@@ -18,3 +18,5 @@ install.packages("assertthat")
 install.packages("janitor")
 install.packages("xtable")
 install.packages("styler")
+
+renv::snapshot()
