@@ -136,22 +136,41 @@ table(obs_random)
 # (2) Compare the observed patterns
 ##################################################################
 
-pdf("ObsRanking.pdf", width=8, height=6)
-par(mfrow=c(2,1), mar=c(2.5,2.5,3,2), oma=c(0,0,2,0))
-barplot(table(obs_pattern)/N, 
-        main="100% Attentive (True pref: A >>> B = C)", 
+pdf(here::here("fig/ObsRanking.pdf"), width=8, height=6)
+par(mfrow=c(2,2), mar=c(2.5,2.5,3,2), oma=c(0,4,2,0))
+barplot(table(check)/N, 
+        main="A. 100% Attentive (True pref: A >>> B = C)", 
         col="deepskyblue3", border=F)
+mtext("Fixed Order (a,b,c)", 
+      side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
 barplot(table(obs_random)/N, 
-        main="0% Attentive (Zig-Zag Orientation)", 
+        main="B. 0% Attentive (Zig-Zag Orientation)", 
         col="deepskyblue3", border=F)
-title("*Observed* Ranking Patterns (with Item Order Randomization)",outer=T)
+barplot(table(obs_pattern)/N, 
+        main="C. 100% Attentive (True pref: A >>> B = C)", 
+        col="deepskyblue3", border=F)
+mtext("Item Order Randomization", 
+      side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
+barplot(table(obs_random)/N, 
+        main="D. 0% Attentive (Zig-Zag Orientation)", 
+        col="deepskyblue3", border=F)
+title("*Observed* Ranking Patterns",outer=T, col.main="deepskyblue4")
+
 dev.off()
 
 ##################################################################
 # (2) Estimate the Quantities of Interest
 ##################################################################
 
+# 2.1: Distribution of unique rankings (the most cease summary)
 
+head(obs_pattern)
+head(obs_random)
+head(choice)
+
+dt_p <- dtc %>% gather("C1_1", "C1_2", "C1_3", "C1_4","C1_5",
+                       "C1_6", "C1_7", "C1_8", "C1_9","C1_10", 
+                      key="position", value="rank")
 
 
 
