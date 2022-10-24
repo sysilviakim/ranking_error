@@ -128,7 +128,7 @@ prob_pt <- rep(1/n_perm, n_perm) # Uniform patterns (can be MODIFIED later)
 prob_pt <- c(0.05,0.3,0.15,0.15,0.3,0.05) # Zig-zag orientation
 
 obs_random <- sample(x=perm,size=N, replace=T, prob=prob_pt)
-obs_random
+obs_random <- data.frame(obs_random)
 
 table(obs_random)
 
@@ -162,15 +162,66 @@ dev.off()
 # (2) Estimate the Quantities of Interest
 ##################################################################
 
-# 2.1: Distribution of unique rankings (the most cease summary)
+# Transforming observed rankings into "true" orderings
+# Create ID for join
+obs_pattern$id <- as.numeric(row.names(obs_pattern))
+obs_random$id <- as.numeric(row.names(obs_pattern))
+choice$id <- as.numeric(row.names(choice))
 
+# Check
 head(obs_pattern)
 head(obs_random)
 head(choice)
 
-dt_p <- dtc %>% gather("C1_1", "C1_2", "C1_3", "C1_4","C1_5",
-                       "C1_6", "C1_7", "C1_8", "C1_9","C1_10", 
-                      key="position", value="rank")
+
+obs_pref1 <- choice %>% left_join(obs_pattern) %>%                      # Join two datasets
+             gather("V1", "V2", "V3", key="position", value="item") %>% # Turn into a long format
+             mutate(rank = case_when(position=="V1" ~ str_sub(obs_rank, 1,1),      # First value
+                                     position=="V2" ~ str_sub(obs_rank, 2,2),      # Second value
+                                     position=="V3" ~ str_sub(obs_rank, 3,3))) %>% # Third value
+             arrange(id, rank)
+
+
+obs_pref2 <- choice %>% left_join(obs_random) %>%                      # Join two datasets
+             gather("V1", "V2", "V3", key="position", value="item") %>% # Turn into a long format
+             mutate(rank = case_when(position=="V1" ~ str_sub(obs_random, 1,1),      # First value
+                                     position=="V2" ~ str_sub(obs_random, 2,2),      # Second value
+                                     position=="V3" ~ str_sub(obs_random, 3,3))) %>% # Third value
+             arrange(id, rank)
+
+# Check the "true" ranking data
+head(obs_pref1)
+head(obs_pref2)
+
+
+# 2.1: Distribution of unique rankings (the most cease summary)
+# 100% Attentive Respondents
+freq_pref1 <-  obs_pref1[,c(1,4,5)] %>% 
+               spread(key="rank", value="item") %>%
+               dplyr::select(-id) %>%
+               unite("true_order", sep="") 
+
+# 0% Attentive Respondents
+freq_pref2 <-  obs_pref2[,c(1,4,5)] %>% 
+               spread(key="rank", value="item") %>%
+               dplyr::select(-id) %>%
+               unite("true_order", sep="") 
+
+
+# Visualizing What Happens When We Extract "True" Orderings from Data with Item Order Randomization
+pdf(here::here("fig/QOI.pdf"), width=8, height=6)
+par(mfrow=c(1,2), mar=c(2.5,2.5,3,2), oma=c(0,4,2,0))
+barplot(table(freq_pref1)/N, 
+        main="A. 100% Attentive (True pref: A >>> B = C)", 
+        col="deepskyblue3", border=F)
+mtext("Item Order Randomization", 
+      side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
+barplot(table(freq_pref2)/N, 
+        main="B. 0% Attentive (Zig-Zag Orientation)", 
+        col="deepskyblue3", border=F)
+
+dev.off()
+
 
 
 
