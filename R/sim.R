@@ -39,9 +39,6 @@ true_pref <- rpluce(N=N, t=J, prob=prob_vec) %>%
 head(true_pref) # Check
 
 # Check the uniformity
-ncol <- dim(true_pref)[2]
-check <- true_pref %>% unite(order,sep="") 
-table(check) 
 
 # Getting the true ranking for each unit
 true_rank <- PLMIX::rank_ord_switch(data=true_pref, 
@@ -50,6 +47,10 @@ true_rank <- PLMIX::rank_ord_switch(data=true_pref,
 
 true_rank # Item_1 = A, Item _2 = B, Item_3 = C
 # Note: if (3,2,1) this means A corresponds 3, B 2, and C 1. We use this later.
+
+
+check <- true_rank %>% unite(order,sep="") 
+table(check) 
 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -128,32 +129,64 @@ prob_pt <- rep(1/n_perm, n_perm) # Uniform patterns (can be MODIFIED later)
 prob_pt <- c(0.05,0.3,0.15,0.15,0.3,0.05) # Zig-zag orientation
 
 obs_random <- sample(x=perm,size=N, replace=T, prob=prob_pt)
-obs_random <- data.frame(obs_random)
+obs_random <- data.frame(obs_rank=obs_random)
 
 table(obs_random)
+
+
+# (3) 50% attentive respondents (Fixed Order (a,b,c))
+select1 <- rbinom(n=N,size=1,prob=0.5) # If 1, selected from the Attentive Group
+select2 <- rbinom(n=N,size=1,prob=0.5) # If 0, selected from the Inattentive Group
+
+draw1 <- check %>% filter(select1==1) %>% rename(obs_rank=order)
+draw2 <- obs_random %>% filter(select2==1)
+
+check_half <- rbind(draw1,draw2) 
+
+# (3) 50% attentive respondents (item order randomization)
+
+draw3 <- obs_pattern %>% filter(select1==1)
+draw4 <- obs_random %>% filter(select2==1)
+  
+obs_half <- rbind(draw3,draw4) 
+
+table(obs_half)
 
 ##################################################################
 # (2) Compare the observed patterns
 ##################################################################
 
-pdf(here::here("fig/ObsRanking.pdf"), width=8, height=6)
-par(mfrow=c(2,2), mar=c(2.5,2.5,3,2), oma=c(0,4,2,0))
-barplot(table(check)/N, 
-        main="A. 100% Attentive (True pref: A >>> B = C)", 
+pdf(here::here("fig/ObsRanking.pdf"), width=9, height=6)
+par(mfrow=c(2,3), mar=c(2.5,2.5,3,2), oma=c(0,4,2,0))
+barplot(table(check)/N, main="", 
         col="deepskyblue3", border=F)
+title(adj=0, main="A. 100% Attentive",)
 mtext("Fixed Order (a,b,c)", 
       side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
 barplot(table(obs_random)/N, 
-        main="B. 0% Attentive (Zig-Zag Orientation)", 
+        main="", 
         col="deepskyblue3", border=F)
+title(adj=0, main="B. 0% Attentive (Zig-Zag Orientation)",)
+barplot(table(check_half)/N, 
+        main="", 
+        col="deepskyblue3", border=F)
+title(adj=0, main="C. 50% Attentive",)
+
+
 barplot(table(obs_pattern)/N, 
-        main="C. 100% Attentive (True pref: A >>> B = C)", 
+        main="", 
         col="deepskyblue3", border=F)
+title(adj=0, main="D. 100% Attentive",)
 mtext("Item Order Randomization", 
       side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
 barplot(table(obs_random)/N, 
-        main="D. 0% Attentive (Zig-Zag Orientation)", 
+        main="", 
         col="deepskyblue3", border=F)
+title(adj=0, main="E. 0% Attentive (Zig-Zag Orientation)",)
+barplot(table(obs_half)/N, 
+        main="", 
+        col="deepskyblue3", border=F)
+title(adj=0, main="F. 50% Attentive",)
 title("*Observed* Ranking Patterns",outer=T, col.main="deepskyblue4")
 
 dev.off()
@@ -165,15 +198,17 @@ dev.off()
 # Transforming observed rankings into "true" orderings
 # Create ID for join
 obs_pattern$id <- as.numeric(row.names(obs_pattern))
-obs_random$id <- as.numeric(row.names(obs_pattern))
+obs_random$id <- as.numeric(row.names(obs_random))
+obs_half$id <- as.numeric(row.names(obs_half))
 choice$id <- as.numeric(row.names(choice))
 
 # Check
 head(obs_pattern)
 head(obs_random)
+head(obs_half)
 head(choice)
 
-
+# 100% Attentive
 obs_pref1 <- choice %>% left_join(obs_pattern) %>%                      # Join two datasets
              gather("V1", "V2", "V3", key="position", value="item") %>% # Turn into a long format
              mutate(rank = case_when(position=="V1" ~ str_sub(obs_rank, 1,1),      # First value
@@ -181,19 +216,28 @@ obs_pref1 <- choice %>% left_join(obs_pattern) %>%                      # Join t
                                      position=="V3" ~ str_sub(obs_rank, 3,3))) %>% # Third value
              arrange(id, rank)
 
-
+# 0% Attentive
 obs_pref2 <- choice %>% left_join(obs_random) %>%                      # Join two datasets
              gather("V1", "V2", "V3", key="position", value="item") %>% # Turn into a long format
-             mutate(rank = case_when(position=="V1" ~ str_sub(obs_random, 1,1),      # First value
-                                     position=="V2" ~ str_sub(obs_random, 2,2),      # Second value
-                                     position=="V3" ~ str_sub(obs_random, 3,3))) %>% # Third value
+             mutate(rank = case_when(position=="V1" ~ str_sub(obs_rank, 1,1),      # First value
+                                     position=="V2" ~ str_sub(obs_rank, 2,2),      # Second value
+                                     position=="V3" ~ str_sub(obs_rank, 3,3))) %>% # Third value
+             arrange(id, rank)
+
+# 50% Attentive
+obs_pref3 <- choice %>% left_join(obs_half) %>%                      # Join two datasets
+             gather("V1", "V2", "V3", key="position", value="item") %>% # Turn into a long format
+             mutate(rank = case_when(position=="V1" ~ str_sub(obs_rank, 1,1),      # First value
+                                     position=="V2" ~ str_sub(obs_rank, 2,2),      # Second value
+                                     position=="V3" ~ str_sub(obs_rank, 3,3))) %>% # Third value
              arrange(id, rank)
 
 # Check the "true" ranking data
 head(obs_pref1)
 head(obs_pref2)
+head(obs_pref3)
 
-
+#----------------------------------------------------------------#
 # 2.1: Distribution of unique rankings (the most cease summary)
 # 100% Attentive Respondents
 freq_pref1 <-  obs_pref1[,c(1,4,5)] %>% 
@@ -207,20 +251,33 @@ freq_pref2 <-  obs_pref2[,c(1,4,5)] %>%
                dplyr::select(-id) %>%
                unite("true_order", sep="") 
 
+# 50% Attentive Respondents
+freq_pref3 <-  obs_pref3[,c(1,4,5)] %>% 
+               spread(key="rank", value="item") %>%
+               dplyr::select(-id) %>%
+               unite("true_order", sep="") 
+
 
 # Visualizing What Happens When We Extract "True" Orderings from Data with Item Order Randomization
-pdf(here::here("fig/QOI.pdf"), width=8, height=6)
-par(mfrow=c(1,2), mar=c(2.5,2.5,3,2), oma=c(0,4,2,0))
-barplot(table(freq_pref1)/N, 
-        main="A. 100% Attentive (True pref: A >>> B = C)", 
+pdf(here::here("fig/QOI.pdf"), width=8, height=3)
+par(mfrow=c(1,3), mar=c(2.5,2.5,3,2), oma=c(0,4,2,0))
+barplot(table(freq_pref1)/N, main="", 
         col="deepskyblue3", border=F)
+title(adj=0, main="A. 100% Attentive")
 mtext("Item Order Randomization", 
       side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
-barplot(table(freq_pref2)/N, 
-        main="B. 0% Attentive (Zig-Zag Orientation)", 
+barplot(table(freq_pref2)/N, main="", 
         col="deepskyblue3", border=F)
+title(adj=0, main="B. 0% Attentive (Zig-Zag Orientation)")
+barplot(table(freq_pref3)/N, main="", 
+        col="deepskyblue3", border=F)
+title(adj=0, main="C. 50% Attentive")
+title("*Recovered* Preferences",outer=T, col.main="deepskyblue4")
+
 
 dev.off()
+#----------------------------------------------------------------#
+
 
 
 
