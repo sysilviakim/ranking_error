@@ -20,3 +20,4 @@ install.packages("xtable")
 install.packages("styler")
 
 renv::snapshot()
+## Sys.setenv(RENV_DOWNLOAD_METHOD = "libcurl")
