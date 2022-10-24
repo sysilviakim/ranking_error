@@ -131,25 +131,22 @@ prob_pt <- c(0.05,0.3,0.15,0.15,0.3,0.05) # Zig-zag orientation
 obs_random <- sample(x=perm,size=N, replace=T, prob=prob_pt)
 obs_random <- data.frame(obs_rank=obs_random)
 
+head(obs_random)
 table(obs_random)
 
 
 # (3) 50% attentive respondents (Fixed Order (a,b,c))
-select1 <- rbinom(n=N,size=1,prob=0.5) # If 1, selected from the Attentive Group
-select2 <- rbinom(n=N,size=1,prob=0.5) # If 0, selected from the Inattentive Group
-
-draw1 <- check %>% filter(select1==1) %>% rename(obs_rank=order)
-draw2 <- obs_random %>% filter(select2==1)
+draw1 <- check[1:(N/2),] %>% rename(obs_rank=order)
+draw2 <- tibble(obs_rank = obs_random[1001:N,])
 
 check_half <- rbind(draw1,draw2) 
 
 # (3) 50% attentive respondents (item order randomization)
 
-draw3 <- obs_pattern %>% filter(select1==1)
-draw4 <- obs_random %>% filter(select2==1)
-  
-obs_half <- rbind(draw3,draw4) 
+draw3 <-tibble(obs_rank =  obs_pattern[1:(N/2),])
+draw4 <-  tibble(obs_rank = obs_random[1001:N,])
 
+obs_half <- rbind(draw3,draw4) 
 table(obs_half)
 
 ##################################################################
@@ -160,29 +157,29 @@ pdf(here::here("fig/ObsRanking.pdf"), width=9, height=6)
 par(mfrow=c(2,3), mar=c(2.5,2.5,3,2), oma=c(0,4,2,0))
 barplot(table(check)/N, main="", 
         col="deepskyblue3", border=F)
-title(adj=0, main="A. 100% Attentive",)
+title(adj=0, main="A. 100% Attentive")
 mtext("Fixed Order (a,b,c)", 
       side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
 barplot(table(obs_random)/N, 
         main="", 
         col="deepskyblue3", border=F)
-title(adj=0, main="B. 0% Attentive (Zig-Zag Orientation)",)
+title(adj=0, main="B. 0% Attentive (Zig-Zag Orientation)")
 barplot(table(check_half)/N, 
         main="", 
         col="deepskyblue3", border=F)
-title(adj=0, main="C. 50% Attentive",)
+title(adj=0, main="C. 50% Attentive")
 
 
 barplot(table(obs_pattern)/N, 
         main="", 
         col="deepskyblue3", border=F)
-title(adj=0, main="D. 100% Attentive",)
+title(adj=0, main="D. 100% Attentive")
 mtext("Item Order Randomization", 
       side=2, line=4, cex=1.2, font=2, col=rgb(0.1,0.3,0.5,0.5))
 barplot(table(obs_random)/N, 
         main="", 
         col="deepskyblue3", border=F)
-title(adj=0, main="E. 0% Attentive (Zig-Zag Orientation)",)
+title(adj=0, main="E. 0% Attentive (Zig-Zag Orientation)")
 barplot(table(obs_half)/N, 
         main="", 
         col="deepskyblue3", border=F)
