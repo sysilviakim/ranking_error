@@ -1,6 +1,4 @@
-#############################################################
-# WRITE A FUNCTION TO DRAW SAMPLES FROM PLACKET-LUCE MODLE
-#############################################################
+# WRITE A FUNCTION TO DRAW SAMPLES FROM PLACKET-LUCE MODEL =====================
 
 #' @title rpluce
 #'
@@ -20,10 +18,8 @@
 # ALGORITHM 2.1: Efficient Sampling from Plackett-Luce
 # ALGORITHM 2.2: Efficient Sampling from RUM (Random Utility Model)
 
-##########################################################################
-# ALGORITHM 2.1: Efficient Sampling from Plackett-Luce
+# ALGORITHM 2.1: Efficient Sampling from Plackett-Luce =========================
 # This is based on the "gamma" parameterization of the PL model
-##########################################################################
 
 rpluce <- function(N, t, prob) {
   gamma.true <- prob
@@ -68,7 +64,5 @@ rpluce <- function(N, t, prob) {
   return(R.set) # RETURNING RANKINGS OF t ITEMS FOR N ASSESSORS
 }
 
-##########################################################################
-# ALGORITHM 2.2: Efficient Sampling from RUM (Random Utility Model)
+# ALGORITHM 2.2: Efficient Sampling from RUM (Random Utility Model) ============
 # This is based on the "theta" parameterization of the PL model
-##########################################################################
