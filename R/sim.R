@@ -61,12 +61,14 @@ for (i in 1:dim(true_rank)[1]) { # For each i-th unit in true_rank
 
   # Cast numbers to alphabets
   vec_pref <- true_rank[i, ] %>%
-    reshape2::melt() %>%
-    mutate(variable = case_when(
-      variable == "Item_1" ~ "a",
-      variable == "Item_2" ~ "b",
-      variable == "Item_3" ~ "c"
-    ))
+    pivot_longer(cols = contains("Item"), names_to = "variable") %>%
+    mutate(
+      variable = case_when(
+        variable == "Item_1" ~ "a",
+        variable == "Item_2" ~ "b",
+        variable == "Item_3" ~ "c"
+      )
+    )
   vec_pref # Check
 
   # Alphabet unit i sees in each position
@@ -191,39 +193,18 @@ head(choice)
 
 ## 100% Attentive --------------------------------------------------------------
 obs_pref1 <- choice %>%
-  left_join(obs_pattern) %>% # Join two datasets
-  # Turn into a long format
-  gather("V1", "V2", "V3", key = "position", value = "item") %>%
-  mutate(rank = case_when(
-    position == "V1" ~ str_sub(obs_rank, 1, 1), # First value
-    position == "V2" ~ str_sub(obs_rank, 2, 2), # Second value
-    position == "V3" ~ str_sub(obs_rank, 3, 3)
-  )) %>% # Third value
-  arrange(id, rank)
+  left_join(obs_pattern) %>%
+  pivot_sim()
 
 ## 0% Attentive ----------------------------------------------------------------
 obs_pref2 <- choice %>%
-  left_join(obs_random) %>% # Join two datasets
-  # Turn into a long format
-  gather("V1", "V2", "V3", key = "position", value = "item") %>%
-  mutate(rank = case_when(
-    position == "V1" ~ str_sub(obs_rank, 1, 1), # First value
-    position == "V2" ~ str_sub(obs_rank, 2, 2), # Second value
-    position == "V3" ~ str_sub(obs_rank, 3, 3)
-  )) %>% # Third value
-  arrange(id, rank)
+  left_join(obs_random) %>%
+  pivot_sim()
 
 ## 50% Attentive ---------------------------------------------------------------
 obs_pref3 <- choice %>%
-  left_join(obs_half) %>% # Join two datasets
-  # Turn into a long format
-  gather("V1", "V2", "V3", key = "position", value = "item") %>%
-  mutate(rank = case_when(
-    position == "V1" ~ str_sub(obs_rank, 1, 1), # First value
-    position == "V2" ~ str_sub(obs_rank, 2, 2), # Second value
-    position == "V3" ~ str_sub(obs_rank, 3, 3)
-  )) %>% # Third value
-  arrange(id, rank)
+  left_join(obs_half) %>%
+  pivot_sim()
 
 # Check the "true" ranking data
 head(obs_pref1)
