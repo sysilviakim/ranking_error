@@ -1,4 +1,4 @@
-# Script description ===========================================================
+# Script Description ===========================================================
 # sim.R
 # Created: 10/22/2022
 # Aim: simulate the effects of pattern ranking with various true distributions
@@ -11,17 +11,15 @@ J <- 3 # Number of items
 # Generate the Sample Space for Simulation =====================================
 ## Generate the population ranking distribution --------------------------------
 set.seed(102)
-prob_vec <- rep(1 / J, J) # Uniform first-choice probability (can be MODIFIED)
-prob_vec <- c(0.8, 0.1, 0.1) # A dominates B and C in the first-choice prob.
 
-print(prob_vec)
+# Uniform first-choice probability
+prob_vec <- rep(1 / J, J)
 
+# A dominates B and C in the first-choice probability, B and C indifferent
+prob_vec <- c(0.8, 0.1, 0.1)
 true_pref <- rpluce(N = N, t = J, prob = prob_vec) %>%
   as_tibble()
-
-head(true_pref) # Check
-
-# Check the uniformity
+head(true_pref)
 
 # Getting the true ranking for each unit
 true_rank <- PLMIX::rank_ord_switch(
@@ -30,14 +28,17 @@ true_rank <- PLMIX::rank_ord_switch(
 ) %>%
   as_tibble()
 
-true_rank # Item_1 = A, Item _2 = B, Item_3 = C
-# Note: if (3,2,1) this means A corresponds 3, B 2, and C 1. We use this later.
+# Item_1 = A, Item_2 = B, Item_3 = C
+# Note: if (3, 2, 1),
+#       this means A corresponds 3, B 2, and C 1. We use this later.
+true_rank
 
 check <- true_rank %>% unite(order, sep = "")
 table(check)
 
 ## Generate the ordered choice set in survey question --------------------------
-randomize <- rep(1 / J, J) # Assumption 1: Order randomization
+# Assumption 1: Order randomization
+randomize <- rep(1 / J, J)
 choice <- rpluce(N = N, t = J, prob = randomize) %>%
   as_tibble()
 head(choice)
@@ -47,8 +48,7 @@ check2 <- choice %>% unite(order, sep = "")
 table(check2)
 
 ## Generate respondents' stated ranked preferences------------------------------
-
-# (1) 100% attentive respondents ===============================================
+### (1) 100% attentive respondents ---------------------------------------------
 
 # Storage for observed patterns
 obs_pattern <- data.frame(
@@ -57,7 +57,6 @@ obs_pattern <- data.frame(
   pattern3 = integer()
 )
 
-## Loop ------------------------------------------------------------------------
 for (i in 1:dim(true_rank)[1]) { # For each i-th unit in true_rank
 
   # Cast numbers to alphabets
@@ -89,12 +88,14 @@ for (i in 1:dim(true_rank)[1]) { # For each i-th unit in true_rank
 
   # Stack in the storage
   obs_pattern <- rbind(obs_pattern, comb)
-} # End of i loop
+
+  # End of i loop
+}
 
 obs_pattern <- obs_pattern %>% unite(obs_rank, sep = "")
 table(obs_pattern)
 
-# (2) 0% attentive respondents =================================================
+### (2) 0% attentive respondents -----------------------------------------------
 # Note: These units only rank according to patterns, not based on preference
 # Assuming uniform random patterns
 perm <- combinat::permn(x = 1:J) # Get all elements in the sample space
@@ -116,22 +117,20 @@ obs_random <- data.frame(obs_rank = obs_random)
 head(obs_random)
 table(obs_random)
 
-# (3) 50% attentive respondents (Fixed Order (a,b,c)) --------------------------
+### (3) 50% attentive respondents (fixed order (a,b,c)) ------------------------
 draw1 <- check[1:(N / 2), ] %>% rename(obs_rank = order)
 draw2 <- tibble(obs_rank = obs_random[1001:N, ])
 
 check_half <- rbind(draw1, draw2)
 
- # (3) 50% attentive respondents (item order randomization) ---------------------
-
+### (3) 50% attentive respondents (item order randomization) -------------------
 draw3 <- tibble(obs_rank = obs_pattern[1:(N / 2), ])
 draw4 <- tibble(obs_rank = obs_random[1001:N, ])
 
 obs_half <- rbind(draw3, draw4)
 table(obs_half)
 
-# (2) Compare the observed patterns ============================================
-
+# Compare the Observed Patterns ================================================
 pdf(here("fig/ObsRanking.pdf"), width = 9, height = 6)
 par(mfrow = c(2, 3), mar = c(2.5, 2.5, 3, 2), oma = c(0, 4, 2, 0))
 barplot(table(check) / N,
@@ -152,7 +151,6 @@ barplot(table(check_half) / N,
   col = "deepskyblue3", border = F
 )
 title(adj = 0, main = "C. 50% Attentive")
-
 
 barplot(table(obs_pattern) / N,
   main = "",
@@ -232,7 +230,7 @@ head(obs_pref1)
 head(obs_pref2)
 head(obs_pref3)
 
-# 2.1: Distribution of unique rankings (the most cease summary) ================
+# Distribution of Unique Rankings (The Most Case Summary) ======================
 ## 100% Attentive Respondents --------------------------------------------------
 freq_pref1 <- obs_pref1[, c(1, 4, 5)] %>%
   spread(key = "rank", value = "item") %>%
