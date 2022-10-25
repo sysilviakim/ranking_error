@@ -19,5 +19,11 @@ install.packages("janitor")
 install.packages("xtable")
 install.packages("styler")
 
+# For this project
+install.packages("Matrix")
+install.packages("combinat")
+install.packages("gtools")
+install.packages("PLMIX")
+
 renv::snapshot()
 ## Sys.setenv(RENV_DOWNLOAD_METHOD = "libcurl")
