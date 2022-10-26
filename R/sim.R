@@ -184,6 +184,15 @@ colnames(inv) <- c("obs_rank", "inv")
 
 print(inv)
 
+temp <- obs_half %>%
+  mutate(inv = freq_inv)
+
+head(temp,n=20) # looks good
+table(temp)     # This should look like an identity matrix
+ 
+# Compute the weighted count (am I doing something wrong here????????)
+temp_count <- count(x = temp, obs_rank, wt = inv)
+temp_count     # Tada! We "corrected" the distortion
 
 
 # Estimate the Quantities of Interest ==========================================
