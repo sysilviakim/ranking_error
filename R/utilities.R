@@ -1,4 +1,6 @@
 # Library and function calls ===================================================
+library(plyr)
+library(MASS)
 library(here)
 library(combinat) # For permn
 library(gtools) # For permute
@@ -74,4 +76,8 @@ loop_stated_rank_preference <- function(true_rank, choice) {
   
   obs_pattern <- obs_pattern %>% unite(obs_rank, sep = "")
   return(obs_pattern)
+}
+
+prop_vector <- function(x, digits = 1) {
+  return(round(prop.table(table(x, useNA = "ifany")), digits = digits))
 }
