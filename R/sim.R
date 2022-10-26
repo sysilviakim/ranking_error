@@ -12,13 +12,11 @@ J <- 3 # Number of items
 ## Generate the population ranking distribution --------------------------------
 set.seed(102)
 
-# Uniform first-choice probability
-prob_vec <- rep(1 / J, J)
-
-# A dominates B and C in the first-choice probability, B and C indifferent
+# If we wanted to use uniform first-choice probability
+# prob_vec <- rep(1 / J, J)
+# Here, A dominates B and C in the first-choice probability, B and C indifferent
 prob_vec <- c(0.8, 0.1, 0.1)
-true_pref <- rpluce(N = N, t = J, prob = prob_vec) %>%
-  as_tibble()
+true_pref <- rpluce(N = N, t = J, prob = prob_vec)
 head(true_pref)
 
 # Getting the true ranking for each unit
@@ -39,13 +37,13 @@ table(check)
 ## Generate the ordered choice set in survey question --------------------------
 # Assumption 1: Order randomization
 randomize <- rep(1 / J, J)
-choice <- rpluce(N = N, t = J, prob = randomize) %>%
-  as_tibble()
+choice <- rpluce(N = N, t = J, prob = randomize)
 head(choice)
 
-# Check the uniformity
+# Check the uniformity: proportions + pearson's chi-squared test
 check2 <- choice %>% unite(order, sep = "")
-table(check2)
+round(prop.table(table(check2)) * 100, digits = 1)
+chisq.test(table(check2))
 
 ## Generate respondents' stated ranked preferences------------------------------
 ### (1) 100% attentive respondents ---------------------------------------------
@@ -178,21 +176,21 @@ dev.off()
 
 
 # Inverse Probability Weighting on Observed Rankings===========================+
-inv <- N/table(obs_half) %>% 
-       tibble()
-colnames(inv) <- c("obs_rank", "inv")       
+inv <- N / table(obs_half) %>%
+  tibble()
+colnames(inv) <- c("obs_rank", "inv")
 
 print(inv)
 
-temp <- obs_half %>%   # Silvia, try using "obs_random" as a base dataset for the weighted data (see how weird the result will be!)
+temp <- obs_half %>% # Silvia, try using "obs_random" as a base dataset for the weighted data (see how weird the result will be!)
   mutate(inv = freq_inv)
 
-head(temp,n=20) # looks good
-table(temp)     # This should look like an identity matrix
- 
-# Compute the weighted count 
+head(temp, n = 20) # looks good
+table(temp) # This should look like an identity matrix
+
+# Compute the weighted count
 temp_count <- count(x = temp, obs_rank, wt = inv)
-temp_count     # Tada! We "corrected" the distortion
+temp_count # Tada! We "corrected" the distortion
 
 
 # Estimate the Quantities of Interest ==========================================
@@ -224,12 +222,12 @@ obs_pref2 <- choice %>%
 obs_pref3 <- choice %>%
   left_join(obs_half) %>%
   pivot_sim() %>%
-  left_join(inv, by="obs_rank")
+  left_join(inv, by = "obs_rank")
 
 # Check the "true" ranking data
 head(obs_pref1)
 head(obs_pref2)
-head(obs_pref3,n=20)
+head(obs_pref3, n = 20)
 
 # Distribution of Unique Rankings (The Most Case Summary) ======================
 ## 100% Attentive Respondents --------------------------------------------------
@@ -249,30 +247,30 @@ freq_pref3 <- obs_pref3[, c(1, 4, 5, 6)] %>%
   spread(key = "rank", value = "item") %>%
   dplyr::select(-id)
 
-head(freq_pref3, n=20)
+head(freq_pref3, n = 20)
 
 ### Incorporating weights here
 freq_inv <- freq_pref3$inv
 
 freq_temp <- freq_pref3 %>%
-    dplyr::select(-inv) %>%
+  dplyr::select(-inv) %>%
   unite("true_order", sep = "")
 
 
-head(freq_temp,n=20)
+head(freq_temp, n = 20)
 head(freq_inv)
 
-weighted <- freq_temp %>% 
+weighted <- freq_temp %>%
   mutate(inv = freq_inv)
 
-head(weighted,n=20) # looks good
+head(weighted, n = 20) # looks good
 
 # Compute the weighted count (am I doing something wrong here????????)
 w_count <- count(x = weighted, true_order, wt = inv)
 
 # Compare
-table(freq_temp) / N                  # Unweighted
-round(w_count$n/sum(w_count$n),d = 4) # Weighted
+table(freq_temp) / N # Unweighted
+round(w_count$n / sum(w_count$n), d = 4) # Weighted
 
 
 # Visualizing What Happens When We Extract "True" Orderings from Data
