@@ -27,7 +27,7 @@ true_rank <- PLMIX::rank_ord_switch(
   data = true_pref, format_input = "ordering"
 ) %>%
   as_tibble() %>%
-  rename(A = Item_1, B = Item_2, C = Item_3)
+  rename(a = Item_1, b = Item_2, c = Item_3)
 true_rank
 
 true_permn <- true_rank %>% unite(order, sep = "")
@@ -46,7 +46,7 @@ chisq.test(table(random_permn))
 
 ## Generate respondents' stated ranked preferences------------------------------
 ### (1) 100% attentive respondents ---------------------------------------------
-obs_pattern <- loop_stated_rank_preference(true_rank, choice)
+obs_pattern <- loop_stated_rank_preference(true_rank, random_choices)
 prop_vector(obs_pattern)
 chisq.test(table(obs_pattern))
 
@@ -60,19 +60,18 @@ perm <- combinat::permn(x = 1:J) %>%
 # If we wanted uniform patterns
 # prob_pt <- rep(1 / length(perm), length(perm))
 # A hypothetical zig-zag orient.
-prob_pt <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) 
+prob_pt <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05)
 
 obs_random <- sample(x = perm, size = N, replace = T, prob = prob_pt)
-obs_random <- data.frame(obs_rank = obs_random)
+obs_random <- tibble(obs_rank = obs_random)
 
 head(obs_random)
 prop_vector(obs_random)
 chisq.test(table(obs_random))
 
-### (3) 50% attentive respondents (fixed order (a,b,c)) ------------------------
+### (3) 50% attentive respondents (fixed order (a, b, c)) ----------------------
 draw1 <- true_permn[1:(N / 2), ] %>% rename(obs_rank = order)
 draw2 <- tibble(obs_rank = obs_random[1001:N, ])
-
 check_half <- rbind(draw1, draw2)
 
 ### (3) 50% attentive respondents (item order randomization) -------------------

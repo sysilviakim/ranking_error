@@ -36,18 +36,12 @@ loop_stated_rank_preference <- function(true_rank, choice) {
     pattern3 = integer()
   )
   
-  for (i in 1:dim(true_rank)[1]) { # For each i-th unit in true_rank
+  # For each i-th unit in true_rank
+  for (i in 1:dim(true_rank)[1]) { 
     
     # Cast numbers to alphabets
     vec_pref <- true_rank[i, ] %>%
-      pivot_longer(cols = contains("Item"), names_to = "variable") %>%
-      mutate(
-        variable = case_when(
-          variable == "Item_1" ~ "a",
-          variable == "Item_2" ~ "b",
-          variable == "Item_3" ~ "c"
-        )
-      )
+      pivot_longer(cols = c(a, b, c), names_to = "variable")
     vec_pref # Check
     
     # Alphabet unit i sees in each position
