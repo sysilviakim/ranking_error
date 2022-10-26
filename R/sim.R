@@ -21,21 +21,20 @@ head(true_pref)
 
 # Getting the true ranking for each unit
 # Note: if (3, 2, 1), A corresponds to 3, B to 2, and C to 1. We use this later.
+# The population has a homogeneous preference.
 true_rank <- PLMIX::rank_ord_switch(
   data = true_pref, format_input = "ordering"
 ) %>%
   as_tibble() %>%
   rename(A = Item_1, B = Item_2, C = Item_3)
-
 true_rank
 
-check <- true_rank %>% unite(order, sep = "")
-table(check)
+true_permn <- true_rank %>% unite(order, sep = "")
+table(true_permn)
 
 ## Generate the ordered choice set in survey question --------------------------
 # Assumption 1: Order randomization
-randomize <- rep(1 / J, J)
-choice <- rpluce(N = N, t = J, prob = randomize)
+choice <- rpluce(N = N, t = J, prob = rep(1 / J, J))
 head(choice)
 
 # Check the uniformity: proportions + pearson's chi-squared test
@@ -69,7 +68,7 @@ prop_vector(obs_random)
 chisq.test(table(obs_random))
 
 ### (3) 50% attentive respondents (fixed order (a,b,c)) ------------------------
-draw1 <- check[1:(N / 2), ] %>% rename(obs_rank = order)
+draw1 <- true_permn[1:(N / 2), ] %>% rename(obs_rank = order)
 draw2 <- tibble(obs_rank = obs_random[1001:N, ])
 
 check_half <- rbind(draw1, draw2)
@@ -84,7 +83,7 @@ prop_vector(obs_half)
 # Compare the Observed Patterns ================================================
 pdf(here("fig/ObsRanking.pdf"), width = 9, height = 6)
 par(mfrow = c(2, 3), mar = c(2.5, 2.5, 3, 2), oma = c(0, 4, 2, 0))
-barplot(table(check) / N,
+barplot(table(true_permn) / N,
   main = "",
   col = "deepskyblue3", border = F
 )
