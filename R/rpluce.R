@@ -3,6 +3,9 @@
 #' @title rpluce
 #'
 #' @description  \code{rpluce} draws samples from Plackett-Luce model
+#' 
+#' @importFrom tibble as_tibble
+#' 
 #' @param N total number of samples to draw
 #' @param t total number of items (currently t<27)
 #' @param prob a vector of choice probabilities
@@ -49,9 +52,12 @@ rpluce <- function(N, t, prob) {
       A <- A[draw == 0] # REMOVING T-th CHOICE (DRAWN ABOVE)
       gamma <- gamma[draw == 0] # REMOVING T-th CHOICE's PROBABILITY
       gamma <- gamma / sum(gamma) # NORMALIZE THE CHOICE PROBABILITY
-      if (is.na(gamma)) { # This is for when the remaining prob is all 0
+      
+      # This is for when the remaining prob is all 0
+      # Adding `any` because there are two elements
+      if (is.na(any(gamma))) {
         gamma <- c(1, rep(0, (length(gamma) - 1)))
-      } else {}
+      }
     }
 
     R <- cbind(R, A)
@@ -60,7 +66,7 @@ rpluce <- function(N, t, prob) {
     R.set[j, ] <- R
   }
 
-  R.set <- as.data.frame(R.set)
+  R.set <- as_tibble(as.data.frame(R.set))
   return(R.set) # RETURNING RANKINGS OF t ITEMS FOR N ASSESSORS
 }
 
