@@ -15,6 +15,7 @@ set.seed(102)
 # If we wanted to use uniform first-choice probability
 # prob_vec <- rep(1 / J, J)
 # Here, A dominates B and C in the first-choice probability, B and C indifferent
+# V1 = first choice, V2 = second choice, V3 = third choice, ...
 prob_vec <- c(0.8, 0.1, 0.1)
 true_pref <- rpluce(N = N, t = J, prob = prob_vec)
 head(true_pref)
@@ -33,14 +34,15 @@ true_permn <- true_rank %>% unite(order, sep = "")
 table(true_permn)
 
 ## Generate the ordered choice set in survey question --------------------------
-# Assumption 1: Order randomization
-choice <- rpluce(N = N, t = J, prob = rep(1 / J, J))
-head(choice)
+# Assumption 1: Natural order A-B-C, simply observe true permutation
+# Assumption 2: Order of items randomized
+random_choices <- rpluce(N = N, t = J, prob = rep(1 / J, J))
+head(random_choices)
 
 # Check the uniformity: proportions + pearson's chi-squared test
-check2 <- choice %>% unite(order, sep = "")
-prop_vector(check2)
-chisq.test(table(check2))
+random_permn <- random_choices %>% unite(order, sep = "")
+prop_vector(random_permn)
+chisq.test(table(random_permn))
 
 ## Generate respondents' stated ranked preferences------------------------------
 ### (1) 100% attentive respondents ---------------------------------------------
@@ -50,15 +52,15 @@ chisq.test(table(obs_pattern))
 
 ### (2) 0% attentive respondents -----------------------------------------------
 # Note: These units only rank according to patterns, not based on preference
-# Assuming uniform random patterns
-# Get all elements in the sample slace
+# Assuming uniform random patterns, get all elements in the sample space
 perm <- combinat::permn(x = 1:J) %>%
   map_chr(~ paste(.x, collapse = "")) %>%
   sort()
 
-n_perm <- length(perm) # Size of the permutation space
-prob_pt <- rep(1 / n_perm, n_perm) # Uniform patterns (can be MODIFIED later)
-prob_pt <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) # A hypothetical zig-zag orient.
+# If we wanted uniform patterns
+# prob_pt <- rep(1 / length(perm), length(perm))
+# A hypothetical zig-zag orient.
+prob_pt <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) 
 
 obs_random <- sample(x = perm, size = N, replace = T, prob = prob_pt)
 obs_random <- data.frame(obs_rank = obs_random)
