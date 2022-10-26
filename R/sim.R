@@ -184,13 +184,13 @@ colnames(inv) <- c("obs_rank", "inv")
 
 print(inv)
 
-temp <- obs_half %>%
+temp <- obs_half %>%   # Silvia, try using "obs_random" as a base dataset for the weighted data (see how weird the result will be!)
   mutate(inv = freq_inv)
 
 head(temp,n=20) # looks good
 table(temp)     # This should look like an identity matrix
  
-# Compute the weighted count (am I doing something wrong here????????)
+# Compute the weighted count 
 temp_count <- count(x = temp, obs_rank, wt = inv)
 temp_count     # Tada! We "corrected" the distortion
 
@@ -251,6 +251,7 @@ freq_pref3 <- obs_pref3[, c(1, 4, 5, 6)] %>%
 
 head(freq_pref3, n=20)
 
+### Incorporating weights here
 freq_inv <- freq_pref3$inv
 
 freq_temp <- freq_pref3 %>%
