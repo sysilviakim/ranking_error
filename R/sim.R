@@ -20,15 +20,13 @@ true_pref <- rpluce(N = N, t = J, prob = prob_vec)
 head(true_pref)
 
 # Getting the true ranking for each unit
+# Note: if (3, 2, 1), A corresponds to 3, B to 2, and C to 1. We use this later.
 true_rank <- PLMIX::rank_ord_switch(
-  data = true_pref,
-  format_input = "ordering"
+  data = true_pref, format_input = "ordering"
 ) %>%
-  as_tibble()
+  as_tibble() %>%
+  rename(A = Item_1, B = Item_2, C = Item_3)
 
-# Item_1 = A, Item_2 = B, Item_3 = C
-# Note: if (3, 2, 1),
-#       this means A corresponds 3, B 2, and C 1. We use this later.
 true_rank
 
 check <- true_rank %>% unite(order, sep = "")
@@ -42,13 +40,13 @@ head(choice)
 
 # Check the uniformity: proportions + pearson's chi-squared test
 check2 <- choice %>% unite(order, sep = "")
-round(prop.table(table(check2)) * 100, digits = 1)
+prop_vector(check2)
 chisq.test(table(check2))
 
 ## Generate respondents' stated ranked preferences------------------------------
 ### (1) 100% attentive respondents ---------------------------------------------
 obs_pattern <- loop_stated_rank_preference(true_rank, choice)
-round(prop.table(table(obs_pattern)), digits = 1)
+prop_vector(obs_pattern)
 chisq.test(table(obs_pattern))
 
 ### (2) 0% attentive respondents -----------------------------------------------
@@ -56,18 +54,19 @@ chisq.test(table(obs_pattern))
 # Assuming uniform random patterns
 # Get all elements in the sample slace
 perm <- combinat::permn(x = 1:J) %>%
-  map_chr(~ paste(.x, collapse = "")) %>% 
+  map_chr(~ paste(.x, collapse = "")) %>%
   sort()
 
 n_perm <- length(perm) # Size of the permutation space
 prob_pt <- rep(1 / n_perm, n_perm) # Uniform patterns (can be MODIFIED later)
-prob_pt <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) # Zig-zag orientation
+prob_pt <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) # A hypothetical zig-zag orient.
 
 obs_random <- sample(x = perm, size = N, replace = T, prob = prob_pt)
 obs_random <- data.frame(obs_rank = obs_random)
 
 head(obs_random)
-table(obs_random)
+prop_vector(obs_random)
+chisq.test(table(obs_random))
 
 ### (3) 50% attentive respondents (fixed order (a,b,c)) ------------------------
 draw1 <- check[1:(N / 2), ] %>% rename(obs_rank = order)
@@ -80,7 +79,7 @@ draw3 <- tibble(obs_rank = obs_pattern[1:(N / 2), ])
 draw4 <- tibble(obs_rank = obs_random[1001:N, ])
 
 obs_half <- rbind(draw3, draw4)
-table(obs_half)
+prop_vector(obs_half)
 
 # Compare the Observed Patterns ================================================
 pdf(here("fig/ObsRanking.pdf"), width = 9, height = 6)
@@ -134,11 +133,13 @@ colnames(inv) <- c("obs_rank", "inv")
 
 print(inv)
 
-temp <- obs_half %>% # Silvia, try using "obs_random" as a base dataset for the weighted data (see how weird the result will be!)
+temp <- obs_half %>%
+  # Silvia, try using "obs_random" as a base dataset for the weighted data
+  # (see how weird the result will be!)
   mutate(inv = freq_inv)
 
 head(temp, n = 20) # looks good
-table(temp) # This should look like an identity matrix
+prop_vector(temp) # This should look like an identity matrix
 
 # Compute the weighted count
 temp_count <- count(x = temp, obs_rank, wt = inv)
