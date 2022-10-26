@@ -1,8 +1,8 @@
-# WRITE A FUNCTION TO DRAW SAMPLES FROM PLACKET-LUCE MODEL =====================
+# WRITE A FUNCTION TO DRAW SAMPLES FROM PLACKETT-LUCE MODEL ====================
 
 #' @title rpluce
 #'
-#' @description  \code{rpluce} draws samples from Placket-Luce model
+#' @description  \code{rpluce} draws samples from Plackett-Luce model
 #' @param N total number of samples to draw
 #' @param t total number of items (currently t<27)
 #' @param prob a vector of choice probabilities
