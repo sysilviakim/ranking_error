@@ -98,7 +98,8 @@ data_list <- list(
   p5_rand_0p = obs_random,
   ## rand_50p: mixture
   p6_rand_50p = obs_half
-)
+) %>%
+  rowid()
 
 p_list <- data_list %>%
   imap(
@@ -139,6 +140,7 @@ dev.off()
 
 # Inverse Probability Weighting on Observed Rankings ===========================
 inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)
+random_choices <- rowid(random_choices)
 
 temp <- obs_half %>%
   # Silvia, try using "obs_random" as a base dataset for the weighted data
@@ -154,33 +156,21 @@ temp_count # Tada! We "corrected" the distortion
 
 
 # Estimate the Quantities of Interest ==========================================
-
 # Transforming observed rankings into "true" orderings
-# Create ID for join
-obs_pattern$id <- as.numeric(row.names(obs_pattern))
-obs_random$id <- as.numeric(row.names(obs_random))
-obs_half$id <- as.numeric(row.names(obs_half))
-random_choices$id <- as.numeric(row.names(random_choices))
-
-# Check
-head(obs_pattern)
-head(obs_random)
-head(obs_half)
-head(random_choices)
 
 ## 100% Attentive --------------------------------------------------------------
 obs_pref1 <- random_choices %>%
-  left_join(obs_pattern) %>%
+  left_join(data_list$p4_rand_100p) %>%
   pivot_sim()
 
 ## 0% Attentive ----------------------------------------------------------------
 obs_pref2 <- random_choices %>%
-  left_join(obs_random) %>%
+  left_join(data_list$p5_rand_0p) %>%
   pivot_sim()
 
 ## 50% Attentive ---------------------------------------------------------------
 obs_pref3 <- random_choices %>%
-  left_join(obs_half) %>%
+  left_join(data_list$p6_rand_50p) %>%
   pivot_sim() %>%
   left_join(inv, by = "obs_rank")
 
