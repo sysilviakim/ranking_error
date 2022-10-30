@@ -14,6 +14,7 @@ library(patchwork)
 source(here("R", "rpluce.R"))
 
 # Temporary functions ==========================================================
+## Turn 1st, 2nd, and 3rd ranking columns into long data format
 pivot_sim <- function(x) {
   out <- x %>%
     pivot_longer(
@@ -78,7 +79,12 @@ prop_vector <- function(x, digits = 1) {
 }
 
 rowid <- function(x) {
-  x %>%
+  out <- x %>%
     mutate(id = row_number()) %>%
     select(id, everything())
+  return(out)
+}
+
+pivot_join <- function(x, y) {
+  return(pivot_sim(left_join(y, x)) %>% select(id, obs_rank, item, rank))
 }

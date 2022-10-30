@@ -82,7 +82,7 @@ draw4 <- obs_random[1001:N, ]
 obs_half <- rbind(draw3, draw4)
 prop_vector(obs_half)
 
-# Compare the Observed Patterns ================================================
+# Visualize and Compare the Observed Patterns ==================================
 pdf(here("fig", "obs_ranking_sim_zigzag.pdf"), width = 7, height = 5)
 data_list <- list(
   ## fixed_100p: if 100% attentive, observe true permutation
@@ -99,7 +99,7 @@ data_list <- list(
   ## rand_50p: mixture
   p6_rand_50p = obs_half
 ) %>%
-  rowid()
+  map(rowid)
 
 p_list <- data_list %>%
   imap(
@@ -120,7 +120,7 @@ p_list <- data_list %>%
       } else {
         p <- p + ylab("")
       }
-      
+
       return(pdf_default(p))
     }
   )
@@ -136,120 +136,4 @@ p <- p_list %>%
   map(~ .x + theme(plot.title = element_text(size = 10))) %>%
   wrap_plots(ncol = 3)
 print(p)
-dev.off()
-
-# Inverse Probability Weighting on Observed Rankings ===========================
-inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)
-random_choices <- rowid(random_choices)
-
-temp <- obs_half %>%
-  # Silvia, try using "obs_random" as a base dataset for the weighted data
-  # (see how weird the result will be!)
-  mutate(inv = freq_inv)
-
-head(temp, n = 20) # looks good
-prop_vector(temp) # This should look like an identity matrix
-
-# Compute the weighted count
-temp_count <- count(x = temp, obs_rank, wt = inv)
-temp_count # Tada! We "corrected" the distortion
-
-
-# Estimate the Quantities of Interest ==========================================
-# Transforming observed rankings into "true" orderings
-
-## 100% Attentive --------------------------------------------------------------
-obs_pref1 <- random_choices %>%
-  left_join(data_list$p4_rand_100p) %>%
-  pivot_sim()
-
-## 0% Attentive ----------------------------------------------------------------
-obs_pref2 <- random_choices %>%
-  left_join(data_list$p5_rand_0p) %>%
-  pivot_sim()
-
-## 50% Attentive ---------------------------------------------------------------
-obs_pref3 <- random_choices %>%
-  left_join(data_list$p6_rand_50p) %>%
-  pivot_sim() %>%
-  left_join(inv, by = "obs_rank")
-
-# Check the "true" ranking data
-head(obs_pref1)
-head(obs_pref2)
-head(obs_pref3, n = 20)
-
-# Distribution of Unique Rankings (The Most Case Summary) ======================
-## 100% Attentive Respondents --------------------------------------------------
-freq_pref1 <- obs_pref1[, c(1, 4, 5)] %>%
-  spread(key = "rank", value = "item") %>%
-  dplyr::select(-id) %>%
-  unite("true_order", sep = "")
-
-## 0% Attentive Respondents ----------------------------------------------------
-freq_pref2 <- obs_pref2[, c(1, 4, 5)] %>%
-  spread(key = "rank", value = "item") %>%
-  dplyr::select(-id) %>%
-  unite("true_order", sep = "")
-
-## 50% Attentive Respondents ---------------------------------------------------
-freq_pref3 <- obs_pref3[, c(1, 4, 5, 6)] %>%
-  spread(key = "rank", value = "item") %>%
-  dplyr::select(-id)
-
-head(freq_pref3, n = 20)
-
-### Incorporating weights here
-freq_inv <- freq_pref3$inv
-
-freq_temp <- freq_pref3 %>%
-  dplyr::select(-inv) %>%
-  unite("true_order", sep = "")
-
-
-head(freq_temp, n = 20)
-head(freq_inv)
-
-weighted <- freq_temp %>%
-  mutate(inv = freq_inv)
-
-head(weighted, n = 20) # looks good
-
-# Compute the weighted count (am I doing something wrong here????????)
-w_count <- count(x = weighted, true_order, wt = inv)
-
-# Compare
-table(freq_temp) / N # Unweighted
-round(w_count$n / sum(w_count$n), d = 4) # Weighted
-
-
-# Visualizing What Happens When We Extract "True" Orderings from Data
-# with Item Order Randomization
-pdf(here("fig/QOI.pdf"), width = 8, height = 7)
-par(mfrow = c(2, 2), mar = c(2.5, 2.5, 3, 2), oma = c(0, 4, 2, 0))
-barplot(table(freq_pref1) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "A. 100% Attentive")
-
-barplot(table(freq_pref2) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "B. 0% Attentive (Zig-Zag Orientation)")
-barplot(table(freq_temp) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "C. 50% Attentive")
-barplot(w_count$n / sum(w_count$n),
-  main = "",
-  col = "deepskyblue3", border = F,
-  names.arg = unique(w_count$true_order),
-)
-title(adj = 0, main = "D. 50% Attentive (Weighted)")
-title("*Recovered* Preferences", outer = T, col.main = "deepskyblue4")
-
-
 dev.off()
