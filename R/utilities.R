@@ -9,6 +9,8 @@ library(styler)
 library(PLMIX) # For switch_ord_rank()
 library(Kmisc)
 library(patchwork)
+library(janitor)
+library(assertthat)
 
 # READING THE FUNCTION THAT DRAW FROM PRACKETT-LUCE
 source(here("R", "rpluce.R"))
