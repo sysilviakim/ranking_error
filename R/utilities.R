@@ -7,6 +7,7 @@ library(gtools) # For permute
 library(tidyverse)
 library(styler)
 library(PLMIX) # For switch_ord_rank()
+library(Kmisc)
 
 # READING THE FUNCTION THAT DRAW FROM PRACKETT-LUCE
 source(here("R", "rpluce.R"))
@@ -69,7 +70,7 @@ loop_stated_rank_preference <- function(true_rank, choice) {
   }
   
   obs_pattern <- obs_pattern %>% unite(obs_rank, sep = "")
-  return(obs_pattern)
+  return(as_tibble(obs_pattern))
 }
 
 prop_vector <- function(x, digits = 1) {

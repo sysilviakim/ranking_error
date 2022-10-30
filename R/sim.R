@@ -72,59 +72,66 @@ chisq.test(table(obs_random))
 ### (3) 50% attentive respondents (fixed order (a, b, c)) ----------------------
 draw1 <- true_permn[1:(N / 2), ] %>% rename(obs_rank = order)
 draw2 <- obs_random[1001:N, ]
-check_half <- rbind(draw1, draw2)
+fixed_half <- rbind(draw1, draw2)
 
 ### (3) 50% attentive respondents (item order randomization) -------------------
-draw3 <- tibble(obs_rank = obs_pattern[1:(N / 2), ])
+draw3 <- obs_pattern[1:(N / 2), ]
 draw4 <- obs_random[1001:N, ]
-
 obs_half <- rbind(draw3, draw4)
 prop_vector(obs_half)
 
 # Compare the Observed Patterns ================================================
-pdf(here("fig/ObsRanking.pdf"), width = 9, height = 6)
-par(mfrow = c(2, 3), mar = c(2.5, 2.5, 3, 2), oma = c(0, 4, 2, 0))
-barplot(table(true_permn) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "A. 100% Attentive")
-mtext("Fixed Order (a,b,c)",
-  side = 2, line = 4, cex = 1.2, font = 2, col = rgb(0.1, 0.3, 0.5, 0.5)
-)
-barplot(table(obs_random) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "B. 0% Attentive (Zig-Zag Orientation)")
-barplot(table(check_half) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "C. 50% Attentive")
+pdf(here("fig", "obs_ranking_sim_zigzag.pdf"), width = 7, height = 5)
+p_list <- list(
+  ## fixed_100p: if 100% attentive, observe true permutation
+  p1_fixed_100p = true_permn %>%
+    rename(obs_rank = order),
+  ## fixed_0p: if 0% attentive, always observe zigzag
+  p2_fixed_0p = obs_random,
+  ## fixed_50p: mixture
+  p3_fixed_50p = fixed_half,
+  ## rand_100p: if 100% attentive, this is the observed pattern
+  p4_rand_100p = obs_pattern,
+  ## rand_0p: if 0% attentive, regardless of randomization, zigzag
+  p5_rand_0p = obs_random,
+  ## rand_50p: mixture
+  p6_rand_50p = obs_half
+) %>%
+  imap(
+    ~ {
+      p <- ggplot(.x) +
+        geom_bar(
+          aes(x = obs_rank, y = ..count.. / sum(..count..)),
+          fill = "deepskyblue3"
+        ) +
+        xlab("") +
+        scale_y_continuous(limits = c(0, 0.415), labels = scales::percent)
 
-barplot(table(obs_pattern) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "D. 100% Attentive")
-mtext("Item Order Randomization",
-  side = 2, line = 4, cex = 1.2, font = 2, col = rgb(0.1, 0.3, 0.5, 0.5)
-)
-barplot(table(obs_random) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "E. 0% Attentive (Zig-Zag Orientation)")
-barplot(table(obs_half) / N,
-  main = "",
-  col = "deepskyblue3", border = F
-)
-title(adj = 0, main = "F. 50% Attentive", )
-title("*Observed* Ranking Patterns", outer = T, col.main = "deepskyblue4")
+      ## y-axis label
+      if (.y == "p4_rand_100p") {
+        p <- p + ylab("Item Order Randomization")
+      } else if (.y == "p1_fixed_100p") {
+        p <- p + ylab("Fixed Order (a, b, c)")
+      } else {
+        p <- p + ylab("")
+      }
+      
+      return(pdf_default(p))
+    }
+  )
 
+p_list[[1]] <- p_list[[1]] + ggtitle("A. 100% Attentive")
+p_list[[2]] <- p_list[[2]] + ggtitle("B. 0% Attentive")
+p_list[[3]] <- p_list[[3]] + ggtitle("C. 50% Attentive")
+p_list[[4]] <- p_list[[4]] + ggtitle("D. 100% Attentive")
+p_list[[5]] <- p_list[[5]] + ggtitle("E. 0% Attentive")
+p_list[[6]] <- p_list[[6]] + ggtitle("F. 50% Attentive")
+
+p <- p_list %>%
+  map(~ .x + theme(plot.title = element_text(size = 10))) %>%
+  wrap_plots(ncol = 3)
+print(p)
 dev.off()
-
 
 # Inverse Probability Weighting on Observed Rankings===========================+
 inv <- N / table(obs_half) %>%
