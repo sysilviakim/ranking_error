@@ -45,12 +45,14 @@ prop_vector(random_permn)
 chisq.test(table(random_permn))
 
 ## Generate respondents' stated ranked preferences------------------------------
-### (1) 100% attentive respondents ---------------------------------------------
+## Under random order of choices
+
+### (D) 100% attentive respondents ---------------------------------------------
 obs_pattern <- loop_stated_rank_preference(true_rank, random_choices)
 prop_vector(obs_pattern)
 chisq.test(table(obs_pattern))
 
-### (2) 0% attentive respondents -----------------------------------------------
+### (B) 0% attentive respondents -----------------------------------------------
 # Note: These units only rank according to patterns, not based on preference
 # Assuming uniform random patterns, get all elements in the sample space
 perm <- combinat::permn(x = 1:J) %>%
@@ -69,12 +71,12 @@ head(obs_random)
 prop_vector(obs_random)
 chisq.test(table(obs_random))
 
-### (3) 50% attentive respondents (fixed order (a, b, c)) ----------------------
+### (C) 50% attentive respondents (fixed order (a, b, c)) ----------------------
 draw1 <- true_permn[1:(N / 2), ] %>% rename(obs_rank = order)
 draw2 <- obs_random[1001:N, ]
 fixed_half <- rbind(draw1, draw2)
 
-### (3) 50% attentive respondents (item order randomization) -------------------
+### (F) 50% attentive respondents (item order randomization) -------------------
 draw3 <- obs_pattern[1:(N / 2), ]
 draw4 <- obs_random[1001:N, ]
 obs_half <- rbind(draw3, draw4)
@@ -82,7 +84,7 @@ prop_vector(obs_half)
 
 # Compare the Observed Patterns ================================================
 pdf(here("fig", "obs_ranking_sim_zigzag.pdf"), width = 7, height = 5)
-p_list <- list(
+data_list <- list(
   ## fixed_100p: if 100% attentive, observe true permutation
   p1_fixed_100p = true_permn %>%
     rename(obs_rank = order),
@@ -96,7 +98,9 @@ p_list <- list(
   p5_rand_0p = obs_random,
   ## rand_50p: mixture
   p6_rand_50p = obs_half
-) %>%
+)
+
+p_list <- data_list %>%
   imap(
     ~ {
       p <- ggplot(.x) +
@@ -133,12 +137,8 @@ p <- p_list %>%
 print(p)
 dev.off()
 
-# Inverse Probability Weighting on Observed Rankings===========================+
-inv <- N / table(obs_half) %>%
-  tibble()
-colnames(inv) <- c("obs_rank", "inv")
-
-print(inv)
+# Inverse Probability Weighting on Observed Rankings ===========================
+inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)
 
 temp <- obs_half %>%
   # Silvia, try using "obs_random" as a base dataset for the weighted data
@@ -160,26 +160,26 @@ temp_count # Tada! We "corrected" the distortion
 obs_pattern$id <- as.numeric(row.names(obs_pattern))
 obs_random$id <- as.numeric(row.names(obs_random))
 obs_half$id <- as.numeric(row.names(obs_half))
-choice$id <- as.numeric(row.names(choice))
+random_choices$id <- as.numeric(row.names(random_choices))
 
 # Check
 head(obs_pattern)
 head(obs_random)
 head(obs_half)
-head(choice)
+head(random_choices)
 
 ## 100% Attentive --------------------------------------------------------------
-obs_pref1 <- choice %>%
+obs_pref1 <- random_choices %>%
   left_join(obs_pattern) %>%
   pivot_sim()
 
 ## 0% Attentive ----------------------------------------------------------------
-obs_pref2 <- choice %>%
+obs_pref2 <- random_choices %>%
   left_join(obs_random) %>%
   pivot_sim()
 
 ## 50% Attentive ---------------------------------------------------------------
-obs_pref3 <- choice %>%
+obs_pref3 <- random_choices %>%
   left_join(obs_half) %>%
   pivot_sim() %>%
   left_join(inv, by = "obs_rank")
