@@ -71,12 +71,12 @@ chisq.test(table(obs_random))
 
 ### (3) 50% attentive respondents (fixed order (a, b, c)) ----------------------
 draw1 <- true_permn[1:(N / 2), ] %>% rename(obs_rank = order)
-draw2 <- tibble(obs_rank = obs_random[1001:N, ])
+draw2 <- obs_random[1001:N, ]
 check_half <- rbind(draw1, draw2)
 
 ### (3) 50% attentive respondents (item order randomization) -------------------
 draw3 <- tibble(obs_rank = obs_pattern[1:(N / 2), ])
-draw4 <- tibble(obs_rank = obs_random[1001:N, ])
+draw4 <- obs_random[1001:N, ]
 
 obs_half <- rbind(draw3, draw4)
 prop_vector(obs_half)
