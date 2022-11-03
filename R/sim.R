@@ -82,6 +82,7 @@ draw4 <- obs_random[1001:N, ]
 obs_half <- rbind(draw3, draw4)
 prop_vector(obs_half)
 
+
 # Visualize and Compare the Observed Patterns ==================================
 pdf(here("fig", "obs_ranking_sim_zigzag.pdf"), width = 7, height = 5)
 data_list <- list(

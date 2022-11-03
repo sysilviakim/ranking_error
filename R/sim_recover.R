@@ -4,6 +4,54 @@
 # Aim: given observed rankings, attempt to recover true underlying rankings
 source(here::here("R", "sim.R"))
 
+# Proof of concept for our bias-correction strategy
+## Use data with item order randomization (Assumption 1)
+## Bias-correction needs three quantities (alpha, naive estimate, estimate based on 100% random)
+
+alpha <- 0.5 ## We know this from our simulation (In reality, we must estimate this somehow)
+est_random <- data_list[4] %>%
+  as_tibble() ## Recovered pref based on the raw data (naive estimate)
+est_naive <- data_list[6] %>%
+  as_tibble()  ## Recovered pref based on the 100% random data (In reality, we must estimate this somehow)
+est_truth <- data_list[5] %>%
+  as_tibble()## Recoveed pref based on the sincere ranking (our target)
+
+
+p_eps <- table(est_random$p4_rand_100p$obs_rank) / N ## Estimates via 100% pattern rankings
+p_obs <- table(est_naive$p6_rand_50p$obs_rank) / N   ## Estimates via raw data
+
+## Bias-corrected estimator
+p_bc <- (1/alpha) * ( p_obs - (1-alpha)*p_eps )
+
+## Ground truth
+p_QOI <- table(est_truth$p5_rand_0p$obs_rank) / N
+
+# Prepare for the visualization
+gg_ob <- data.frame(p_obs)
+gg_bc <- data.frame(p_bc)
+gg_qoi <- data.frame(p_QOI)
+gg_ob$name <- "Naive"
+gg_bc$name <- "Bias-corrected"
+gg_qoi$name <- "Ground truth"
+ggdt <- rbind(gg_ob, gg_bc, gg_qoi) ## Combine all estimates
+ggdt ## Check
+
+## Visualize
+p <- ggplot(ggdt, aes(x=Var1, y=Freq, fill=name))+
+      geom_bar(stat="identity", position = "dodge2", alpha=0.9) + 
+      scale_fill_manual(values=c("#128ba0","#a5900d", "gray70"))+
+      xlab("") + ylab("") +
+      theme_bw()+
+      theme(legend.position='top',
+            plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+            text=element_text(size=5))
+
+p
+
+ggsave(here::here("fig", "proof_of_concept.pdf"), width=3, height=3)
+
+
+
 # Inverse Probability Weighting on Observed Rankings ===========================
 inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)
 ## the actual choices presented
