@@ -16,7 +16,7 @@ set.seed(102)
 # prob_vec <- rep(1 / J, J)
 # Here, A dominates B and C in the first-choice probability, B and C indifferent
 # V1 = first choice, V2 = second choice, V3 = third choice, ...
-prob_vec <- c(0.8, 0.1, 0.1)
+prob_vec <- rep(1 / J, J)
 true_pref <- rpluce(N = N, t = J, prob = prob_vec)
 head(true_pref)
 
@@ -30,8 +30,7 @@ true_rank <- PLMIX::rank_ord_switch(
   rename(a = Item_1, b = Item_2, c = Item_3)
 true_rank
 
-true_permn <- true_rank %>% unite(order, sep = "")
-table(true_permn)
+temp <- true_rank %>% unite(a)
 
 ## Generate the ordered choice set in survey question --------------------------
 # Assumption 1: Natural order A-B-C, simply observe true permutation

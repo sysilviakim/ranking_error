@@ -9,22 +9,37 @@ source(here::here("R", "sim.R"))
 ## Bias-correction needs three quantities (alpha, naive estimate, estimate based on 100% random)
 
 alpha <- 0.5 ## We know this from our simulation (In reality, we must estimate this somehow)
-est_random <- data_list[4] %>%
+est_random <- data_list$p5_rand_0p %>%
   as_tibble() ## Recovered pref based on the raw data (naive estimate)
-est_naive <- data_list[6] %>%
+est_naive <- data_list$p6_rand_50p %>%
   as_tibble()  ## Recovered pref based on the 100% random data (In reality, we must estimate this somehow)
-est_truth <- data_list[5] %>%
+est_truth <- data_list$p4_rand_100p %>%
   as_tibble()## Recoveed pref based on the sincere ranking (our target)
 
 
-p_eps <- table(est_random$p4_rand_100p$obs_rank) / N ## Estimates via 100% pattern rankings
-p_obs <- table(est_naive$p6_rand_50p$obs_rank) / N   ## Estimates via raw data
+# Boostrapping to estimate ALPHA (STILL IN PROGRESS)
+B <- 1000
+result <- NA
+for(i in 1:B){
+bst <- sample_n(est_naive, size=N/5, replace=T) # "size" here may be the key (it cannot be M)
+
+test <- chisq.test(table(bst$obs_rank))
+result[i] <- (test$p.value > 0.05)
+
+}
+## Proportion of chi-square tests, where the null was not rejected
+mean(result)
+
+
+
+p_eps <- table(est_random$obs_rank) / N ## Estimates via 100% pattern rankings
+p_obs <- table(est_naive$obs_rank) / N   ## Estimates via raw data
 
 ## Bias-corrected estimator
 p_bc <- (1/alpha) * ( p_obs - (1-alpha)*p_eps )
 
 ## Ground truth
-p_QOI <- table(est_truth$p5_rand_0p$obs_rank) / N
+p_QOI <- table(est_truth$obs_rank) / N
 
 # Prepare for the visualization
 gg_ob <- data.frame(p_obs)
