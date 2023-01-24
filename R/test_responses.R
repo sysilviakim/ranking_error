@@ -57,12 +57,20 @@ chisq.test(temp, p = rep(1 / length(temp), length(temp))) ## p = 0.23
 library(pwr)
 P0 <- rep(1 / length(temp), length(temp))
 P1 <- as.numeric(prop.table(temp))
-ES.w1(P0, P1) ## effect size (very small: less than 0.1)
+ES.w1(P0, P1) ## effect size 0.078 (very small: less than 0.1)
 
 ## yikes
 pwr.chisq.test(w = ES.w1(P0, P1), N = 1000, df = (length(temp) - 1)) ## 0.43
-pwr.chisq.test(w = ES.w1(P0, P1), N = 2000, df = (length(temp) - 1)) ## 0.77
-pwr.chisq.test(w = ES.w1(P0, P1), N = 2500, df = (length(temp) - 1)) ## 0.87
+pwr.chisq.test(w = ES.w1(P0, P1), df = (length(temp) - 1), power = 0.8) ## 2,132
+
+## well, generally, Cohen's benchmarks of 0.1 (small), 0.3 (medium), 0.5 (large)
+## rounded up
+pwr.chisq.test(w = 0.1, df = (6 - 1), power = 0.8) ## 1,283
+pwr.chisq.test(w = 0.3, df = (6 - 1), power = 0.8) ## 143
+pwr.chisq.test(w = 0.5, df = (6 - 1), power = 0.8) ## 52
+pwr.chisq.test(w = 0.1, df = (24 - 1), power = 0.8) ## 2,212
+pwr.chisq.test(w = 0.3, df = (24 - 1), power = 0.8) ## 246
+pwr.chisq.test(w = 0.5, df = (24 - 1), power = 0.8) ## 89
 
 ## 4-option case ---------------------------------------------------------------
 temp <- test_rep %>%
@@ -82,7 +90,10 @@ round(prop.table(temp) * 100, digits = 1)
 chisq.test(temp, p = rep(1 / length(temp), length(temp))) ## p = 0.06
 P0 <- rep(1 / length(temp), length(temp))
 P1 <- as.numeric(prop.table(temp))
-pwr.chisq.test(w = ES.w1(P0, P1), N = 1000, df = (length(temp) - 1)) ## 0.92
+ES.w1(P0, P1) ## 0.17
+
+pwr.chisq.test(w = ES.w1(P0, P1), N = 1000, df = (length(temp) - 1)) ## 0.93
+pwr.chisq.test(w = ES.w1(P0, P1), df = (length(temp) - 1), power = 0.8) ## 739
 
 # Letters ======================================================================
 ## 3-option case ---------------------------------------------------------------
@@ -95,7 +106,10 @@ round(prop.table(temp) * 100, digits = 1)
 chisq.test(temp, p = rep(1 / length(temp), length(temp))) ## p = 0.83
 P0 <- rep(1 / length(temp), length(temp))
 P1 <- as.numeric(prop.table(temp))
+ES.w1(P0, P1) ## 0.04 (tiny!)
+
 pwr.chisq.test(w = ES.w1(P0, P1), N = 1000, df = (length(temp) - 1)) ## 0.15
+pwr.chisq.test(w = ES.w1(P0, P1), df = (length(temp) - 1), power = 0.8) ## 6,927
 
 ## 4-option case ---------------------------------------------------------------
 temp <- test_rep %>%
@@ -107,7 +121,10 @@ round(prop.table(temp) * 100, digits = 1)
 chisq.test(temp, p = rep(1 / length(temp), length(temp))) ## p = 0.14
 P0 <- rep(1 / length(temp), length(temp))
 P1 <- as.numeric(prop.table(temp))
+ES.w1(P0, P1) ## 0.16
+
 pwr.chisq.test(w = ES.w1(P0, P1), N = 1000, df = (length(temp) - 1)) ## 0.88
+pwr.chisq.test(w = ES.w1(P0, P1), df = (length(temp) - 1), power = 0.8) ## 842
 
 # Party ID =====================================================================
 ## 3-option case ---------------------------------------------------------------
@@ -120,7 +137,10 @@ round(prop.table(temp) * 100, digits = 1)
 chisq.test(temp, p = rep(1 / length(temp), length(temp))) ## p = 0.007
 P0 <- rep(1 / length(temp), length(temp))
 P1 <- as.numeric(prop.table(temp))
+ES.w1(P0, P1) ## 0.12
+
 pwr.chisq.test(w = ES.w1(P0, P1), N = 1000, df = (length(temp) - 1)) ## 0.83
+pwr.chisq.test(w = ES.w1(P0, P1), df = (length(temp) - 1), power = 0.8) ## 928
 
 ## 4-option case ---------------------------------------------------------------
 temp <- test_rep %>%
@@ -132,4 +152,7 @@ round(prop.table(temp) * 100, digits = 1)
 chisq.test(temp, p = rep(1 / length(temp), length(temp))) ## p = 0.69
 P0 <- rep(1 / length(temp), length(temp))
 P1 <- as.numeric(prop.table(temp))
+ES.w1(P0, P1) ## 0.13
+
 pwr.chisq.test(w = ES.w1(P0, P1), N = 1000, df = (length(temp) - 1)) ## 0.64
+pwr.chisq.test(w = ES.w1(P0, P1), df = (length(temp) - 1), power = 0.8) ## 1,330
