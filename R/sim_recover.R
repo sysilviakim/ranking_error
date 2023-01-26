@@ -17,21 +17,6 @@ est_truth <- data_list$p4_rand_100p %>%
   as_tibble()## Recoveed pref based on the sincere ranking (our target)
 
 
-# Boostrapping to estimate ALPHA (STILL IN PROGRESS)
-B <- 1000
-result <- NA
-for(i in 1:B){
-bst <- sample_n(est_naive, size=N/5, replace=T) # "size" here may be the key (it cannot be M)
-
-test <- chisq.test(table(bst$obs_rank))
-result[i] <- (test$p.value > 0.05)
-
-}
-## Proportion of chi-square tests, where the null was not rejected
-mean(result)
-
-
-
 p_eps <- table(est_random$obs_rank) / N ## Estimates via 100% pattern rankings
 p_obs <- table(est_naive$obs_rank) / N   ## Estimates via raw data
 

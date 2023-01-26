@@ -30,7 +30,15 @@ true_rank <- PLMIX::rank_ord_switch(
   rename(a = Item_1, b = Item_2, c = Item_3)
 true_rank
 
-temp <- true_rank %>% unite(a)
+# Creating the correct response in the anchor question (added on 1/26/2023)
+true_rank <- data.frame(a = rep(1,N),
+                        b = rep(2,N),
+                        c = rep(3,N)) %>%
+             as_tibble()
+true_rank
+
+
+true_permn <- true_rank %>% unite(order, sep = "") # Recovered on 1/26 based on the contextual info
 
 ## Generate the ordered choice set in survey question --------------------------
 # Assumption 1: Natural order A-B-C, simply observe true permutation
