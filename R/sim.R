@@ -31,14 +31,16 @@ true_rank <- PLMIX::rank_ord_switch(
 true_rank
 
 # Creating the correct response in the anchor question (added on 1/26/2023)
-true_rank <- data.frame(a = rep(1,N),
-                        b = rep(2,N),
-                        c = rep(3,N)) %>%
-             as_tibble()
+true_rank <- data.frame(
+  a = rep(1, N),
+  b = rep(2, N),
+  c = rep(3, N)
+) %>%
+  as_tibble()
 true_rank
 
-
-true_permn <- true_rank %>% unite(order, sep = "") # Recovered on 1/26 based on the contextual info
+# Recovered on 1/26 based on the contextual info
+true_permn <- true_rank %>% unite(order, sep = "") 
 
 ## Generate the ordered choice set in survey question --------------------------
 # Assumption 1: Natural order A-B-C, simply observe true permutation
@@ -88,7 +90,6 @@ draw3 <- obs_pattern[1:(N / 2), ]
 draw4 <- obs_random[1001:N, ]
 obs_half <- rbind(draw3, draw4)
 prop_vector(obs_half)
-
 
 # Visualize and Compare the Observed Patterns ==================================
 pdf(here("fig", "obs_ranking_sim_zigzag.pdf"), width = 7, height = 5)

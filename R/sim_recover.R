@@ -1,27 +1,35 @@
 # Script Description ===========================================================
-# sim.R
+# sim_recover.R
 # Created: 10/30/2022
 # Aim: given observed rankings, attempt to recover true underlying rankings
 source(here::here("R", "sim.R"))
 
 # Proof of concept for our bias-correction strategy
 ## Use data with item order randomization (Assumption 1)
-## Bias-correction needs three quantities (alpha, naive estimate, estimate based on 100% random)
+## Bias-correction needs three quantities 
+## (alpha, naive estimate, estimate based on 100% random)
 
-alpha <- 0.5 ## We know this from our simulation (In reality, we must estimate this somehow)
+## We know this from our simulation (In reality, we must estimate this somehow)
+alpha <- 0.5 
+
+## Recovered pref based on the raw data (naive estimate)
 est_random <- data_list$p5_rand_0p %>%
-  as_tibble() ## Recovered pref based on the raw data (naive estimate)
-est_naive <- data_list$p6_rand_50p %>%
-  as_tibble()  ## Recovered pref based on the 100% random data (In reality, we must estimate this somehow)
-est_truth <- data_list$p4_rand_100p %>%
-  as_tibble()## Recoveed pref based on the sincere ranking (our target)
+  as_tibble() 
 
+## Recovered pref based on the 100% random data 
+## (In reality, we must estimate this somehow)
+est_naive <- data_list$p6_rand_50p %>%
+  as_tibble() 
+
+## Recovered pref based on the sincere ranking (our target)
+est_truth <- data_list$p4_rand_100p %>%
+  as_tibble() 
 
 p_eps <- table(est_random$obs_rank) / N ## Estimates via 100% pattern rankings
-p_obs <- table(est_naive$obs_rank) / N   ## Estimates via raw data
+p_obs <- table(est_naive$obs_rank) / N ## Estimates via raw data
 
 ## Bias-corrected estimator
-p_bc <- (1/alpha) * ( p_obs - (1-alpha)*p_eps )
+p_bc <- (1 / alpha) * (p_obs - (1 - alpha) * p_eps)
 
 ## Ground truth
 p_QOI <- table(est_truth$obs_rank) / N
@@ -37,18 +45,21 @@ ggdt <- rbind(gg_ob, gg_bc, gg_qoi) ## Combine all estimates
 ggdt ## Check
 
 ## Visualize
-p <- ggplot(ggdt, aes(x=Var1, y=Freq, fill=name))+
-      geom_bar(stat="identity", position = "dodge2", alpha=0.9) + 
-      scale_fill_manual(values=c("#128ba0","#a5900d", "gray70"))+
-      xlab("") + ylab("") +
-      theme_bw()+
-      theme(legend.position='top',
-            plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-            text=element_text(size=5))
+p <- ggplot(ggdt, aes(x = Var1, y = Freq, fill = name)) +
+  geom_bar(stat = "identity", position = "dodge2", alpha = 0.9) +
+  scale_fill_manual(values = c("#128ba0", "#a5900d", "gray70")) +
+  xlab("") +
+  ylab("") +
+  theme_bw() +
+  theme(
+    legend.position = "top",
+    plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+    text = element_text(size = 5)
+  )
 
 p
 
-ggsave(here::here("fig", "proof_of_concept.pdf"), width=3, height=3)
+ggsave(here::here("fig", "proof_of_concept.pdf"), width = 3, height = 3)
 
 
 
