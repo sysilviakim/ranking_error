@@ -11,20 +11,17 @@ source(here::here("R", "sim.R"))
 ## We know this from our simulation (In reality, we must estimate this somehow)
 alpha <- 0.5 
 
-## Recovered pref based on the raw data (naive estimate)
-est_random <- data_list$p5_rand_0p %>%
-  as_tibble() 
-
 ## Recovered pref based on the 100% random data 
+est_random <- permn_list$uniform$p5_rand_0p
+
+## Recovered pref based on the raw data (naive estimate)
 ## (In reality, we must estimate this somehow)
-est_naive <- data_list$p6_rand_50p %>%
-  as_tibble() 
+est_naive <- permn_list$uniform$p6_rand_50p
 
 ## Recovered pref based on the sincere ranking (our target)
-est_truth <- data_list$p4_rand_100p %>%
-  as_tibble() 
+est_truth <- permn_list$uniform$p4_rand_100p
 
-p_eps <- table(est_random$obs_rank) / N ## Estimates via 100% pattern rankings
+p_eps <- table(est_random$obs_rank) / N ## Estimates via 100% non-sincere
 p_obs <- table(est_naive$obs_rank) / N ## Estimates via raw data
 
 ## Bias-corrected estimator
@@ -78,7 +75,7 @@ obs_pattern[2, ] ## therefore, writes c = 3, a = 1, b = 2
 ## i.e., given the c-a-b, can we recover a respondent's ranking?
 ## How is it different under each situation?
 
-inv_list <- data_list[4:6] %>%
+inv_list <- permn_list$uniform[4:6] %>%
   map(~ pivot_join(.x, random_choices))
 inv_list$p6_rand_50p <- left_join(inv_list$p6_rand_50p, inv, by = "obs_rank")
 
