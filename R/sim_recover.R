@@ -56,12 +56,8 @@ p <- ggplot(ggdt, aes(x = Var1, y = Freq, fill = name)) +
     plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
     text = element_text(size = 5)
   )
-
 p
-
-ggsave(here::here("fig", "proof_of_concept.pdf"), width = 3, height = 3)
-
-
+ggsave(here("fig", "proof_of_concept.pdf"), width = 3, height = 3)
 
 # Inverse Probability Weighting on Observed Rankings ===========================
 inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)

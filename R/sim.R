@@ -31,13 +31,12 @@ true_rank <- PLMIX::rank_ord_switch(
 true_rank
 
 # Creating the correct response in the anchor question (added on 1/26/2023)
-true_rank <- data.frame(
+true_rank_anchor <- tibble(
   a = rep(1, N),
   b = rep(2, N),
   c = rep(3, N)
-) %>%
-  as_tibble()
-true_rank
+)
+true_rank_anchor
 
 # Recovered on 1/26 based on the contextual info
 true_permn <- true_rank %>% unite(order, sep = "") 
