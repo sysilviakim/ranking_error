@@ -1,6 +1,5 @@
 # Script Description ===========================================================
 # sim_recover.R
-# Created: 10/30/2022
 # Aim: given observed rankings, attempt to recover true underlying rankings
 source(here::here("R", "sim.R"))
 

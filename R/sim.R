@@ -1,3 +1,6 @@
+# Script Description ===========================================================
+# sim.R
+# Aim: simulate effects of non-sincere responses with various true distributions
 source(here::here("R", "utilities.R"))
 set.seed(123)
 
