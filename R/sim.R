@@ -4,7 +4,7 @@
 source(here::here("R", "utilities.R"))
 set.seed(123)
 
-# Simulation parameters + sample space =========================================
+# Simulation Parameters + Sample Space =========================================
 N <- 2000 # Number of units
 J <- 3 # Number of items
 
@@ -36,9 +36,12 @@ chisq_list <- rep(
   )),
   length = length(prob_vec_list)
 )
-names(chisq_list) <- names(prob_vec_list)
 
-# Loop: true and observed rankings =============================================
+## In addition, observed data patterns for diff. conditions
+permn_list <- vector("list", length = length(prob_vec_list))
+names(permn_list) <- names(chisq_list) <- names(prob_vec_list)
+
+# Loop: True and Observed Rankings =============================================
 for (scenario in names(prob_vec_list)) {
   prob_vec <- prob_vec_list[[scenario]]
   true_pref <- rpluce(N = N, t = J, prob = prob_vec)
@@ -123,7 +126,7 @@ for (scenario in names(prob_vec_list)) {
     here("fig", paste0("obs_ranking_", scenario, ".pdf")),
     width = 7, height = 5
   )
-  data_list <- list(
+  permn_list[[scenario]] <- list(
     ## fixed_100p: if 100% attentive, observe true permutation
     p1_fixed_100p = true_permn %>%
       rename(obs_rank = order),
@@ -140,7 +143,7 @@ for (scenario in names(prob_vec_list)) {
   ) %>%
     map(rowid)
 
-  p_list <- data_list %>%
+  p_list <- permn_list[[scenario]] %>%
     imap(
       ~ {
         p <- ggplot(.x) +
