@@ -671,10 +671,15 @@
     },
     "extrafont": {
       "Package": "extrafont",
-      "Version": "0.18",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "07a8a50195fc77e8690fd8bc4e87e6a0",
+      "Version": "0.19",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "extrafont",
+      "RemoteUsername": "wch",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "1063e8f8803879d9bb7e7a3e9a569ecfee8f75b3",
+      "Hash": "e4a4ae4f2a13fff9bf7d9af54f5685e1",
       "Requirements": [
         "Rttf2pt1",
         "extrafontdb"
@@ -715,9 +720,14 @@
     "fontcm": {
       "Package": "fontcm",
       "Version": "1.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "0ada605cc558efe298e6bc9e94eb5bee",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "fontcm",
+      "RemoteUsername": "wch",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "b1b7ab75962397d468b66fc8a77faed9f3a8a345",
+      "Hash": "7580b579a38e584af5467e913794fa43",
       "Requirements": []
     },
     "forcats": {
@@ -1493,6 +1503,14 @@
         "magrittr",
         "rlang"
       ]
+    },
+    "pwr": {
+      "Package": "pwr",
+      "Version": "1.3-0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "adfa41db3678b41bf9235c514c51799a",
+      "Requirements": []
     },
     "quantreg": {
       "Package": "quantreg",
