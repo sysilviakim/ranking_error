@@ -5,55 +5,62 @@ source(here::here("R", "sim.R"))
 
 # Proof of concept for our bias-correction strategy
 ## Use data with item order randomization (Assumption 1)
-## Bias-correction needs three quantities 
+## Bias-correction needs three quantities
 ## (alpha, naive estimate, estimate based on 100% random)
 
+# POV: Alpha is known ==========================================================
 ## We know this from our simulation (In reality, we must estimate this somehow)
-alpha <- 0.5 
+alpha <- 0.5
 
-## Recovered pref based on the 100% random data 
-est_random <- permn_list$uniform$p5_rand_0p
+for (scenario in names(prob_vec_list)) {
+  ## Recovered pref based on the 100% random data (0% sincere)
+  ## i.e., there's some notion of what pattern exists when 0% sincere
+  est_random <- permn_list[[scenario]]$p5_rand_0p
 
-## Recovered pref based on the raw data (naive estimate)
-## (In reality, we must estimate this somehow)
-est_naive <- permn_list$uniform$p6_rand_50p
+  ## Recovered pref based on the raw data (naive estimate)
+  ## (In reality, we must estimate this somehow)
+  est_naive <- permn_list[[scenario]]$p6_rand_50p
 
-## Recovered pref based on the sincere ranking (our target)
-est_truth <- permn_list$uniform$p4_rand_100p
+  ## Recovered pref based on the sincere ranking (our target)
+  est_truth <- permn_list[[scenario]]$p4_rand_100p
 
-p_eps <- table(est_random$obs_rank) / N ## Estimates via 100% non-sincere
-p_obs <- table(est_naive$obs_rank) / N ## Estimates via raw data
+  p_eps <- table(est_random$obs_rank) / N ## Estimates via 0% sincere (pane E)
+  p_obs <- table(est_naive$obs_rank) / N ## Estimates via raw data (pane F)
 
-## Bias-corrected estimator
-p_bc <- (1 / alpha) * (p_obs - (1 - alpha) * p_eps)
+  ## Bias-corrected estimator --------------------------------------------------
+  p_bc <- (1 / alpha) * (p_obs - (1 - alpha) * p_eps)
 
-## Ground truth
-p_QOI <- table(est_truth$obs_rank) / N
+  ## Ground truth
+  ## p_QOI <- table(est_truth$obs_rank) / N <- ???
+  p_QOI <- table(permn_list[[scenario]]$p1_fixed_100p$obs_rank) / N
 
-# Prepare for the visualization
-gg_ob <- data.frame(p_obs)
-gg_bc <- data.frame(p_bc)
-gg_qoi <- data.frame(p_QOI)
-gg_ob$name <- "Naive"
-gg_bc$name <- "Bias-corrected"
-gg_qoi$name <- "Ground truth"
-ggdt <- rbind(gg_ob, gg_bc, gg_qoi) ## Combine all estimates
-ggdt ## Check
+  # Visualization --------------------------------------------------------------
+  alpha_known <- list(
+    naive = enframe(p_obs, name = "obs_rank") %>% mutate(name = "Naive"),
+    bc = enframe(p_bc, name = "obs_rank") %>% mutate(name = "Bias-corrected"),
+    qoi = enframe(p_QOI, name = "obs_rank") %>% mutate(name = "Ground truth")
+  ) %>%
+    bind_rows()
 
-## Visualize
-p <- ggplot(ggdt, aes(x = Var1, y = Freq, fill = name)) +
-  geom_bar(stat = "identity", position = "dodge2", alpha = 0.9) +
-  scale_fill_manual(values = c("#128ba0", "#a5900d", "gray70")) +
-  xlab("") +
-  ylab("") +
-  theme_bw() +
-  theme(
-    legend.position = "top",
-    plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-    text = element_text(size = 5)
+  p <- ggplot(alpha_known, aes(x = obs_rank, y = value, fill = name)) +
+    geom_bar(stat = "identity", position = "dodge2", alpha = 0.9) +
+    scale_fill_manual(values = c("#128ba0", "#a5900d", "gray70")) +
+    xlab("") +
+    ylab("") + 
+    scale_y_continuous(limits = c(0, 0.3))
+  print(
+    pdf_default(p) +
+      theme(
+        legend.position = "top",
+        legend.title = element_blank(),
+        plot.margin = margin(0.2, 0.2, 0, -0.2, "cm")
+      )
   )
-p
-ggsave(here("fig", "proof_of_concept.pdf"), width = 3, height = 3)
+  ggsave(
+    here("fig", paste0("bias_correct_alpha_known_", scenario, ".pdf")),
+    width = 3.55, height = 3
+  )
+}
 
 # Inverse Probability Weighting on Observed Rankings ===========================
 inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)
@@ -75,7 +82,7 @@ obs_pattern[2, ] ## therefore, writes c = 3, a = 1, b = 2
 ## i.e., given the c-a-b, can we recover a respondent's ranking?
 ## How is it different under each situation?
 
-inv_list <- permn_list$uniform[4:6] %>%
+inv_list <- permn_list[[scenario]][4:6] %>%
   map(~ pivot_join(.x, random_choices))
 inv_list$p6_rand_50p <- left_join(inv_list$p6_rand_50p, inv, by = "obs_rank")
 
