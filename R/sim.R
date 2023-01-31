@@ -174,12 +174,3 @@ for (scenario in names(prob_vec_list)) {
   print(p)
   dev.off()
 }
-
-# Using anchor question for inference ==========================================
-## Creating the correct response in the anchor question
-true_rank_anchor <- tibble(
-  a = rep(1, N),
-  b = rep(2, N),
-  c = rep(3, N)
-)
-true_rank_anchor
