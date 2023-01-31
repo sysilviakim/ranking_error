@@ -31,7 +31,7 @@ prob_vec_list <- list(
 ## Store chi-squared test for discrete uniform check
 chisq_list <- rep(
   list(list(
-    true_permn = NA, random_permn = NA, 
+    true_permn = NA, random_permn = NA,
     obs_pattern = NA, obs_random = NA, obs_half = NA
   )),
   length = length(prob_vec_list)
@@ -45,7 +45,7 @@ names(permn_list) <- names(chisq_list) <- names(prob_vec_list)
 for (scenario in names(prob_vec_list)) {
   prob_vec <- prob_vec_list[[scenario]]
   true_pref <- rpluce(N = N, t = J, prob = prob_vec)
-  
+
   if (scenario == "homogeneous") {
     true_pref <- bind_rows(
       ## this is to secure at least one obs of all unique patterns
@@ -56,8 +56,8 @@ for (scenario in names(prob_vec_list)) {
         V2 = rep("b", N),
         V3 = rep("a", N)
       )
-    ) %>% 
-     slice(1:N) 
+    ) %>%
+      slice(1:N)
   }
 
   ## Generate true rankings ----------------------------------------------------
@@ -90,12 +90,12 @@ for (scenario in names(prob_vec_list)) {
   # Stated/observed rankings ---------------------------------------------------
 
   ## Under random order of choices
-  ## (D) 100% attentive respondents
+  ## (D) 100% sincere respondents
   obs_pattern <- loop_stated_rank_preference(true_rank, random_choices)
   prop_vector(obs_pattern)
   chisq_list[[scenario]]$obs_pattern <- chisq.test(table(obs_pattern))
 
-  ## (B) 0% attentive respondents
+  ## (B) 0% sincere respondents
   ## Note: These units only rank according to patterns, not based on preference
   ## Assuming uniform random patterns, get all elements in the sample space
   perm <- combinat::permn(x = 1:J) %>%
@@ -109,15 +109,17 @@ for (scenario in names(prob_vec_list)) {
   prop_vector(obs_random)
   chisq_list[[scenario]]$obs_random <- chisq.test(table(obs_random))
 
-  ## (C) 50% attentive respondents (fixed order (a, b, c))
-  draw1 <- true_permn[1:(N / 2), ] %>% rename(obs_rank = order)
-  draw2 <- obs_random[1001:N, ]
-  fixed_half <- rbind(draw1, draw2)
+  ## (C) 50% sincere respondents (fixed order (a, b, c))
+  fixed_half <- rbind(
+    true_permn[1:(N / 2), ] %>% rename(obs_rank = order),
+    obs_random[1001:N, ]
+  )
 
-  ### (F) 50% attentive respondents (item order randomization)
-  draw3 <- obs_pattern[1:(N / 2), ]
-  draw4 <- obs_random[1001:N, ]
-  obs_half <- rbind(draw3, draw4)
+  ### (F) 50% sincere respondents (item order randomization)
+  obs_half <- rbind(
+    obs_pattern[1:(N / 2), ],
+    obs_random[1001:N, ]
+  )
   prop_vector(obs_half)
   chisq_list[[scenario]]$obs_half <- chisq.test(table(obs_half))
 
@@ -127,16 +129,16 @@ for (scenario in names(prob_vec_list)) {
     width = 7, height = 5
   )
   permn_list[[scenario]] <- list(
-    ## fixed_100p: if 100% attentive, observe true permutation
+    ## fixed_100p: if 100% sincere, observe true permutation
     p1_fixed_100p = true_permn %>%
       rename(obs_rank = order),
-    ## fixed_0p: if 0% attentive, always observe zigzag
+    ## fixed_0p: if 0% sincere, always observe zigzag
     p2_fixed_0p = obs_random,
     ## fixed_50p: mixture
     p3_fixed_50p = fixed_half,
-    ## rand_100p: if 100% attentive, this is the observed pattern
+    ## rand_100p: if 100% sincere, this is the observed pattern
     p4_rand_100p = obs_pattern,
-    ## rand_0p: if 0% attentive, regardless of randomization, zigzag
+    ## rand_0p: if 0% sincere, regardless of randomization, zigzag
     p5_rand_0p = obs_random,
     ## rand_50p: mixture
     p6_rand_50p = obs_half
@@ -167,12 +169,12 @@ for (scenario in names(prob_vec_list)) {
       }
     )
 
-  p_list[[1]] <- p_list[[1]] + ggtitle("A. 100% Attentive")
-  p_list[[2]] <- p_list[[2]] + ggtitle("B. 0% Attentive")
-  p_list[[3]] <- p_list[[3]] + ggtitle("C. 50% Attentive")
-  p_list[[4]] <- p_list[[4]] + ggtitle("D. 100% Attentive")
-  p_list[[5]] <- p_list[[5]] + ggtitle("E. 0% Attentive")
-  p_list[[6]] <- p_list[[6]] + ggtitle("F. 50% Attentive")
+  p_list[[1]] <- p_list[[1]] + ggtitle("A. 100% Sincere")
+  p_list[[2]] <- p_list[[2]] + ggtitle("B. 0% Sincere")
+  p_list[[3]] <- p_list[[3]] + ggtitle("C. 50% Sincere")
+  p_list[[4]] <- p_list[[4]] + ggtitle("D. 100% Sincere")
+  p_list[[5]] <- p_list[[5]] + ggtitle("E. 0% Sincere")
+  p_list[[6]] <- p_list[[6]] + ggtitle("F. 50% Sincere")
 
   p <- p_list %>%
     map(~ .x + theme(plot.title = element_text(size = 10))) %>%
@@ -180,3 +182,7 @@ for (scenario in names(prob_vec_list)) {
   print(p)
   dev.off()
 }
+
+# Export =======================================================================
+save(permn_list, file = here("output", "sim_permn_list.Rda"))
+save(chisq_list, file = here("output", "sim_chisq_list.Rda"))
