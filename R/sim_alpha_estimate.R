@@ -13,13 +13,25 @@ for (scenario in names(prob_vec_list)) {
   ## Recovered pref based on the 100% random data (0% sincere)
   ## i.e., there's some notion of what pattern exists when 0% sincere
   ## This is what's carrying the analysis
+
+  ## P(pi | z = 0): reference distribution of ranking given non-sincere
+  ## For example, in the homogeneous scenario
+  ## 123 132 213 231 312 321 
+  ## 102 607 276 322 592 101 ---> "non-sincere recipients love certain patterns"
+  ## "Observed pattern"
   est_random <- permn_list[[scenario]]$p5_rand_0p
   
-  ## Recovered pref based on the raw data (naive estimate)
-  est_naive <- permn_list[[scenario]]$p6_rand_50p
-  
   ## Recovered pref based on the sincere ranking (our target)
+  ## For example, in the homogeneous scenario
+  ## 123  132  213  231  312  321 
+  ##   1    1    1    1    1 1995
   est_truth <- permn_list[[scenario]]$p1_fixed_100p
+  
+  ## 50% mix case ---> Equation (4)
+  ## P(pi) = P(pi | z = 1) * P(z = 1) + P(pi | z = 0) * P(z = 0)
+  ## Recovered pref based on the raw data (naive estimate)
+  ## "Observed pattern"
+  est_naive <- permn_list[[scenario]]$p6_rand_50p
   
   p_eps <- table(est_random$obs_rank) / N ## Estimates via 0% sincere (pane E)
   p_obs <- table(est_naive$obs_rank) / N ## Estimates via raw data (pane F)
@@ -29,13 +41,17 @@ for (scenario in names(prob_vec_list)) {
   ## Estimating "alpha," i.e., P(z = 0) ----------------------------------------
   ## Assume P(pi | z = 1) is simply uniform, given random choice ordering
   ## p_eps * alpha + p_uniform * (1 - alpha) = p_obs
-  alpha <- 0.5
+  alpha_true <- 0.5
   
   ## if we knew, we'd expect in our observed data
-  expected_obs <- as.numeric(p_eps * alpha + p_uniform * (1 - alpha))
-  summary(x - as.numeric(p_obs)) ## on avg. zero; small differences
+  ## "We can mix D and E to get F"
+  ## "Some difference between the expected F and the real F but trivial diff." 
+  expected_obs <- as.numeric(p_eps * alpha_true + p_uniform * (1 - alpha_true))
+  summary(expected_obs - as.numeric(p_obs)) ## on avg. zero; small differences
   
-  ## alpha * (p_eps - p_uniform) = p_obs - p_uniform
+  ## p_obs = p_uniform * (1 - alpha_true) + p_eps * alpha_true
+  ## alpha_true * (p_eps - p_uniform) = p_obs - p_uniform
+  ## Rearranged Equation (4)
   alpha_est <- (as.numeric(p_obs) - as.numeric(p_uniform)) / 
     (as.numeric(p_eps) - as.numeric(p_uniform))
   
