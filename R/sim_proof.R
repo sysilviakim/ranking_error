@@ -154,8 +154,9 @@ code_z <- ifelse(ref_data_A$ref_ranking == "123", 1, 0) # 123 means the correct 
 
 
 ## Estimated proportion of sincere-responses
-est_p_z1 <- mean(code_z)  # This could be always over-estimated (because non-sincere Rs may be right sometimes). What should we do?
+est_p_z1 <- mean(code_z)/(1 + 1/factorial(J)) # Adjusting for over-estimation
 
+## This is because P(z=1) = mean(z) - (1/J!)*P(z=1)
 
 ## Estimated distribution of non-sincere responses
 obs_data_A_aug <- obs_data_A %>%
@@ -184,6 +185,3 @@ pi <- true_rank %>%
 rbind(est_pi, pi)
 
 
-# Next step --> We need to think about how to solve the overestimation of 
-# est_p_z1: est_p_z1 <- mean(code_z) - (1/factorical(J))*0.5 is the answer
-# But we don't know 0.5 in reality
