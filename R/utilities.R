@@ -90,3 +90,52 @@ rowid <- function(x) {
 pivot_join <- function(x, y) {
   return(pivot_sim(left_join(y, x)) %>% select(id, obs_rank, item, rank))
 }
+
+
+# Added on 2/6/2023
+# This function recovers the reference (true) ranking with respect to the reference item set (here: {abc})
+recov_ref_ranking <- function(data){
+
+ref_data <- data.frame(ref_ranking = as.character())
+
+# For each i-th unit in data
+  for (i in 1:dim(data)[1]) {
+
+    
+    obs_vector <- data$obs[i] # Get the "observed ranking"
+    temp <- strsplit(obs_vector, "")[[1]]
+    obs_1st <- temp[1] # first digit
+    obs_2nd <- temp[2] # second digit
+    obs_3rd <- temp[3] # third digit
+
+    
+    vec_pref <- data[i, ] %>% # Get the stated ordering (given the observed set)
+      pivot_longer(cols = c(V1, V2, V3), names_to = "variable") %>%
+      mutate(first = obs_1st,
+             second = obs_2nd,
+             third = obs_3rd)
+    vec_pref # Check
+    
+    recover <- vec_pref %>%  # Recovering the true ranking given the reference set (abc)
+      mutate(recover = case_when(variable == "V1" ~ first,
+                                 variable == "V2" ~ second,
+                                 variable == "V3" ~ third)) %>%
+      dplyr::select(value, recover) %>%
+      arrange(value)
+    
+   recover # Check
+    
+   ref_ranking <- paste0(recover$recover[1], 
+                         recover$recover[2],
+                         recover$recover[3],
+                         sep="") # Concatenate the true rankings
+
+   # Combine the result
+    comb <- data.frame(ref_ranking = ref_ranking)
+   
+   # Stack in the storage
+    ref_data <- rbind(ref_data, comb)
+  }    
+
+return(ref_data)
+}
