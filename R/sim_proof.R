@@ -18,7 +18,7 @@ mean(s_rankor) # must be close to 0.5
 
 # Generate the Sample Space for Simulation =====================================
 ## (1) Generate the rank-order question of interest ----------------------------
-set.seed(102)
+set.seed(103)
 
 # If we wanted to use uniform first-choice probability
 # prob_vec <- rep(1 / J, J)
@@ -93,7 +93,7 @@ head(obs_data) # True obs is defined with resepct to the reference set (abc)
 
 
 ## (2) Generate the anchor question --------------------------------------------
-set.seed(102)
+set.seed(103)
 
 
 # Creating the correct response in the anchor question (added on 1/26/2023)
@@ -149,6 +149,7 @@ ref_data_A <- recov_ref_ranking(obs_data_A) # This function is in "utilities.R"
 head(ref_data_A)
 table(ref_data_A)
 
+
 ## Coding z variable
 code_z <- ifelse(ref_data_A$ref_ranking == "123", 1, 0) # 123 means the correct answer
 
@@ -174,14 +175,50 @@ ref_data <- recov_ref_ranking(obs_data) #
 head(ref_data)
 table(ref_data)
 
-est_pi <- (table(ref_data) / N - (1 - est_p_z1) * est_pi_epsilon2) / est_p_z1
-
+est_naive <- table(ref_data) / N
+est_pi <- (est_naive - (1 - est_p_z1) * est_pi_epsilon2) / est_p_z1
 
 pi <- true_rank %>%
   unite("true_ranking", sep = "") %>%
   table() / N
 
+## Recovering reference rankings from respondents who got the right answer
+correct_answer <- obs_data[code_z==1,]
+correct_data <- recov_ref_ranking(correct_answer) # only getting data from Rs with the correct answer
+head(correct_data)
+table(correct_data)
 
-rbind(est_pi, pi)
+est_correct <- table(correct_data) / dim(correct_answer)[1]
 
 
+rbind(est_naive, est_correct, est_pi, pi)
+
+ggdat <-  rbind(est_naive, est_correct, est_pi, pi) %>%
+    as_tibble() %>%
+    mutate(est = c("Naive Estimator 1", "Naive Estimator 2", 
+                   "Our Method", "Qquantity of Interest")) %>%
+    pivot_longer(cols =!est, 
+                 names_to = "ranking",
+                 values_to = "proportion")
+# Visualization --------------------------------------------------------------
+
+
+  p <- ggplot(ggdat, aes(x = ranking, y = proportion, fill = est)) +
+    geom_bar(stat = "identity", position = "dodge2", alpha = 0.7) +
+    scale_fill_manual(values = c("gray70", "#128ba0", "firebrick4", "#a5900d")) +
+    xlab("") +
+    ylab("") + 
+    scale_y_continuous(limits = c(0, 0.6)) +
+    theme_classic()+
+    theme(
+        legend.position = "top",
+        legend.title = element_blank(),
+        plot.margin = margin(0.2, 0.2, 0, -0.2, "cm")
+      )
+p
+
+  ggsave(
+    here("fig", paste0("proof_of_concept", ".pdf")),
+    width = 5.55, height = 5
+    )
+  
