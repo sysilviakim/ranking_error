@@ -5,20 +5,21 @@
 source(here::here("R", "utilities.R"))
 
 # Simulation Parameters ========================================================
-N <- 2000 # Number of units (parameter to manupulate for Monte Carlo experiments)
-J <- 3 # Number of items (parameter to manupulate for Monte Carlo experiments)
+N <- 2000 # Number of units (parameter to manipulate for Monte Carlo experiments)
+J <- 3 # Number of items (parameter to manipulate for Monte Carlo experiments)
 
-p_z1 <- 0.5 # Proportion of sincere responses (parameter to manupulate for Monte Carlo experiments)
+p_z1 <- 0.5 # Proportion of sincere responses (parameter to manipulate)
 s_anchor <- rbinom(n = N, size = 1, prob = p_z1) # 1 if sincere, 0 if non-sincere
-s_rankor <- rbinom(n = N, size = 1, prob = p_z1) # 1 if sincere, 0 if non-sincere
+s_raw <- rbinom(n = N, size = 1, prob = p_z1) 
+s_rankor <- c(s_anchor[1:(0.8*N)], s_raw[(0.8*N+1):N]) # 80% = same state
+table(s_anchor, s_rankor)
 mean(s_anchor) # must be close to 0.5
 mean(s_rankor) # must be close to 0.5
 
 
-
 # Generate the Sample Space for Simulation =====================================
 ## (1) Generate the rank-order question of interest ----------------------------
-set.seed(103)
+set.seed(102)
 
 # If we wanted to use uniform first-choice probability
 # prob_vec <- rep(1 / J, J)
@@ -93,7 +94,7 @@ head(obs_data) # True obs is defined with resepct to the reference set (abc)
 
 
 ## (2) Generate the anchor question --------------------------------------------
-set.seed(103)
+set.seed(102)
 
 
 # Creating the correct response in the anchor question (added on 1/26/2023)
@@ -187,6 +188,8 @@ correct_answer <- obs_data[code_z==1,]
 correct_data <- recov_ref_ranking(correct_answer) # only getting data from Rs with the correct answer
 head(correct_data)
 table(correct_data)
+dim(correct_answer)[1]/N # This will be over 0.5! (bc non-sincere Rs happen to be correct)
+
 
 est_correct <- table(correct_data) / dim(correct_answer)[1]
 
@@ -205,7 +208,7 @@ ggdat <-  rbind(est_naive, est_correct, est_pi, pi) %>%
 
   p <- ggplot(ggdat, aes(x = ranking, y = proportion, fill = est)) +
     geom_bar(stat = "identity", position = "dodge2", alpha = 0.7) +
-    scale_fill_manual(values = c("gray70", "#128ba0", "firebrick4", "#a5900d")) +
+    scale_fill_manual(values = c("gray70", "gray10", "firebrick4", "#a5900d")) +
     xlab("") +
     ylab("") + 
     scale_y_continuous(limits = c(0, 0.6)) +
