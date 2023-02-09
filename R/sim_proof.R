@@ -156,7 +156,10 @@ code_z <- ifelse(ref_data_A$ref_ranking == "123", 1, 0) # 123 means the correct 
 
 
 ## Estimated proportion of sincere-responses
-est_p_z1 <- mean(code_z)/(1 + 1/factorial(J)) # Adjusting for over-estimation
+#est_p_z1 <- mean(code_z)/(1 + 1/factorial(J)) # Adjusting for over-estimation (this was wrong)
+A <- mean(code_z) - (1/factorial(J))
+B <- 1 - (1/factorial(J))
+est_p_z1 <- A/B
 
 ## This is because P(z=1) = mean(z) - (1/J!)*P(z=1)
 
