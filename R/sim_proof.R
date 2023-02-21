@@ -52,7 +52,7 @@ table(ref_data_A)
 
 ## Coding random variable c, i.e., whether respondent offers the correct answer
 ## 1 if correct, 0 if not
-correct <- ifelse(ref_data_A$ref_ranking == "123", 1, 0)
+correct <- ifelse(ref_data_A$ref_data == "123", 1, 0)
 # 123 means the correct answer
 
 ## Unbiased estimation of the proportion of sincere-responses (Eq. pz)
@@ -127,7 +127,8 @@ p <- ggplot(ggdat, aes(x = ranking, y = proportion, fill = est)) +
     legend.title = element_blank(),
     plot.margin = margin(0.2, 0.2, 0, -0.2, "cm")
   )
-plot_notitle(pdf_default(p))
+## plot_notitle(pdf_default(p))
+p
 
 ggsave(
   here("fig", "proof_of_concept.pdf"),
@@ -138,14 +139,19 @@ ggsave(
 ## Indices ---------------------------------------------------------------------
 set.seed(12345)
 indices <- seq(1000) %>%
-  map(~ tibble(!!as.name(paste0("x", .x)) := seq(2000)) %>% sample_n(1000)) %>%
+  map(
+    ~ tibble(
+      !!as.name(paste0("x", .x)) := 
+        sample(seq(2000), size = 2000, replace = TRUE)
+    )
+  ) %>%
   bind_cols()
 assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 
 ## Naive and De-Contamination Estimators ---------------------------------------
 ## Naive estimator 1: heroic assumption of zero non-sincere responses
 est_naive_bootstrap <- seq(1000) %>%
-  map(~ table(ref_data[unlist(indices[, .x]), ]) / 1000)
+  map(~ table(ref_data[unlist(indices[, .x]), ]) / 2000)
 
 est_p_z1_bootstrap <- seq(1000) %>%
   map(
@@ -156,7 +162,7 @@ est_p_z1_bootstrap <- seq(1000) %>%
 est_pi_nonsincere_bootstrap <- seq(1000) %>%
   map(
     ~ (
-      table(ref_data_A[unlist(indices[, .x]), ]) / 1000 -
+      table(ref_data_A[unlist(indices[, .x]), ]) / 2000 -
         (est_p_z1_bootstrap[[.x]]) * c(1, 0, 0, 0, 0, 0)
     ) / (1 - est_p_z1_bootstrap[[.x]])
   )
