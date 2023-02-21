@@ -5,14 +5,13 @@ source(here::here("R", "utilities.R"))
 set.seed(123)
 
 # Simulation Parameters + Sample Space =========================================
+## The below are parameters manipulable for Monte Carlo experiments
 N <- 2000 # Number of units
 J <- 3 # Number of items
-
-## Non-sincere respondents' patterns -------------------------------------------
-## If we wanted uniform patterns
-## prob_pt <- rep(1 / length(perm), length(perm))
-## A hypothetical zig-zag
-prob_pt <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05)
+p_z1 <- 0.5 # Proportion of sincere responses
+pi_epsilon <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) # Non-sincere response pattern
+## A hypothetical zig-zag. If we wanted uniform patterns
+## pi_epsilon <- rep(1 / length(perm), length(perm))
 
 ## Generate the population ranking distribution --------------------------------
 ## V1 = first choice, V2 = second choice, V3 = third choice, ...
@@ -22,10 +21,14 @@ prob_vec_list <- list(
   ## Using uniformly distributed first-choice probability (indifferent!)
   uniform = rep(1 / J, J),
   ## Instead of uniform dist., deliberate create a nonuniform dist.
-  skewed = rev(
+  ## If J = 3, 0.2, 0.3, 0.5
+  skewed_01 = rev(
     c(0.5, seq(0.3, 0.2, length.out = J - 1) /
       sum(seq(0.3, 0.2, length.out = J - 1)) / 2)
-  )
+  ),
+  ## If J = 3, 0.7, 0.2, 0.1
+  skewed_02 = c(0.7, seq(0.2, 0.1, length.out = J - 1)) /
+    sum(c(0.7, seq(0.2, 0.1, length.out = J - 1)))
 )
 
 ## Store chi-squared test for discrete uniform check
@@ -38,8 +41,9 @@ chisq_list <- rep(
 )
 
 ## In addition, observed data patterns for diff. conditions
-permn_list <- vector("list", length = length(prob_vec_list))
-names(permn_list) <- names(chisq_list) <- names(prob_vec_list)
+obs_data_list <- permn_list <- vector("list", length = length(prob_vec_list))
+names(obs_data_list) <- names(permn_list) <- names(chisq_list) <-
+  names(prob_vec_list)
 
 # Loop: True and Observed Rankings =============================================
 for (scenario in names(prob_vec_list)) {
@@ -87,13 +91,14 @@ for (scenario in names(prob_vec_list)) {
   prop_vector(random_permn)
   chisq_list[[scenario]]$random_permn <- chisq.test(table(random_permn))
 
-  # Stated/observed rankings ---------------------------------------------------
+  # Generate respondents' "stated rankings" ------------------------------------
 
   ## Under random order of choices
   ## (D) 100% sincere respondents
   obs_pattern <- loop_stated_rank_preference(true_rank, random_choices)
   prop_vector(obs_pattern)
   chisq_list[[scenario]]$obs_pattern <- chisq.test(table(obs_pattern))
+  ## Proposition: the dist of observed rankings will be uniform
 
   ## (B) 0% sincere respondents
   ## Note: These units only rank according to patterns, not based on preference
@@ -102,26 +107,36 @@ for (scenario in names(prob_vec_list)) {
     map_chr(~ paste(.x, collapse = "")) %>%
     sort()
 
-  obs_random <- sample(x = perm, size = N, replace = TRUE, prob = prob_pt)
+  obs_random <- sample(x = perm, size = N, replace = TRUE, prob = pi_epsilon)
   obs_random <- tibble(obs_rank = obs_random)
 
   head(obs_random)
   prop_vector(obs_random)
   chisq_list[[scenario]]$obs_random <- chisq.test(table(obs_random))
+  ## Proposition: this will never be uniform; p-val must be < 0.001
 
-  ## (C) 50% sincere respondents (fixed order (a, b, c))
+  ## (C) 50% sincere respondents (fixed order (a, b, c)) if p_z1 = 0.5
   fixed_half <- rbind(
-    true_permn[1:(N / 2), ] %>% rename(obs_rank = order),
-    obs_random[1001:N, ]
+    true_permn[1:floor(N * p_z1), ] %>% rename(obs_rank = order),
+    obs_random[(floor(N * p_z1) + 1):N, ]
   )
 
   ### (F) 50% sincere respondents (item order randomization)
   obs_half <- rbind(
-    obs_pattern[1:(N / 2), ],
-    obs_random[1001:N, ]
+    obs_pattern[1:floor(N * p_z1), ],
+    obs_random[(floor(N * p_z1) + 1):N, ]
   )
   prop_vector(obs_half)
   chisq_list[[scenario]]$obs_half <- chisq.test(table(obs_half))
+
+  ## Generating observed rank-order question
+  obs_data <- bind_cols(
+    obs_pattern, ## sincere responses
+    obs_random %>% rename(obs_nonsincere = obs_rank), ## non-sincere responses
+    random_choices, ## observed choice set
+  )
+  
+  obs_data_list[[scenario]] <- obs_data
 
   # Visualize: compare observed patterns ---------------------------------------
   pdf(
@@ -154,8 +169,8 @@ for (scenario in names(prob_vec_list)) {
             fill = "deepskyblue3"
           ) +
           xlab("") +
-          scale_y_continuous(limits = c(0, 1), labels = scales::percent) + 
-          geom_hline(yintercept = 1/6)
+          scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
+          geom_hline(yintercept = 1 / 6)
 
         ## y-axis label
         if (.y == "p4_rand_100p") {
