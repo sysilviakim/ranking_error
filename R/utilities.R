@@ -94,7 +94,7 @@ pivot_join <- function(x, y) {
 # Added on 2/6/2023
 # This function recovers the reference (true) ranking
 # with respect to the reference item set (here: {abc})
-recov_ref_ranking_new <- function(dat) {
+recov_ref_ranking <- function(dat) {
   # For each i-th unit in data
   ref_data <- seq(nrow(dat)) %>%
     map(
