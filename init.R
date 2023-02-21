@@ -7,6 +7,12 @@ library(remotes)
 install_github(
   "sysilviakim/Kmisc", INSTALL_opts = c("--no-multiarch"), dependencies = TRUE
 )
+install_github(
+  "wch/extrafont", INSTALL_opts = c("--no-multiarch"), dependencies = TRUE
+)
+install_github(
+  "wch/fontcm", INSTALL_opts = c("--no-multiarch"), dependencies = TRUE
+)
 Kmisc::proj_skeleton()
 
 # Install typically used libraries

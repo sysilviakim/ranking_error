@@ -252,7 +252,7 @@ p <- ggplot(summ_dat, aes(x = ranking, y = avg, fill = est)) +
   scale_fill_manual(values = c("gray70", "gray10", "firebrick4", "#a5900d")) +
   xlab("") +
   ylab("") +
-  scale_y_continuous(limits = c(-0.02, 0.6), labels = scales::percent) +
+  scale_y_continuous(limits = c(-0.02, 0.52), labels = scales::percent) +
   theme_classic() +
   theme(
     legend.position = "top",
