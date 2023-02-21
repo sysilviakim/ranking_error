@@ -21,54 +21,21 @@ table(s_anchor, s_main)
 mean(s_anchor) # must be close to 0.5
 mean(s_main) # must be close to 0.5
 
-# 1) Generate the Rank-Order Question of Interest ==============================
+# 1) The Main Rank-Order Question and its Observed Rankings ====================
 ## Already handled in sim.R; use scenario "skewed_02"
 
 ## True obs is defined with respect to the reference choice set (ordered a-b-c)
-## Generating *Observed* Ranking (\pi_i) ---------------------------------------
+## Generating *Observed* Ranking (\pi_i)
 obs_data_main <- bind_cols(obs_data_list$skewed_02, tibble(s_main = s_main)) %>%
   ## z is a random variable: sincere if 1, non-sincere if 0
   mutate(obs = ifelse(s_main == 1, obs_rank, obs_nonsincere)) %>%
   dplyr::select(obs, starts_with("V"), everything())
 head(obs_data_main)
 
-# 2) Generate the Anchor Question and its Responses ============================
-set.seed(102)
-
-## Creating the "correct" response in the anchor question: a-b-c
-true_rank_A <- tibble(
-  a = rep(1, N),
-  b = rep(2, N),
-  c = rep(3, N)
-)
-true_rank_A
-
-## Generate the ordered choice set in survey question --------------------------
-# The observed choice set (the set respondents actually see in the surveys)
-random_choices_A <- rpluce(N = N, t = J, prob = rep(1 / J, J))
-head(random_choices_A)
-
-## Generate respondents' "stated rankings" -------------------------------------
-### *Sincere* respondents
-obs_sincere_A <- loop_stated_rank_preference(true_rank_A, random_choices_A)
-head(obs_sincere_A)
-
-obs_nonsincere_A <- sample(x = perm, size = N, replace = T, prob = pi_epsilon)
-obs_nonsincere_A <- tibble(obs_nonsincere = obs_nonsincere_A)
-head(obs_nonsincere_A)
-
-## Generate observed ranking ---------------------------------------------------
-obs_data_A <- data.frame(
-  obs_sincere_A, # sincere responses to anchor question
-  obs_nonsincere_A, # non-sincere responses to anchor question
-  random_choices_A, # observed choice set for anchor question
-  s_anchor
-) %>%
-  ## z random variable: sincere if 1, non-sincere if 0
+# 2) The Anchor Question and its Observed Rankings =============================
+obs_data_A <- bind_cols(obs_data_list$anchor, tibble(s_anchor = s_anchor)) %>%
   mutate(obs = ifelse(s_anchor == 1, obs_rank, obs_nonsincere)) %>%
-  dplyr::select(obs, starts_with("V"))
-
-## Again, true obs is defined with respect to the reference choice set (a-b-c)
+  dplyr::select(obs, starts_with("V"), everything())
 head(obs_data_A)
 
 ## Check two data sets from the main rank-order and anchor questions
