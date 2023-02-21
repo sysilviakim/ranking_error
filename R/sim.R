@@ -154,13 +154,14 @@ for (scenario in names(prob_vec_list)) {
             fill = "deepskyblue3"
           ) +
           xlab("") +
-          scale_y_continuous(limits = c(0, 1), labels = scales::percent)
+          scale_y_continuous(limits = c(0, 1), labels = scales::percent) + 
+          geom_hline(yintercept = 1/6)
 
         ## y-axis label
         if (.y == "p4_rand_100p") {
           p <- p + ylab("Item Order Randomization")
         } else if (.y == "p1_fixed_100p") {
-          p <- p + ylab("Fixed Order (a, b, c)")
+          p <- p + ylab("Reference Item Set (a, b, c)")
         } else {
           p <- p + ylab("")
         }
