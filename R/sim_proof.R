@@ -15,38 +15,33 @@ s_anchor <- rbinom(n = N, size = 1, prob = p_z1)
 ## non-sincerity will carry over. For the rest, it may be random.
 s_main <- c(
   s_anchor[1:floor(s_overlap * N)],
-  rbinom(n = floor(s_overlap * N) + 1, size = 1, prob = p_z1)
+  rbinom(n = floor((1 - s_overlap) * N) + 1, size = 1, prob = p_z1)
 )
 table(s_anchor, s_main)
 mean(s_anchor) # must be close to 0.5
 mean(s_main) # must be close to 0.5
 
-# 1) Generate the rank-order question of interest ==============================
+# 1) Generate the Rank-Order Question of Interest ==============================
 ## Already handled in sim.R; use scenario "skewed_02"
 
 ## True obs is defined with respect to the reference choice set (ordered a-b-c)
 ## Generating *Observed* Ranking (\pi_i) ---------------------------------------
-obs_data <- bind_cols(obs_data_list$skewed_02, tibble(s_main = s_main)) %>%
+obs_data_main <- bind_cols(obs_data_list$skewed_02, tibble(s_main = s_main)) %>%
   ## z is a random variable: sincere if 1, non-sincere if 0
   mutate(obs = ifelse(s_main == 1, obs_rank, obs_nonsincere)) %>%
   dplyr::select(obs, starts_with("V"), everything())
-head(obs_data)
+head(obs_data_main)
 
-# 2) Generate the anchor question ==============================================
+# 2) Generate the Anchor Question and its Responses ============================
 set.seed(102)
 
-# Creating the correct response in the anchor question
+## Creating the "correct" response in the anchor question: a-b-c
 true_rank_A <- tibble(
   a = rep(1, N),
   b = rep(2, N),
   c = rep(3, N)
 )
 true_rank_A
-
-# Check
-# Recovered on 1/26 based on the contextual info
-# true_permn <- true_rank_anchor %>% unite(order, sep = "")
-# table(true_permn)
 
 ## Generate the ordered choice set in survey question --------------------------
 # The observed choice set (the set respondents actually see in the surveys)
@@ -55,36 +50,35 @@ head(random_choices_A)
 
 ## Generate respondents' "stated rankings" -------------------------------------
 ### *Sincere* respondents
-obs_pattern_A <- loop_stated_rank_preference(true_rank_A, random_choices_A)
-head(obs_pattern_A)
+obs_sincere_A <- loop_stated_rank_preference(true_rank_A, random_choices_A)
+head(obs_sincere_A)
 
-obs_random_A <- sample(x = perm, size = N, replace = T, prob = pi_epsilon)
-obs_random_A <- tibble(obs_nonsincere = obs_random_A)
-head(obs_random_A)
+obs_nonsincere_A <- sample(x = perm, size = N, replace = T, prob = pi_epsilon)
+obs_nonsincere_A <- tibble(obs_nonsincere = obs_nonsincere_A)
+head(obs_nonsincere_A)
 
-
-## Generating Observed Rank-Order Question -------------------------------------
+## Generate observed ranking ---------------------------------------------------
 obs_data_A <- data.frame(
-  obs_pattern_A, # sincere responses
-  obs_random_A, # non-sincere responses
-  random_choices_A, # observed choice set
+  obs_sincere_A, # sincere responses to anchor question
+  obs_nonsincere_A, # non-sincere responses to anchor question
+  random_choices_A, # observed choice set for anchor question
   s_anchor
 ) %>%
-  # z random variable (1 = sincere)
-  # sincere if 1, non-sincere if 0
+  ## z random variable: sincere if 1, non-sincere if 0
   mutate(obs = ifelse(s_anchor == 1, obs_rank, obs_nonsincere)) %>%
   dplyr::select(obs, starts_with("V"))
 
-head(obs_data_A) # True obs is defined with respect to the reference set (abc)
+## Again, true obs is defined with respect to the reference choice set (a-b-c)
+head(obs_data_A)
 
-### Check two data sets from the main rank-order and anchor questions
-head(obs_data)
+## Check two data sets from the main rank-order and anchor questions
+head(obs_data_main)
 head(obs_data_A)
 
 # Estimating the QOI using our method ==========================================
 ## Recovering reference rankings from observed rankings and
 ## observed item sets (anchor question)
-ref_data_A <- recov_ref_ranking(obs_data_A) # This function is in "utilities.R"
+ref_data_A <- recov_ref_ranking(obs_data_A)
 head(ref_data_A)
 table(ref_data_A)
 
