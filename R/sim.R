@@ -9,9 +9,10 @@ set.seed(123)
 N <- 2000 # Number of units
 J <- 3 # Number of items
 p_z1 <- 0.5 # Proportion of sincere responses
-pi_epsilon <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) # Non-sincere response pattern
-## A hypothetical zig-zag. If we wanted uniform patterns
-## pi_epsilon <- rep(1 / length(perm), length(perm))
+pi_nonsincere <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) 
+## Non-sincere response pattern; prob dist. over rankings (hypothetical zig-zag)
+## If we wanted uniform patterns
+## pi_nonsincere <- rep(1 / length(perm), length(perm))
 
 ## Generate the population ranking distribution --------------------------------
 ## V1 = first choice, V2 = second choice, V3 = third choice, ...
@@ -118,7 +119,7 @@ for (scenario in names(prob_vec_list)) {
     sort()
 
   obs_nonsincere <- 
-    sample(x = perm, size = N, replace = TRUE, prob = pi_epsilon)
+    sample(x = perm, size = N, replace = TRUE, prob = pi_nonsincere)
   obs_nonsincere <- tibble(obs_rank = obs_nonsincere)
 
   head(obs_nonsincere)
@@ -145,6 +146,8 @@ for (scenario in names(prob_vec_list)) {
     obs_sincere, ## sincere responses
     obs_nonsincere %>% rename(obs_nonsincere = obs_rank), ## non-sincere resp.
     random_choices, ## observed choice set
+    true_rank,
+    true_permn %>% rename(true_permn = order)
   )
   
   obs_data_list[[scenario]] <- obs_data

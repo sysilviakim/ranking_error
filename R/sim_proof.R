@@ -42,7 +42,7 @@ head(obs_data_A)
 head(obs_data_main)
 head(obs_data_A)
 
-# Estimating the QOI using our method ==========================================
+# Estimating the QOI via De-Contamination ======================================
 ## Recovering reference rankings from observed rankings and
 ## observed item sets (anchor question)
 ref_data_A <- recov_ref_ranking(obs_data_A)
@@ -56,17 +56,16 @@ correct <- ifelse(ref_data_A$ref_ranking == "123", 1, 0)
 
 ## Unbiased estimation of the proportion of sincere-responses (Eq. pz)
 ## est_p_z1 <- mean(correct) / (1 + 1 / factorial(J))
-## Adjusting for over-estimation (this was wrong)
+## Adjusting for over-estimation (this was wrong) <- ??
 est_p_z1 <- (mean(correct) - (1 / factorial(J))) / (1 - (1 / factorial(J)))
-
-## This is because P(z=1) = mean(z) - (1/J!)*P(z=1)
+## This is because P(z=1) = mean(z) - (1/J!)*P(z=1) <- ??
 
 ## Estimated distribution of non-sincere responses
 obs_data_A_aug <- obs_data_A %>%
-  mutate(z = correct) %>%
-  filter(z == 1)
-est_pi_epsilon <- table(obs_data_A_aug$obs) / sum(correct)
-est_pi_epsilon2 <-
+  mutate(c = correct) %>%
+  filter(c == 1)
+## est_pi_epsilon <- table(obs_data_A_aug$obs) / sum(correct) <- ??
+est_pi_nonsincere <-
   (table(ref_data_A) / N - (est_p_z1) * c(1, 0, 0, 0, 0, 0)) / (1 - est_p_z1)
 
 ## Compare with ground truth
@@ -74,35 +73,40 @@ rbind(est_p_z1, p_z1)
 
 ## Recovering reference rankings from observed rankings and
 ## observed item sets (main question)
-ref_data <- recov_ref_ranking(obs_data) #
+ref_data <- recov_ref_ranking(obs_data_main)
 head(ref_data)
 table(ref_data)
 
+## Naive estimator 1: heroic assumption of zero non-sincere responses
 est_naive <- table(ref_data) / N
-est_pi <- (est_naive - (1 - est_p_z1) * est_pi_epsilon2) / est_p_z1
+est_pi <- (est_naive - (1 - est_p_z1) * est_pi_nonsincere) / est_p_z1
 
-pi <- true_rank %>%
-  unite("true_ranking", sep = "") %>%
+## Extract the true permn distribution, which was saved!
+pi <- obs_data_list$skewed_02$true_permn %>%
   table() / N
 
 ## Recovering reference rankings from respondents who got the right answer
-correct_answer <- obs_data[correct == 1, ]
+correct_answer <- obs_data_main[correct == 1, ]
 correct_data <- recov_ref_ranking(correct_answer)
-# only getting data from Rs with the correct answer
+
+## only getting data from Rs with the correct answer
 head(correct_data)
 table(correct_data)
 dim(correct_answer)[1] / N
-# This will be over 0.5! (bc non-sincere Rs happen to be correct)
+## This will be >= 0.5, because some non-sincere Rs happen to be correct!
 
+## Naive estimator 2: simply use Rs with correct responses to anchor question
 est_correct <- table(correct_data) / dim(correct_answer)[1]
 rbind(est_naive, est_correct, est_pi, pi)
 
 ggdat <- rbind(est_naive, est_correct, est_pi, pi) %>%
   as_tibble() %>%
-  mutate(est = c(
-    "Naive Estimator 1", "Naive Estimator 2",
-    "Our Method", "Quantity of Interest"
-  )) %>%
+  mutate(
+    est = c(
+      "Naive Estimator 1", "Naive Estimator 2",
+      "Our Method", "Quantity of Interest"
+    )
+  ) %>%
   pivot_longer(
     cols = !est,
     names_to = "ranking",
@@ -128,3 +132,7 @@ ggsave(
   here("fig", "proof_of_concept.pdf"),
   width = 5.5, height = 4
 )
+
+# Bootstrapping ================================================================
+
+
