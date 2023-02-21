@@ -15,7 +15,7 @@ library(assertthat)
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))
 
-# Temporary functions ==========================================================
+# Functions ====================================================================
 ## Turn 1st, 2nd, and 3rd ranking columns into long data format
 pivot_sim <- function(x) {
   out <- x %>%
@@ -94,53 +94,35 @@ pivot_join <- function(x, y) {
 # Added on 2/6/2023
 # This function recovers the reference (true) ranking
 # with respect to the reference item set (here: {abc})
-recov_ref_ranking <- function(data) {
-  ref_data <- data.frame(ref_ranking = as.character())
-
+recov_ref_ranking_new <- function(dat) {
   # For each i-th unit in data
-  for (i in 1:dim(data)[1]) {
-    obs_vector <- data$obs[i] # Get the "observed ranking"
-    temp <- strsplit(obs_vector, "")[[1]]
-    obs_1st <- temp[1] # first digit
-    obs_2nd <- temp[2] # second digit
-    obs_3rd <- temp[3] # third digit
-
-    vec_pref <- data[i, ] %>% # Get the stated ordering (given the observed set)
-      pivot_longer(cols = c(V1, V2, V3), names_to = "variable") %>%
-      mutate(
-        first = obs_1st,
-        second = obs_2nd,
-        third = obs_3rd
-      )
-    vec_pref # Check
-
-    recover <- vec_pref %>%
-      # Recovering the true ranking given the reference set (abc)
-      mutate(
-        recover = case_when(
-          variable == "V1" ~ first,
-          variable == "V2" ~ second,
-          variable == "V3" ~ third
+  ref_data <- seq(nrow(dat)) %>%
+    map(
+      ~ {
+        temp <- dat[.x, ] %>%
+          separate(obs, sep = c(1, 2), into = c("first", "second", "third")) %>%
+          ## V1, V2, and V3 are randomized choice order given to respondent
+          select(first, second, third, contains("V")) %>%
+          pivot_longer(cols = c(V1, V2, V3), names_to = "variable")
+        
+        ## Recovering the true ranking given the reference set (abc)
+        ## case_when is faster outside a pipe
+        temp$recover <- case_when(
+          temp$variable == "V1" ~ temp$first,
+          temp$variable == "V2" ~ temp$second,
+          temp$variable == "V3" ~ temp$third
         )
-      ) %>%
-      dplyr::select(value, recover) %>%
-      arrange(value)
-
-    recover # Check
-
-    ref_ranking <- paste0(
-      recover$recover[1],
-      recover$recover[2],
-      recover$recover[3],
-      sep = ""
-    ) # Concatenate the true rankings
-
-    # Combine the result
-    comb <- data.frame(ref_ranking = ref_ranking)
-
-    # Stack in the storage
-    ref_data <- rbind(ref_data, comb)
-  }
-
+        
+        temp <- temp %>%
+          arrange(value) %>%
+          .$recover %>%
+          ## ref_ranking, i.e., concatenated true rankings
+          paste(collapse = "")
+        return(temp)
+      }
+    ) %>%
+    ## combine
+    unlist() %>%
+    tibble(ref_data = .)
   return(ref_data)
 }
