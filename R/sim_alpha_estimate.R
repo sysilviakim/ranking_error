@@ -61,8 +61,10 @@ for (scenario in names(prob_vec_list)) {
   summary(alpha_est) ## median 0.50 but mean is 0.67
 }
 
+# POV: Alpha Known, 0% Sincere Pattern Unknown =================================
+
 # Inverse Probability Weighting on Observed Rankings ===========================
-inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)
+inv <- as_tibble(N / table(obs_half)) %>% rename(inv = n)
 ## the actual choices presented
 random_choices <- rowid(random_choices)
 
