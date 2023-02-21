@@ -43,7 +43,7 @@ head(obs_data_A)
 head(obs_data_main)
 head(obs_data_A)
 
-## Estimating the QOI via De-Contamination ======================================
+## Estimating the QOI via De-Contamination =====================================
 ## Recovering reference rankings from observed rankings and
 ## observed item sets (anchor question)
 ref_data_A <- recov_ref_ranking(obs_data_A)
@@ -138,11 +138,12 @@ ggsave(
 # Bootstrapping ================================================================
 ## Indices ---------------------------------------------------------------------
 set.seed(12345)
-indices <- seq(1000) %>%
+bootstrap_n <- 1000
+
+indices <- seq(bootstrap_n) %>%
   map(
     ~ tibble(
-      !!as.name(paste0("x", .x)) := 
-        sample(seq(2000), size = 2000, replace = TRUE)
+      !!as.name(paste0("x", .x)) :=  sample(seq(N), size = N, replace = TRUE)
     )
   ) %>%
   bind_cols()
@@ -150,24 +151,24 @@ assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 
 ## Naive and De-Contamination Estimators ---------------------------------------
 ## Naive estimator 1: heroic assumption of zero non-sincere responses
-est_naive_bootstrap <- seq(1000) %>%
-  map(~ table(ref_data[unlist(indices[, .x]), ]) / 2000)
+est_naive_bootstrap <- seq(bootstrap_n) %>%
+  map(~ table(ref_data[unlist(indices[, .x]), ]) / N)
 
-est_p_z1_bootstrap <- seq(1000) %>%
+est_p_z1_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ (mean(correct[unlist(indices[, .x])]) - (1 / factorial(J))) /
       (1 - (1 / factorial(J)))
   )
 
-est_pi_nonsincere_bootstrap <- seq(1000) %>%
+est_pi_nonsincere_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ (
-      table(ref_data_A[unlist(indices[, .x]), ]) / 2000 -
+      table(ref_data_A[unlist(indices[, .x]), ]) / N -
         (est_p_z1_bootstrap[[.x]]) * c(1, 0, 0, 0, 0, 0)
     ) / (1 - est_p_z1_bootstrap[[.x]])
   )
 
-est_pi_bootstrap <- seq(1000) %>%
+est_pi_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ (
       est_naive_bootstrap[[.x]] -
@@ -177,7 +178,7 @@ est_pi_bootstrap <- seq(1000) %>%
   )
 
 ## Recovering reference rankings from respondents who got the right answer
-correct_answer_bootstrap <- seq(1000) %>%
+correct_answer_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ obs_data_main[unlist(indices[, .x]), ][
       correct[unlist(indices[, .x])] == 1,
@@ -191,14 +192,14 @@ correct_data_bootstrap <- correct_answer_bootstrap %>%
 ## assert_that(dim(correct_answer_bootstrap[[1]])[1] / N >= 0.5) --> violated
 
 ## Naive estimator 2: simply use Rs with correct responses to anchor question
-est_correct_bootstrap <- seq(1000) %>%
+est_correct_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ table(correct_data_bootstrap[[.x]]) /
       dim(correct_answer_bootstrap[[.x]])[1]
   )
 
 ## Combine data ----------------------------------------------------------------
-ggdat_bootstrap <- seq(1000) %>%
+ggdat_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ rbind(
       est_naive_bootstrap[[.x]], est_correct_bootstrap[[.x]],
@@ -230,13 +231,14 @@ summ_dat <- seq(nrow(ggdat_bootstrap[[1]])) %>%
         tibble(
           avg = mean(vec),
           sd = sd(vec),
-          se = sd / sqrt(1000)
+          se = sd / sqrt(N)
         )
       )
     }
   ) %>%
   bind_rows() %>%
-  bind_cols(ggdat_bootstrap[[1]] %>% select(-proportion), .)
+  bind_cols(ggdat_bootstrap[[1]] %>% select(-proportion), .) %>%
+  mutate(se = ifelse(est == "Quantitiy of Interest", NA, se))
 
 ## Visualization ---------------------------------------------------------------
 p <- ggplot(summ_dat, aes(x = ranking, y = avg, fill = est)) +
