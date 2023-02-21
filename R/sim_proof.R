@@ -88,7 +88,7 @@ pi <- obs_data_list$skewed_02$true_permn %>%
 
 ## Recovering reference rankings from respondents who got the right answer
 correct_answer <- obs_data_main[correct == 1, ]
-correct_data <- recov_ref_ranking(correct_answer) ## this is the bottleneck; 16 sec
+correct_data <- recov_ref_ranking(correct_answer) ## this is the bottleneck
 
 ## only getting data from Rs with the correct answer
 head(correct_data)
