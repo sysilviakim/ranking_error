@@ -231,26 +231,28 @@ summ_dat <- seq(nrow(ggdat_bootstrap[[1]])) %>%
         tibble(
           avg = mean(vec),
           sd = sd(vec),
-          se = sd / sqrt(N)
+          se = sd / sqrt(bootstrap_n),
+          low = quantile(vec, p = 0.025),
+          upp = quantile(vec, p = 0.975)
         )
       )
     }
   ) %>%
   bind_rows() %>%
   bind_cols(ggdat_bootstrap[[1]] %>% select(-proportion), .) %>%
-  mutate(se = ifelse(est == "Quantitiy of Interest", NA, se))
+  mutate(se = ifelse(est == "Quantity of Interest", NA, se))
 
 ## Visualization ---------------------------------------------------------------
 p <- ggplot(summ_dat, aes(x = ranking, y = avg, fill = est)) +
   geom_bar(stat = "identity", position = "dodge2", alpha = 0.7) +
   geom_errorbar(
     position = position_dodge(width = 0.9), width = 0.25,
-    aes(ymin = avg - 1.96 * se, ymax = avg + 1.96 * se)
+    aes(ymin = low, ymax = upp)
   ) +
   scale_fill_manual(values = c("gray70", "gray10", "firebrick4", "#a5900d")) +
   xlab("") +
   ylab("") +
-  scale_y_continuous(limits = c(0, 0.5), labels = scales::percent) +
+  scale_y_continuous(limits = c(-0.02, 0.6), labels = scales::percent) +
   theme_classic() +
   theme(
     legend.position = "top",
