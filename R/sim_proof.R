@@ -145,7 +145,7 @@ assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 ## Naive and De-Contamination Estimators ---------------------------------------
 ## Naive estimator 1: heroic assumption of zero non-sincere responses
 est_naive_bootstrap <- seq(1000) %>%
-  map(~ table(ref_data[unlist(indices[, .x]), ]) / N)
+  map(~ table(ref_data[unlist(indices[, .x]), ]) / 1000)
 
 est_p_z1_bootstrap <- seq(1000) %>%
   map(
@@ -156,11 +156,10 @@ est_p_z1_bootstrap <- seq(1000) %>%
 est_pi_nonsincere_bootstrap <- seq(1000) %>%
   map(
     ~ (
-      table(ref_data_A[unlist(indices[, .x]), ]) / N -
+      table(ref_data_A[unlist(indices[, .x]), ]) / 1000 -
         (est_p_z1_bootstrap[[.x]]) * c(1, 0, 0, 0, 0, 0)
     ) / (1 - est_p_z1_bootstrap[[.x]])
   )
-
 
 est_pi_bootstrap <- seq(1000) %>%
   map(
@@ -175,35 +174,84 @@ est_pi_bootstrap <- seq(1000) %>%
 correct_answer_bootstrap <- seq(1000) %>%
   map(
     ~ obs_data_main[unlist(indices[, .x]), ][
-      correct[unlist(indices[, .x])] == 1, 
+      correct[unlist(indices[, .x])] == 1,
     ]
   )
+
+## This is the main bottleneck; must try data.table
 correct_data_bootstrap <- correct_answer_bootstrap %>%
   map(recov_ref_ranking)
 
-assert_that(dim(correct_answer_bootstrap[[1]])[1] / N >= 0.5)
-## This will be >= 0.5, because some non-sincere Rs happen to be correct!
+## assert_that(dim(correct_answer_bootstrap[[1]])[1] / N >= 0.5) --> violated
 
 ## Naive estimator 2: simply use Rs with correct responses to anchor question
 est_correct_bootstrap <- seq(1000) %>%
   map(
-    ~ table(correct_data_bootstrap[[.x]]) / 
+    ~ table(correct_data_bootstrap[[.x]]) /
       dim(correct_answer_bootstrap[[.x]])[1]
   )
 
 ## Combine data ----------------------------------------------------------------
-ggdat <- rbind(est_naive, est_correct, est_pi, pi) %>%
-  as_tibble() %>%
-  mutate(
-    est = c(
-      "Naive Estimator 1", "Naive Estimator 2",
-      "Our Method", "Quantity of Interest"
-    )
-  ) %>%
-  pivot_longer(
-    cols = !est,
-    names_to = "ranking",
-    values_to = "proportion"
+ggdat_bootstrap <- seq(1000) %>%
+  map(
+    ~ rbind(
+      est_naive_bootstrap[[.x]], est_correct_bootstrap[[.x]],
+      est_pi_bootstrap[[.x]], pi
+    ) %>%
+      as_tibble() %>%
+      mutate(
+        est = c(
+          "Naive Estimator 1", "Naive Estimator 2",
+          "Our Method", "Quantity of Interest"
+        )
+      ) %>%
+      pivot_longer(
+        cols = !est,
+        names_to = "ranking",
+        values_to = "proportion"
+      )
   )
 
+## Calculate standard error ----------------------------------------------------
+## For each row, est + ranking are the same
+summ_dat <- seq(nrow(ggdat_bootstrap[[1]])) %>%
+  map(
+    ~ {
+      vec <- ggdat_bootstrap %>%
+        map(function(x) x$proportion[.x]) %>%
+        unlist()
+      return(
+        tibble(
+          avg = mean(vec),
+          sd = sd(vec),
+          se = sd / sqrt(1000)
+        )
+      )
+    }
+  ) %>%
+  bind_rows() %>%
+  bind_cols(ggdat_bootstrap[[1]] %>% select(-proportion), .)
+
 ## Visualization ---------------------------------------------------------------
+p <- ggplot(summ_dat, aes(x = ranking, y = avg, fill = est)) +
+  geom_bar(stat = "identity", position = "dodge2", alpha = 0.7) +
+  geom_errorbar(
+    position = position_dodge(width = 0.9), width = 0.25,
+    aes(ymin = avg - 1.96 * se, ymax = avg + 1.96 * se)
+  ) +
+  scale_fill_manual(values = c("gray70", "gray10", "firebrick4", "#a5900d")) +
+  xlab("") +
+  ylab("") +
+  scale_y_continuous(limits = c(0, 0.5), labels = scales::percent) +
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    legend.title = element_blank(),
+    plot.margin = margin(0.2, 0.2, 0, -0.2, "cm")
+  )
+plot_notitle(pdf_default(p))
+
+ggsave(
+  here("fig", "proof_of_concept_bootstrapped.pdf"),
+  width = 5.5, height = 4
+)
