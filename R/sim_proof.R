@@ -4,37 +4,37 @@
 # Aim: simulate our methodology
 source(here::here("R", "sim.R"))
 set.seed(12345)
-s_overlap <- 0.8 ## Another parameter that we could tweak
+z_overlap <- 0.8 ## Another parameter that we could tweak
 
 # Sincerity for Main and Anchor Questions ======================================
 ## 1 if sincere, 0 if non-sincere
 ## First, define whether responses will be non-sincere in the anchor question
-s_anchor <- rbinom(n = N, size = 1, prob = p_z1)
+z_anchor <- rbinom(n = N, size = 1, prob = p_z1)
 
-## Second, in the main question, 80% of the time, 
+## Second, in the main question, 80% of the time,
 ## non-sincerity will carry over. For the rest, it may be random.
-s_main <- c(
-  s_anchor[1:floor(s_overlap * N)],
-  rbinom(n = floor((1 - s_overlap) * N) + 1, size = 1, prob = p_z1)
+z_main <- c(
+  z_anchor[1:floor(z_overlap * N)],
+  rbinom(n = floor((1 - z_overlap) * N) + 1, size = 1, prob = p_z1)
 )
-table(s_anchor, s_main)
-mean(s_anchor) # must be close to 0.5
-mean(s_main) # must be close to 0.5
+table(z_anchor, z_main)
+mean(z_anchor) # must be close to 0.5
+mean(z_main) # must be close to 0.5
 
 # 1) The Main Rank-Order Question and its Observed Rankings ====================
 ## Already handled in sim.R; use scenario "skewed_02"
 
 ## True obs is defined with respect to the reference choice set (ordered a-b-c)
 ## Generating *Observed* Ranking (\pi_i)
-obs_data_main <- bind_cols(obs_data_list$skewed_02, tibble(s_main = s_main)) %>%
-  ## z is a random variable: sincere if 1, non-sincere if 0
-  mutate(obs = ifelse(s_main == 1, obs_rank, obs_nonsincere)) %>%
+obs_data_main <- bind_cols(obs_data_list$skewed_02, tibble(z_main = z_main)) %>%
+  ## z is a random variable: 1 if sincere, 0 if non-sincere
+  mutate(obs = ifelse(z_main == 1, obs_rank, obs_nonsincere)) %>%
   dplyr::select(obs, starts_with("V"), everything())
 head(obs_data_main)
 
 # 2) The Anchor Question and its Observed Rankings =============================
-obs_data_A <- bind_cols(obs_data_list$anchor, tibble(s_anchor = s_anchor)) %>%
-  mutate(obs = ifelse(s_anchor == 1, obs_rank, obs_nonsincere)) %>%
+obs_data_A <- bind_cols(obs_data_list$anchor, tibble(z_anchor = z_anchor)) %>%
+  mutate(obs = ifelse(z_anchor == 1, obs_rank, obs_nonsincere)) %>%
   dplyr::select(obs, starts_with("V"), everything())
 head(obs_data_A)
 
@@ -49,24 +49,23 @@ ref_data_A <- recov_ref_ranking(obs_data_A)
 head(ref_data_A)
 table(ref_data_A)
 
-## Coding z variable
-code_z <- ifelse(ref_data_A$ref_ranking == "123", 1, 0)
+## Coding random variable c, i.e., whether respondent offers the correct answer
+## 1 if correct, 0 if not
+correct <- ifelse(ref_data_A$ref_ranking == "123", 1, 0)
 # 123 means the correct answer
 
-## Estimated proportion of sincere-responses
-# est_p_z1 <- mean(code_z)/(1 + 1/factorial(J))
-# Adjusting for over-estimation (this was wrong)
-A <- mean(code_z) - (1 / factorial(J))
-B <- 1 - (1 / factorial(J))
-est_p_z1 <- A / B
+## Unbiased estimation of the proportion of sincere-responses (Eq. pz)
+## est_p_z1 <- mean(correct) / (1 + 1 / factorial(J))
+## Adjusting for over-estimation (this was wrong)
+est_p_z1 <- (mean(correct) - (1 / factorial(J))) / (1 - (1 / factorial(J)))
 
 ## This is because P(z=1) = mean(z) - (1/J!)*P(z=1)
 
 ## Estimated distribution of non-sincere responses
 obs_data_A_aug <- obs_data_A %>%
-  mutate(z = code_z) %>%
+  mutate(z = correct) %>%
   filter(z == 1)
-est_pi_epsilon <- table(obs_data_A_aug$obs) / sum(code_z)
+est_pi_epsilon <- table(obs_data_A_aug$obs) / sum(correct)
 est_pi_epsilon2 <-
   (table(ref_data_A) / N - (est_p_z1) * c(1, 0, 0, 0, 0, 0)) / (1 - est_p_z1)
 
@@ -87,7 +86,7 @@ pi <- true_rank %>%
   table() / N
 
 ## Recovering reference rankings from respondents who got the right answer
-correct_answer <- obs_data[code_z == 1, ]
+correct_answer <- obs_data[correct == 1, ]
 correct_data <- recov_ref_ranking(correct_answer)
 # only getting data from Rs with the correct answer
 head(correct_data)
