@@ -6,7 +6,8 @@ source(here::here("R", "sim.R"))
 set.seed(12345)
 z_overlap <- 0.8 ## Another parameter that we could tweak
 
-# Sincerity for Main and Anchor Questions ======================================
+# Proof of Concept: Point Estimate Closer to QOI ===============================
+## Sincerity for Main and Anchor Questions =====================================
 ## 1 if sincere, 0 if non-sincere
 ## First, define whether responses will be non-sincere in the anchor question
 z_anchor <- rbinom(n = N, size = 1, prob = p_z1)
@@ -21,7 +22,7 @@ table(z_anchor, z_main)
 mean(z_anchor) # must be close to 0.5
 mean(z_main) # must be close to 0.5
 
-# 1) The Main Rank-Order Question and its Observed Rankings ====================
+## 1) The Main Rank-Order Question and its Observed Rankings ===================
 ## Already handled in sim.R; use scenario "skewed_02"
 
 ## True obs is defined with respect to the reference choice set (ordered a-b-c)
@@ -32,7 +33,7 @@ obs_data_main <- bind_cols(obs_data_list$skewed_02, tibble(z_main = z_main)) %>%
   dplyr::select(obs, starts_with("V"), everything())
 head(obs_data_main)
 
-# 2) The Anchor Question and its Observed Rankings =============================
+## 2) The Anchor Question and its Observed Rankings ============================
 obs_data_A <- bind_cols(obs_data_list$anchor, tibble(z_anchor = z_anchor)) %>%
   mutate(obs = ifelse(z_anchor == 1, obs_rank, obs_nonsincere)) %>%
   dplyr::select(obs, starts_with("V"), everything())
@@ -42,7 +43,7 @@ head(obs_data_A)
 head(obs_data_main)
 head(obs_data_A)
 
-# Estimating the QOI via De-Contamination ======================================
+## Estimating the QOI via De-Contamination ======================================
 ## Recovering reference rankings from observed rankings and
 ## observed item sets (anchor question)
 ref_data_A <- recov_ref_ranking(obs_data_A)
@@ -87,7 +88,7 @@ pi <- obs_data_list$skewed_02$true_permn %>%
 
 ## Recovering reference rankings from respondents who got the right answer
 correct_answer <- obs_data_main[correct == 1, ]
-correct_data <- recov_ref_ranking(correct_answer)
+correct_data <- recov_ref_ranking(correct_answer) ## this is the bottleneck; 16 sec
 
 ## only getting data from Rs with the correct answer
 head(correct_data)
@@ -113,7 +114,7 @@ ggdat <- rbind(est_naive, est_correct, est_pi, pi) %>%
     values_to = "proportion"
   )
 
-# Visualization ================================================================
+## Visualization ===============================================================
 p <- ggplot(ggdat, aes(x = ranking, y = proportion, fill = est)) +
   geom_bar(stat = "identity", position = "dodge2", alpha = 0.7) +
   scale_fill_manual(values = c("gray70", "gray10", "firebrick4", "#a5900d")) +
@@ -134,5 +135,75 @@ ggsave(
 )
 
 # Bootstrapping ================================================================
+## Indices ---------------------------------------------------------------------
+set.seed(12345)
+indices <- seq(1000) %>%
+  map(~ tibble(!!as.name(paste0("x", .x)) := seq(2000)) %>% sample_n(1000)) %>%
+  bind_cols()
+assert_that(!identical(sort(indices$x1), sort(indices$x2)))
+
+## Naive and De-Contamination Estimators ---------------------------------------
+## Naive estimator 1: heroic assumption of zero non-sincere responses
+est_naive_bootstrap <- seq(1000) %>%
+  map(~ table(ref_data[unlist(indices[, .x]), ]) / N)
+
+est_p_z1_bootstrap <- seq(1000) %>%
+  map(
+    ~ (mean(correct[unlist(indices[, .x])]) - (1 / factorial(J))) /
+      (1 - (1 / factorial(J)))
+  )
+
+est_pi_nonsincere_bootstrap <- seq(1000) %>%
+  map(
+    ~ (
+      table(ref_data_A[unlist(indices[, .x]), ]) / N -
+        (est_p_z1_bootstrap[[.x]]) * c(1, 0, 0, 0, 0, 0)
+    ) / (1 - est_p_z1_bootstrap[[.x]])
+  )
 
 
+est_pi_bootstrap <- seq(1000) %>%
+  map(
+    ~ (
+      est_naive_bootstrap[[.x]] -
+        (1 - est_p_z1_bootstrap[[.x]]) * est_pi_nonsincere_bootstrap[[.x]]
+    ) /
+      est_p_z1_bootstrap[[.x]]
+  )
+
+## Recovering reference rankings from respondents who got the right answer
+correct_answer_bootstrap <- seq(1000) %>%
+  map(
+    ~ obs_data_main[unlist(indices[, .x]), ][
+      correct[unlist(indices[, .x])] == 1, 
+    ]
+  )
+correct_data_bootstrap <- correct_answer_bootstrap %>%
+  map(recov_ref_ranking)
+
+assert_that(dim(correct_answer_bootstrap[[1]])[1] / N >= 0.5)
+## This will be >= 0.5, because some non-sincere Rs happen to be correct!
+
+## Naive estimator 2: simply use Rs with correct responses to anchor question
+est_correct_bootstrap <- seq(1000) %>%
+  map(
+    ~ table(correct_data_bootstrap[[.x]]) / 
+      dim(correct_answer_bootstrap[[.x]])[1]
+  )
+
+## Combine data ----------------------------------------------------------------
+ggdat <- rbind(est_naive, est_correct, est_pi, pi) %>%
+  as_tibble() %>%
+  mutate(
+    est = c(
+      "Naive Estimator 1", "Naive Estimator 2",
+      "Our Method", "Quantity of Interest"
+    )
+  ) %>%
+  pivot_longer(
+    cols = !est,
+    names_to = "ranking",
+    values_to = "proportion"
+  )
+
+## Visualization ---------------------------------------------------------------
