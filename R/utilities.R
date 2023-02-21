@@ -12,7 +12,7 @@ library(patchwork)
 library(janitor)
 library(assertthat)
 
-# READING THE FUNCTION THAT DRAW FROM PRACKETT-LUCE
+# READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))
 
 # Temporary functions ==========================================================
@@ -92,7 +92,7 @@ pivot_join <- function(x, y) {
 }
 
 # Added on 2/6/2023
-# This function recovers the reference (true) ranking 
+# This function recovers the reference (true) ranking
 # with respect to the reference item set (here: {abc})
 recov_ref_ranking <- function(data) {
   ref_data <- data.frame(ref_ranking = as.character())
@@ -105,7 +105,6 @@ recov_ref_ranking <- function(data) {
     obs_2nd <- temp[2] # second digit
     obs_3rd <- temp[3] # third digit
 
-
     vec_pref <- data[i, ] %>% # Get the stated ordering (given the observed set)
       pivot_longer(cols = c(V1, V2, V3), names_to = "variable") %>%
       mutate(
@@ -115,13 +114,15 @@ recov_ref_ranking <- function(data) {
       )
     vec_pref # Check
 
-    recover <- vec_pref %>% 
+    recover <- vec_pref %>%
       # Recovering the true ranking given the reference set (abc)
-      mutate(recover = case_when(
-        variable == "V1" ~ first,
-        variable == "V2" ~ second,
-        variable == "V3" ~ third
-      )) %>%
+      mutate(
+        recover = case_when(
+          variable == "V1" ~ first,
+          variable == "V2" ~ second,
+          variable == "V3" ~ third
+        )
+      ) %>%
       dplyr::select(value, recover) %>%
       arrange(value)
 
