@@ -4,26 +4,33 @@
 # Aim: simulate our methodology
 source(here::here("R", "sim.R"))
 set.seed(12345)
+s_overlap <- 0.8 ## Another parameter that we could tweak
 
-# Anchor Question ==============================================================
-# 1 if sincere, 0 if non-sincere
+# Sincerity for Main and Anchor Questions ======================================
+## 1 if sincere, 0 if non-sincere
+## First, define whether responses will be non-sincere in the anchor question
 s_anchor <- rbinom(n = N, size = 1, prob = p_z1)
-s_raw <- rbinom(n = N, size = 1, prob = p_z1)
-s_rankor <- c(s_anchor[1:(0.8 * N)], s_raw[(0.8 * N + 1):N]) # 80% = same state
-table(s_anchor, s_rankor)
+
+## Second, in the main question, 80% of the time, 
+## non-sincerity will carry over. For the rest, it may be random.
+s_main <- c(
+  s_anchor[1:floor(s_overlap * N)],
+  rbinom(n = floor(s_overlap * N) + 1, size = 1, prob = p_z1)
+)
+table(s_anchor, s_main)
 mean(s_anchor) # must be close to 0.5
-mean(s_rankor) # must be close to 0.5
+mean(s_main) # must be close to 0.5
 
 # 1) Generate the rank-order question of interest ==============================
 ## Already handled in sim.R; use scenario "skewed_02"
 
 ## True obs is defined with respect to the reference choice set (ordered a-b-c)
 ## Generating *Observed* Ranking (\pi_i) ---------------------------------------
-obs_data <- bind_cols(obs_data_list$skewed_02, tibble(s_rankor = s_rankor)) %>%
+obs_data <- bind_cols(obs_data_list$skewed_02, tibble(s_main = s_main)) %>%
   ## z is a random variable: sincere if 1, non-sincere if 0
-  mutate(obs = ifelse(s_rankor == 1, obs_rank, obs_nonsincere)) %>%
+  mutate(obs = ifelse(s_main == 1, obs_rank, obs_nonsincere)) %>%
   dplyr::select(obs, starts_with("V"), everything())
-head(obs_data) 
+head(obs_data)
 
 # 2) Generate the anchor question ==============================================
 set.seed(102)
