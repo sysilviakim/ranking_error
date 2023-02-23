@@ -37,3 +37,10 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Project specific
+doc/*
+output/dump*
+data/raw/*.zip
+data/raw/CastVoteRecords_RCV
+
