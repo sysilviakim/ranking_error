@@ -91,9 +91,8 @@ pivot_join <- function(x, y) {
   return(pivot_sim(left_join(y, x)) %>% select(id, obs_rank, item, rank))
 }
 
-# Added on 2/6/2023
-# This function recovers the reference (true) ranking
-# with respect to the reference item set (here: {abc})
+## Recover the reference (true) ranking
+## with respect to the reference item set (here: {abc})
 recov_ref_ranking <- function(dat) {
   # For each i-th unit in data
   ref_data <- seq(nrow(dat)) %>%
@@ -104,7 +103,7 @@ recov_ref_ranking <- function(dat) {
           ## V1, V2, and V3 are randomized choice order given to respondent
           select(first, second, third, contains("V")) %>%
           pivot_longer(cols = c(V1, V2, V3), names_to = "variable")
-        
+
         ## Recovering the true ranking given the reference set (abc)
         ## case_when is faster outside a pipe
         temp$recover <- case_when(
@@ -112,7 +111,7 @@ recov_ref_ranking <- function(dat) {
           temp$variable == "V2" ~ temp$second,
           temp$variable == "V3" ~ temp$third
         )
-        
+
         temp <- temp %>%
           arrange(value) %>%
           .$recover %>%
@@ -125,4 +124,63 @@ recov_ref_ranking <- function(dat) {
     unlist() %>%
     tibble(ref_data = .)
   return(ref_data)
+}
+
+## Plot the distribution of observed rankings (over permutation space)
+plot_dist_ranking <- function(x, J = 3, ylim = 0.65) {
+  x %>%
+    ggplot(aes(x = ranking, y = prop, fill = "1")) +
+    geom_col() +
+    scale_fill_manual(values = "firebrick4") +
+    xlab("Observed Ranking") +
+    ylab("") +
+    scale_y_continuous(labels = scales::percent, limits = c(0, ylim)) +
+    geom_hline(yintercept = 1 / factorial(J)) +
+    geom_text(
+      aes(
+        label = paste0(round(prop * 100, digits = 1), "%"),
+        family = "CM Roman"
+      ),
+      vjust = -0.5, size = 3
+    )
+}
+
+## Print effect size and power
+chisq_power <- function(tab, power = 0.95) {
+  ## Chi-square test
+  message("The chi-square test result is:")
+  print(chisq.test(tab, p = rep(1 / length(tab), length(tab))))
+
+  ## Power test. We could do the power = 0.8, sure
+  P0 <- rep(1 / length(tab), length(tab))
+  P1 <- as.numeric(prop.table(tab))
+  message(paste0("Effect size is ", ES.w1(P0, P1)))
+  message("The chi-square power test result is:")
+  print(
+    pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab) - 1), power = power)
+  )
+}
+
+## Turn ranking dist. summary table to a tibble
+table_to_tibble <- function(tab) {
+  enframe(tab, name = "ranking", value = "freq") %>%
+    mutate(
+      ranking = factor(ranking),
+      freq = as.numeric(freq),
+      prop = freq / sum(freq)
+    )
+}
+
+## If necessary, supplement all possible permutation patterns
+## for a distribution table
+permn_augment <- function(tab, J = 4) {
+  tab4 <- deframe(
+    enframe(tab3) %>%
+      bind_rows(
+        ., tibble(name = permn(seq(J)) %>%
+          map(~ paste(.x, collapse = "")) %>%
+          unlist() %>%
+          setdiff(., names(tab)), value = as.table(0))
+      )
+  )
 }

@@ -60,20 +60,8 @@ round(prop.table(tab_anch) * 100, digits = 1)
 #  8.8 35.2  9.9 20.9 15.4  9.9
 
 ## Chi-square test and power test ----------------------------------------------
-## p-value < 2.2e-16
-chisq.test(tab_main, p = rep(1 / length(tab_main), length(tab_main)))
-## p-value < 3.413e-05
-chisq.test(tab_anch, p = rep(1 / length(tab_anch), length(tab_anch)))
-
-P0 <- rep(1 / length(tab_main), length(tab_main))
-P1 <- as.numeric(prop.table(tab_main))
-ES.w1(P0, P1) # 1.111(!)
-pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab_main) - 1), power = 0.95)
-
-P0 <- rep(1 / length(tab_anch), length(tab_anch))
-P1 <- as.numeric(prop.table(tab_anch))
-ES.w1(P0, P1) # 0.556
-pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab_anch) - 1), power = 0.95)
+chisq_power(tab_main) ## p-value < 2.2e-16
+chisq_power(tab_anch) ## p-value = 3.413e-05
 
 ## Visualize -------------------------------------------------------------------
 ### Anchor question ------------------------------------------------------------
@@ -84,22 +72,7 @@ temp <- enframe(tab_main, name = "ranking", value = "freq") %>%
     prop = freq / sum(freq)
   )
 
-p <- temp %>%
-  ggplot(aes(x = ranking, y = prop, fill = "1")) +
-  geom_col() +
-  scale_fill_manual(values = "firebrick4") +
-  xlab("Observed Ranking") +
-  ylab("") +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 0.65)) +
-  geom_hline(yintercept = 1 / factorial(3)) +
-  geom_text(
-    aes(
-      label = paste0(round(prop * 100, digits = 1), "%"),
-      family = "CM Roman"
-    ),
-    vjust = -0.5, size = 3
-  )
-plot_nolegend(pdf_default(p))
+plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-tate1993-main.pdf"), width = 4.5, height = 2.8)
 
 temp <- enframe(tab_anch, name = "ranking", value = "freq") %>%
@@ -109,20 +82,5 @@ temp <- enframe(tab_anch, name = "ranking", value = "freq") %>%
     prop = freq / sum(freq)
   )
 
-p <- temp %>%
-  ggplot(aes(x = ranking, y = prop, fill = "1")) +
-  geom_col() +
-  scale_fill_manual(values = "firebrick4") +
-  xlab("Observed Ranking") +
-  ylab("") +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 0.65)) +
-  geom_hline(yintercept = 1 / factorial(3)) +
-  geom_text(
-    aes(
-      label = paste0(round(prop * 100, digits = 1), "%"),
-      family = "CM Roman"
-    ),
-    vjust = -0.5, size = 3
-  )
-plot_nolegend(pdf_default(p))
+plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-tate1993-anchor.pdf"), width = 4.5, height = 2.8)

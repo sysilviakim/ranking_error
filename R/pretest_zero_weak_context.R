@@ -119,81 +119,21 @@ round(prop.table(tab4a) * 100, digits = 1)
 ## This assertion is necessary but does not apply to this small pretest sample
 ## assert_that(length(tab4a) == 24)
 ## Therefore, supplement missing permutations
-tab4 <- deframe(
-  enframe(tab4a) %>%
-    bind_rows(
-      ., tibble(name = permn(seq(4)) %>%
-        map(~ paste(.x, collapse = "")) %>%
-        unlist() %>%
-        setdiff(., names(tab4a)), value = as.table(0))
-    )
-)
+tab4 <- permn_augment(tab4a)
 
 ## Chi-square test and power test ----------------------------------------------
-## p-value = 0.4368
-chisq.test(tab3, p = rep(1 / length(tab3), length(tab3)))
-## p-value < 2.2e-16
-chisq.test(tab4, p = rep(1 / length(tab4), length(tab4)))
-
-## Nice. At this effect size, we'd only need about 350+ respondents for 3-opt
-P0 <- rep(1 / length(tab3), length(tab3))
-P1 <- as.numeric(prop.table(tab3))
-ES.w1(P0, P1) # 0.241
-pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab3) - 1), power = 0.95)
-
-## Not even meaningful; N < 24
-P0 <- rep(1 / length(tab4), length(tab4))
-P1 <- as.numeric(prop.table(tab4))
-ES.w1(P0, P1) # 2.8 wow that's large
-pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab4) - 1), power = 0.95)
+chisq_power(tab3) ## p-value = 0.4368, need 340+
+chisq_power(tab4) ## p-value < 2.2e-16, N < J! so not meaningful
 
 ## Visualize -------------------------------------------------------------------
 ### 3-option
-temp <- enframe(tab3, name = "ranking", value = "freq") %>%
-  mutate(
-    ranking = factor(ranking),
-    freq = as.numeric(freq),
-    prop = freq / sum(freq)
-  )
-
-p <- temp %>%
-  ggplot(aes(x = ranking, y = prop, fill = "1")) +
-  geom_col() +
-  scale_fill_manual(values = "firebrick4") +
-  xlab("Observed Ranking") +
-  ylab("") +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 0.3)) +
-  geom_hline(yintercept = 1 / factorial(3)) +
-  geom_text(
-    aes(
-      label = paste0(round(prop * 100, digits = 1), "%"),
-      family = "CM Roman"
-    ),
-    vjust = -0.5, size = 3
-  )
-plot_nolegend(pdf_default(p))
+temp <- table_to_tibble(tab3)
+plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-nocontext-3opt.pdf"), width = 4.5, height = 2.8)
 
 ### 4-option
-temp <- enframe(tab4, name = "ranking", value = "freq") %>%
-  mutate(ranking = factor(ranking), prop = freq / sum(freq))
-
-p <- temp %>%
-  ggplot(aes(x = ranking, y = prop, fill = "1")) +
-  geom_col() +
-  scale_fill_manual(values = "firebrick4") +
-  xlab("Observed Ranking") +
-  ylab("") +
-  scale_y_continuous(labels = scales::percent, limits = c(0, 0.65)) +
-  geom_hline(yintercept = 1 / factorial(4)) +
-  geom_text(
-    aes(
-      label = paste0(round(prop * 100, digits = 1), "%"),
-      family = "CM Roman"
-    ),
-    vjust = -0.5, size = 3
-  )
-plot_nolegend(pdf_default(p))
+temp <- table_to_tibble(tab4)
+plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-nocontext-4opt.pdf"), width = 7.5, height = 2.8)
 
 # Weak context questions =======================================================
