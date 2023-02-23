@@ -1,7 +1,8 @@
 source(here::here("R", "pretest_zero_weak_context.R"))
 
 # Tate (1993) ==================================================================
-## Collapse order of randomized item presentation ------------------------------
+## Use order of randomized items to recover observed ranking -------------------
+### First, turn text into item numbers from the reference choice set.
 main <- main %>%
   mutate(
     across(
@@ -31,7 +32,7 @@ main <- main %>%
     )
   )
 
-## Collapse into ranking pattern -----------------------------------------------
+## Collapse "resulting" ranking ------------------------------------------------
 tate1993 <- main %>%
   mutate(
     across(
@@ -42,8 +43,21 @@ tate1993 <- main %>%
   unite("anc_tate1993", sep = "", anc_tate1993_1:anc_tate1993_3) %>%
   unite("app_tate1993", sep = "", app_tate1993_1:app_tate1993_3)
 
-rank_main <- tate1993$anc_tate1993
-rank_anch <- tate1993$app_tate1993
+## Recover the "observed" ranking ----------------------------------------------
+## based on randomized order presentation
+tate1993$anc_tate1993_obs <- tate1993 %>%
+  separate(anc_tate1993_do, sep = c(1, 2), into = c("V1", "V2", "V3")) %>%
+  recov_ref_ranking(rank_var = "anc_tate1993") %>%
+  .$ref
+
+tate1993$app_tate1993_obs <- tate1993 %>%
+  separate(app_tate1993_do, sep = c(1, 2), into = c("V1", "V2", "V3")) %>%
+  recov_ref_ranking(rank_var = "app_tate1993") %>%
+  .$ref
+
+## Create frequency tables -----------------------------------------------------
+rank_main <- tate1993$anc_tate1993_obs
+rank_anch <- tate1993$app_tate1993_obs
 
 sum(grepl("9", rank_main)) ## 8
 sum(grepl("9", rank_anch)) ## 7
@@ -51,36 +65,24 @@ sum(grepl("9", rank_anch)) ## 7
 tab_main <- table(rank_main[!grepl("9", rank_main)])
 tab_anch <- table(rank_anch[!grepl("9", rank_anch)])
 
-## Some *really* interesting patterns
+## Remember, 
 round(prop.table(tab_main) * 100, digits = 1)
 #  123  132  213  231  312  321 
-# 57.8  6.7 10.0  5.6  7.8 12.2
+# 21.1 14.4  8.9 15.6 20.0 20.0
 round(prop.table(tab_anch) * 100, digits = 1)
 #  123  132  213  231  312  321 
-#  8.8 35.2  9.9 20.9 15.4  9.9
+# 19.8 12.1 24.2 12.1 15.4 16.5
 
 ## Chi-square test and power test ----------------------------------------------
-chisq_power(tab_main) ## p-value < 2.2e-16
-chisq_power(tab_anch) ## p-value = 3.413e-05
+chisq_power(tab_main) ## p-value = 0.3194, ES = 0.255, N = 300+
+chisq_power(tab_anch) ## p-value = 0.3073, ES = 0.257, N = 300+
 
 ## Visualize -------------------------------------------------------------------
 ### Anchor question ------------------------------------------------------------
-temp <- enframe(tab_main, name = "ranking", value = "freq") %>%
-  mutate(
-    ranking = factor(ranking),
-    freq = as.numeric(freq),
-    prop = freq / sum(freq)
-  )
-
+temp <- table_to_tibble(tab_main)
 plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-tate1993-main.pdf"), width = 4.5, height = 2.8)
 
-temp <- enframe(tab_anch, name = "ranking", value = "freq") %>%
-  mutate(
-    ranking = factor(ranking),
-    freq = as.numeric(freq),
-    prop = freq / sum(freq)
-  )
-
+temp <- table_to_tibble(tab_anch)
 plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-tate1993-anchor.pdf"), width = 4.5, height = 2.8)

@@ -52,7 +52,7 @@ table(ref_data_A)
 
 ## Coding random variable c, i.e., whether respondent offers the correct answer
 ## 1 if correct, 0 if not
-correct <- ifelse(ref_data_A$ref_data == "123", 1, 0)
+correct <- ifelse(ref_data_A$ref == "123", 1, 0)
 # 123 means the correct answer
 
 ## Unbiased estimation of the proportion of sincere-responses (Eq. pz)

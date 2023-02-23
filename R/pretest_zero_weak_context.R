@@ -133,7 +133,7 @@ ggsave(here("fig", "pretest-nocontext-3opt.pdf"), width = 4.5, height = 2.8)
 
 ### 4-option
 temp <- table_to_tibble(tab4)
-plot_nolegend(pdf_default(plot_dist_ranking(temp)))
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = 0.65)))
 ggsave(here("fig", "pretest-nocontext-4opt.pdf"), width = 7.5, height = 2.8)
 
 # Weak context questions =======================================================
