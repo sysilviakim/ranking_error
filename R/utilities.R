@@ -93,13 +93,16 @@ pivot_join <- function(x, y) {
 
 ## Recover the reference (true) ranking
 ## with respect to the reference item set (here: {abc})
-recov_ref_ranking <- function(dat) {
+recov_ref_ranking <- function(dat, rank_var = "obs") {
   # For each i-th unit in data
   ref_data <- seq(nrow(dat)) %>%
     map(
       ~ {
         temp <- dat[.x, ] %>%
-          separate(obs, sep = c(1, 2), into = c("first", "second", "third")) %>%
+          separate(
+            !!as.name(rank_var),
+            sep = c(1, 2), into = c("first", "second", "third")
+          ) %>%
           ## V1, V2, and V3 are randomized choice order given to respondent
           select(first, second, third, contains("V")) %>%
           pivot_longer(cols = c(V1, V2, V3), names_to = "variable")
@@ -122,12 +125,12 @@ recov_ref_ranking <- function(dat) {
     ) %>%
     ## combine
     unlist() %>%
-    tibble(ref_data = .)
+    tibble(ref = .)
   return(ref_data)
 }
 
 ## Plot the distribution of observed rankings (over permutation space)
-plot_dist_ranking <- function(x, J = 3, ylim = 0.65) {
+plot_dist_ranking <- function(x, J = 3, ylim = 0.3) {
   x %>%
     ggplot(aes(x = ranking, y = prop, fill = "1")) +
     geom_col() +
