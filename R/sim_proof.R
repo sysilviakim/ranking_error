@@ -143,7 +143,7 @@ bootstrap_n <- 1000
 indices <- seq(bootstrap_n) %>%
   map(
     ~ tibble(
-      !!as.name(paste0("x", .x)) :=  sample(seq(N), size = N, replace = TRUE)
+      !!as.name(paste0("x", .x)) := sample(seq(N), size = N, replace = TRUE)
     )
   ) %>%
   bind_cols()

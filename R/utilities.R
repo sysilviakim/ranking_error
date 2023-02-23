@@ -177,8 +177,8 @@ table_to_tibble <- function(tab) {
 ## If necessary, supplement all possible permutation patterns
 ## for a distribution table
 permn_augment <- function(tab, J = 4) {
-  tab4 <- deframe(
-    enframe(tab3) %>%
+  deframe(
+    enframe(tab) %>%
       bind_rows(
         ., tibble(name = permn(seq(J)) %>%
           map(~ paste(.x, collapse = "")) %>%
