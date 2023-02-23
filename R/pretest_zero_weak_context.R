@@ -164,10 +164,6 @@ p <- temp %>%
   ylab("") +
   scale_y_continuous(labels = scales::percent, limits = c(0, 0.3)) +
   geom_hline(yintercept = 1 / factorial(3)) +
-  # annotate(
-  #   geom = "text", x = 0.65, y = 1 / 6,
-  #   label = "16.7%", vjust = -1, family = "CM Roman"
-  # ) +
   geom_text(
     aes(
       label = paste0(round(prop * 100, digits = 1), "%"),
@@ -202,7 +198,3 @@ ggsave(here("fig", "pretest-nocontext-4opt.pdf"), width = 7.5, height = 2.8)
 
 # Weak context questions =======================================================
 ## Second priority for now
-
-# Applications =================================================================
-
-
