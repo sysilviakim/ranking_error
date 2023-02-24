@@ -43,4 +43,4 @@ doc/*
 output/dump*
 data/raw/*.zip
 data/raw/CastVoteRecords_RCV
-
+fig/ostrich*
