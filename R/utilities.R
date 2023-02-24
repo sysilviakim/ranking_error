@@ -188,10 +188,173 @@ permn_augment <- function(tab, J = 4) {
   )
 }
 
-# Applications: wrangle data ===================================================
-apps_wrangle <- function(x) {
+# Text options wrangle to number ===============================================
+text_to_item_position <- function(x) {
+  ## For no-context questions, the presented order doesn't matter --------------
+  x <- x %>%
+    select(
+      -contains("no_context_3_opts_1_do"),
+      -contains("no_context_4_opts_1_do"),
+      -contains("no_context_4_opts_2_do")
+    )
+
+  ## Identity ------------------------------------------------------------------
+  x <- x %>%
+    mutate(
+      across(
+        contains("identity"),
+        ~ gsub(
+          "Gender", "1",
+          gsub(
+            "City", "2",
+            gsub(
+              "Country", "3",
+              gsub(
+                "Socioeconomic Status", "4",
+                gsub(
+                  "Racial or Ethnic Group", "5",
+                  gsub(
+                    "Political Party", "6",
+                    gsub("Religion", "7", gsub("\\|", "", .x))
+                  )
+                )
+              )
+            )
+          )
+        ),
+      )
+    )
+
+  ## Nelson (1997) -------------------------------------------------------------
+  x <- x %>%
+    mutate(
+      across(
+        contains("nelson1997"),
+        ~ gsub(
+          paste0(
+            "Print media|",
+            "A person's freedom to speak and hear what he or she wants should be protected"
+          ),
+          "1",
+          gsub(
+            paste0(
+              "Television|",
+              "Campus and workplace safety and security should be protected"
+            ),
+            "2",
+            gsub(
+              paste0(
+                "The Internet|",
+                "School or workplace's reputation should be protected"
+              ),
+              "3",
+              gsub(
+                paste0(
+                  "Social media|Social Media|", ## corrected capitalization
+                  "Racism and prejudice should be opposed"
+                ),
+                "4",
+                gsub("\\|", "", .x)
+              )
+            )
+          )
+        )
+      )
+    )
+
+  ## Voting Mode ---------------------------------------------------------------
+  x <- x %>%
+    mutate(
+      across(
+        contains("voting"),
+        ~ gsub(
+          "Primary elections|Vote in-person on Election Day",
+          "1",
+          gsub(
+            paste0(
+              "Nomination of primary winners as candidates in the general election|",
+              "Vote in-person during the early voting period"
+            ),
+            "2",
+            gsub(
+              paste0(
+                "Early Voting starts \\(Before Election Day\\)|",
+                "Send a mail ballot by post"
+              ),
+              "3",
+              gsub(
+                paste0(
+                  "Election Day \\(November 5, 2024\\)|",
+                  "Drop a mail ballot at a dropbox or polling place"
+                ),
+                "4",
+                gsub(
+                  paste0(
+                    "Winner of general election sworn in as the next president|",
+                    "Not vote"
+                  ),
+                  "5",
+                  gsub("\\|", "", .x)
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+
+  ## Partisanship --------------------------------------------------------------
+  x <- x %>%
+    mutate(
+      across(
+        contains("party_id_3_cands"),
+        ~ gsub(
+          "Registered Democrat", "1",
+          gsub(
+            "Registered Republican", "2",
+            gsub("Independent", "3", gsub("\\|", "", .x))
+          )
+        )
+      )
+    )
+
+  x <- x %>%
+    mutate(
+      across(
+        contains("party_id_4_cands"),
+        ~ gsub(
+          "Registered Democrat 1", "1",
+          gsub(
+            "Registered Democrat 2", "2",
+            gsub(
+              "Registered Republican 1", "3",
+              gsub("Registered Republican 2", "4", gsub("\\|", "", .x))
+            )
+          )
+        )
+      )
+    )
+
+  ## Symbols -------------------------------------------------------------------
+  x <- x %>%
+    mutate(
+      across(
+        contains("symbol"),
+        ~ gsub(
+          "△", "1",
+          gsub(
+            "□", "2",
+            gsub(
+              "⬠", "3",
+              gsub("⬡", "4", gsub("\\|", "", .x))
+            )
+          )
+        )
+      )
+    )
+
   ## Tate (1993) ---------------------------------------------------------------
-  out <- x %>%
+  x <- x %>%
     mutate(
       across(
         contains("tate1993"),
@@ -220,24 +383,25 @@ apps_wrangle <- function(x) {
       )
     )
 
-  return(out)
+  return(x)
 }
 
+## Collapse into resulting ranking pattern in the permutation space
 unite_ranking <- function(x) {
   x_raw <- x
-  
+
   ## Find all patterns and bring it to its "root," i.e., without the _1
   var_list <- x %>%
     select(ends_with("_1")) %>%
     names() %>%
     str_sub(end = -3)
-  
+
   ## WHY are there five options yet Qualtrics decides to skip 5 and go to 6??
   if ("app_voting_6" %in% names(x)) {
     x <- x %>%
       rename(app_voting_5 = app_voting_6)
   }
-  
+
   x <- x[, sort(names(x))]
 
   ## Perform for each pattern
@@ -247,14 +411,14 @@ unite_ranking <- function(x) {
       select(contains(v)) %>%
       select(-ends_with("_do")) %>%
       ncol()
-    
+
     ## Shows how important variable naming is in Qualtrics :)
     if (v == "symbols_3_opts") {
       l <- 3
     } else if (v == "symbols_4_opts") {
       l <- 4
     }
-    
+
     x <- x %>%
       mutate(
         across(
@@ -267,16 +431,16 @@ unite_ranking <- function(x) {
         sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l))
       )
   }
-  
+
   ## restructure variable order
   x <- x %>%
     select(
-      names(x_raw %>% select(start_date:berinsky_screener)), 
+      names(x_raw %>% select(start_date:berinsky_screener)),
       ## Lucid generated
       rid, age_2, gender_2, hhi, ethnicity, hispanic, education_2,
-      political_party, region, zip, 
+      political_party, region, zip,
       everything()
     )
-  
+
   return(x)
 }
