@@ -459,3 +459,28 @@ avg_rank <- function(df, var) {
     summarise(across(everything(), ~ mean(as.numeric(.x))))
   return(out)
 }
+
+avg_rank_bootstrap_quantile <- function(x) {
+  if (class(x) != "list") {
+    stop("Input is not a list.")
+  }
+  x %>%
+    imap(
+      ~ .x %>%
+        pivot_longer(everything(), names_to = "variable") %>%
+        group_by(variable) %>%
+        summarize(
+          mean_val = mean(value),
+          low = quantile(value, probs = 0.025),
+          up = quantile(value, probs = 0.975)
+        ) %>%
+        mutate(Estimator = .y)
+    ) %>%
+    bind_rows() %>%
+    mutate(
+      Estimator = case_when(
+        Estimator == "debiased" ~ "De-biased",
+        TRUE ~ "Naive"
+      )
+    )
+}

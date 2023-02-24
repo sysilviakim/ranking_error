@@ -66,7 +66,7 @@ ggsave(here("fig", "pretest-tate1993-anchor.pdf"), width = 4.5, height = 2.8)
 #### One solution is to randomize the order between the anchor and main Qs
 #### (Let's try it in our pre-test)
 
-## De-Contaminating ============================================================
+## De-Contaminating: \pi =======================================================
 ### Correct answers to anchor question -----------------------------------------
 ### So, who got it "right", anyway?
 sum(tate1993$anc_tate1993 == "123") / N ## Yikes, only 58.0%

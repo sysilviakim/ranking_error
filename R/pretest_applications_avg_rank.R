@@ -20,9 +20,9 @@ assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 ### Correct answers to anchor question
 correct <- ifelse(tate1993$anc_tate1993 == "123", 1, 0)
 
-## De-Contaminating ============================================================
+## De-Contaminating: avg. rank =================================================
 ### Naive estimator 1: heroic assumption of zero non-sincere responses
-est_naive_boot <- seq(bootstrap_n) %>%
+est_main_naive_boot <- seq(bootstrap_n) %>%
   map(~ avg_rank(tate1993[unlist(indices[, .x]), ], "app_tate1993")) %>%
   bind_rows()
 
@@ -38,33 +38,17 @@ vec_pr_z1 <- unlist(est_p_z1_boot)
 vec_pr_z0 <- 1 - vec_pr_z1
 
 ## Unbiased estimator for the underlying non-sincere dist. in anchor q. (Eq. 10)
-est_anc_naive_boot <- seq(bootstrap_n) %>%
+est_anch_naive_boot <- seq(bootstrap_n) %>%
   map(~ avg_rank(tate1993[unlist(indices[, .x]), ], "anc_tate1993")) %>%
   bind_rows()
 
 ## De-contaminated ranking data
-est_debias_boot <- (est_naive_boot - vec_pr_z0 * est_anc_naive_boot) / vec_pr_z1
+est_debiased_boot <-
+  (est_main_naive_boot - vec_pr_z0 * est_anch_naive_boot) / vec_pr_z1
 
-## Quantiles into a single dataframe
-ggdat <- list(debiased = est_debias_boot, naive = est_naive_boot) %>%
-  imap(
-    ~ .x %>%
-      pivot_longer(everything(), names_to = "variable") %>%
-      group_by(variable) %>%
-      summarize(
-        mean_val = mean(value),
-        low = quantile(value, probs = 0.025),
-        up = quantile(value, probs = 0.975)
-      ) %>%
-      mutate(Estimator = .y)
-  ) %>%
-  bind_rows() %>%
-  mutate(
-    Estimator = case_when(
-      Estimator == "debiased" ~ "De-biased",
-      TRUE ~ "Naive"
-    )
-  )
+## Quantiles calculated and into a single dataframe
+ggdat <- list(debiased = est_debiased_boot, naive = est_main_naive_boot) %>%
+  avg_rank_bootstrap_quantile()
 
 ### Visualization --------------------------------------------------------------
 p <- ggplot(ggdat, aes(x = variable, y = mean_val, color = Estimator)) +
