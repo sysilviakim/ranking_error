@@ -158,25 +158,25 @@ p_list <- ggdat_list %>%
     ~ ggplot(.x, aes(x = variable, y = mean_val, color = Estimator)) +
       geom_point(
         aes(x = variable, y = mean_val, shape = Estimator),
-        size = 2,
-        position = position_dodge(width = 0.4)
+        size = 3,
+        position = position_dodge(width = 0.6)
       ) +
       # Reorder by point estimate
       geom_linerange(
         aes(x = variable, ymin = low, ymax = up),
-        lwd = 1, position = position_dodge(width = 0.4)
+        lwd = 1.5, position = position_dodge(width = 0.6)
       ) +
-      scale_color_manual(values = c("#E69F00", "#999999")) +
+      scale_color_manual(values = c("violetred3", "#999999")) +
       theme_bw() +
-      ylim(0, 6) +
-      ylab("Average Rank") + 
-      xlab("") 
+      xlab("") +
+      ylab("") 
   )
 
 pdf_default(p_list$tate1993) + 
   ylim(1, 3) +
   geom_hline(yintercept=2, lty="dashed", col="gray")+
-  theme(legend.position = "top")
+  theme(legend.position = "top")+
+  coord_flip()
 ggsave(
   here("fig/application_tate1993_bootstrapped_avg_rank.pdf"),
   width = 3.5, height = 2.8
@@ -185,7 +185,8 @@ ggsave(
 pdf_default(p_list$nelson1997) + 
   ylim(1, 4) +
   geom_hline(yintercept=2.5, lty="dashed", col="gray")+  
-  theme(legend.position = "top")
+  theme(legend.position = "top")+
+  coord_flip()  
 ggsave(
   here("fig/application_nelson1997_bootstrapped_avg_rank.pdf"),
   width = 3.5, height = 2.8
@@ -195,10 +196,11 @@ ggsave(
 pdf_default(p_list$identity) + 
   ylim(1, 6) + 
   geom_hline(yintercept=3.5, lty="dashed", col="gray")+    
-  theme(legend.position = "top")
+  theme(legend.position = "top")+
+  coord_flip()  
 ggsave(
   here("fig/application_identity_bootstrapped_avg_rank.pdf"),
-  width = 5, height = 2.8
+  width = 5, height = 2.8*1.5
 )
 
 ## non-overlapping CI? ---------------------------------------------------------
