@@ -1,13 +1,25 @@
-source(here::here("R", "pretest_zero_weak_context.R"))
+source(here::here("R", "pretest_import.R"))
 
 # Tate (1993) ==================================================================
 ## Uniform distribution test ===================================================
 ### Use order of randomized items to recover observed ranking ------------------
 ### First, turn text into item numbers from the reference choice set.
-main <- text_to_item_position(main) %>%
-  unite_ranking() %>%
+tate1993 <- main %>%
   ## Lost 10 obs (10.2%)
   filter(!grepl("9", anc_tate1993) & !grepl("9", app_tate1993))
+
+### Parameters for bootsrapping
+N <- nrow(tate1993)
+set.seed(12345)
+indices <- seq(bootstrap_n) %>%
+  map(
+    ~ tibble(
+      !!as.name(paste0("x", .x)) :=
+        sample(seq(N), size = N, replace = TRUE)
+    )
+  ) %>%
+  bind_cols()
+assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 
 ### Recover the "observed" ranking ---------------------------------------------
 ## based on randomized order presentation
@@ -47,26 +59,18 @@ temp <- table_to_tibble(tab_anch)
 plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-tate1993-anchor.pdf"), width = 4.5, height = 2.8)
 
+#### Yuki comment: These two graphs offer a great test for Assumptions 1-2
+#### It seems to me that one of them (or both) is violated.
+#### If non-sincere responses have the same distribution, we should able to
+#### observe similar empirical distributions in the two figures
+#### One solution is to randomize the order between the anchor and main Qs
+#### (Let's try it in our pre-test)
+
 ## De-Contaminating ============================================================
 ### Correct answers to anchor question -----------------------------------------
 ### So, who got it "right", anyway?
-N <- nrow(tate1993)
 sum(tate1993$anc_tate1993 == "123") / N ## Yikes, only 58.0%
 correct <- ifelse(tate1993$anc_tate1993 == "123", 1, 0)
-
-### Bootstrapping prep ---------------------------------------------------------
-set.seed(12345)
-bootstrap_n <- 1000
-
-indices <- seq(bootstrap_n) %>%
-  map(
-    ~ tibble(
-      !!as.name(paste0("x", .x)) :=
-        sample(seq(N), size = N, replace = TRUE)
-    )
-  ) %>%
-  bind_cols()
-assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 
 ### Naive and de-contaminated estimators of pi ---------------------------------
 ### Naive estimator 1: heroic assumption of zero non-sincere responses

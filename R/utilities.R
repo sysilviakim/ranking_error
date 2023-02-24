@@ -16,6 +16,9 @@ library(pwr)
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))
 
+# Parameters ===================================================================
+bootstrap_n <- 1000
+
 # Functions ====================================================================
 ## Turn 1st, 2nd, and 3rd ranking columns into long data format
 pivot_sim <- function(x) {
