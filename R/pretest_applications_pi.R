@@ -4,18 +4,8 @@ source(here::here("R", "pretest_zero_weak_context.R"))
 ## Uniform distribution test ===================================================
 ### Use order of randomized items to recover observed ranking ------------------
 ### First, turn text into item numbers from the reference choice set.
-main <- apps_wrangle(main)
-
-### Collapse "resulting" ranking -----------------------------------------------
-tate1993 <- main %>%
-  mutate(
-    across(
-      anc_tate1993_1:app_tate1993_3,
-      ~ case_when(.x == "-99" ~ "9", TRUE ~ .x)
-    )
-  ) %>%
-  unite("anc_tate1993", sep = "", anc_tate1993_1:anc_tate1993_3) %>%
-  unite("app_tate1993", sep = "", app_tate1993_1:app_tate1993_3) %>%
+main <- apps_wrangle(main) %>%
+  unite_ranking() %>%
   ## Lost 10 obs (10.2%)
   filter(!grepl("9", anc_tate1993) & !grepl("9", app_tate1993))
 

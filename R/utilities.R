@@ -219,9 +219,64 @@ apps_wrangle <- function(x) {
         )
       )
     )
-  
+
   return(out)
 }
 
+unite_ranking <- function(x) {
+  x_raw <- x
+  
+  ## Find all patterns and bring it to its "root," i.e., without the _1
+  var_list <- x %>%
+    select(ends_with("_1")) %>%
+    names() %>%
+    str_sub(end = -3)
+  
+  ## WHY are there five options yet Qualtrics decides to skip 5 and go to 6??
+  if ("app_voting_6" %in% names(x)) {
+    x <- x %>%
+      rename(app_voting_5 = app_voting_6)
+  }
+  
+  x <- x[, sort(names(x))]
 
-
+  ## Perform for each pattern
+  for (v in var_list) {
+    ## Is it 3-option or 4-option?
+    l <- x %>%
+      select(contains(v)) %>%
+      select(-ends_with("_do")) %>%
+      ncol()
+    
+    ## Shows how important variable naming is in Qualtrics :)
+    if (v == "symbols_3_opts") {
+      l <- 3
+    } else if (v == "symbols_4_opts") {
+      l <- 4
+    }
+    
+    x <- x %>%
+      mutate(
+        across(
+          !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l)),
+          ~ case_when(.x == "-99" ~ "9", TRUE ~ .x)
+        )
+      ) %>%
+      unite(
+        !!as.name(v),
+        sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l))
+      )
+  }
+  
+  ## restructure variable order
+  x <- x %>%
+    select(
+      names(x_raw %>% select(start_date:berinsky_screener)), 
+      ## Lucid generated
+      rid, age_2, gender_2, hhi, ethnicity, hispanic, education_2,
+      political_party, region, zip, 
+      everything()
+    )
+  
+  return(x)
+}
