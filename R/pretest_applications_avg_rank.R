@@ -1,24 +1,42 @@
 source(here::here("R", "pretest_import.R"))
 
-# Tate (1993) ==================================================================
-tate1993 <- main %>%
-  filter(!grepl("9", anc_tate1993) & !grepl("9", app_tate1993))
-
-### Parameters for bootstrapping
-N <- nrow(tate1993)
-set.seed(12345)
-indices <- seq(bootstrap_n) %>%
-  map(
-    ~ tibble(
-      !!as.name(paste0("x", .x)) :=
-        sample(seq(N), size = N, replace = TRUE)
-    )
-  ) %>%
-  bind_cols()
-assert_that(!identical(sort(indices$x1), sort(indices$x2)))
-
-### Correct answers to anchor question
-correct <- ifelse(tate1993$anc_tate1993 == "123", 1, 0)
+# Setup ========================================================================
+## Missed the opportunity to see voting, because
+## anchor question was incorrectly administered as a single choice question
+## later, add voting = "12345"
+# sort(c(
+#   `1` = "gender", `2` = "city", `3` = "country", `4` = "socio",
+#   `5` = "rac", `6` = "poli", `7` = "relig"
+# ))
+root_var <- c(tate1993 = "123", identity = "2316574", nelson1997 = "1234")
+prep_list <- root_var %>%
+  imap(
+    ~ {
+      ## For each application, delete partial rankings for both 
+      ## main and anchor variable. Need respondent to answer both fully.
+      dat <- main %>%
+        filter(
+          !grepl("9", !!as.name(paste0("anc_", .y))) &
+            !grepl("9", !!as.name(paste0("app_", .y)))
+        )
+      N <- nrow(dat)
+      
+      ## Indices
+      indices <- seq(bootstrap_n) %>%
+        map(
+          function(y) tibble(
+            !!as.name(paste0("x", y)) :=
+              sample(seq(N), size = N, replace = TRUE)
+          )
+        ) %>%
+        bind_cols()
+      assert_that(!identical(sort(indices$x1), sort(indices$x2)))
+      
+      ## Correct answers to the anchor question
+      correct <- ifelse(dat[[paste0("anc_", .y)]] == .x, 1, 0)
+      return(list(dat = dat, N = N, indices = indices, correct = correct))
+    }
+  )
 
 ## De-Contaminating: avg. rank =================================================
 ### Naive estimator 1: heroic assumption of zero non-sincere responses
@@ -60,7 +78,8 @@ p <- ggplot(ggdat, aes(x = variable, y = mean_val, color = Estimator)) +
     size = 2,
     position = position_dodge(width = 0.4)
   ) + # Reorder by point estimate
-  geom_linerange(aes(x = variable, ymin = low, ymax = up),
+  geom_linerange(
+    aes(x = variable, ymin = low, ymax = up),
     lwd = 1,
     position = position_dodge(width = 0.4)
   ) +
