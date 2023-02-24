@@ -168,19 +168,23 @@ p_list <- ggdat_list %>%
       ) +
       scale_color_manual(values = c("#E69F00", "#999999")) +
       theme_bw() +
-      ylim(-0.1, 4) +
+      ylim(0, 6) +
       ylab("Average Rank") + 
-      xlab("")
+      xlab("") 
   )
 
-pdf_default(p_list$tate1993) +
+pdf_default(p_list$tate1993) + 
+  ylim(1, 3) +
+  geom_hline(yintercept=2, lty="dashed", col="gray")+
   theme(legend.position = "top")
 ggsave(
   here("fig/application_tate1993_bootstrapped_avg_rank.pdf"),
   width = 3.5, height = 2.8
 )
 
-pdf_default(p_list$nelson1997) +
+pdf_default(p_list$nelson1997) + 
+  ylim(1, 4) +
+  geom_hline(yintercept=2.5, lty="dashed", col="gray")+  
   theme(legend.position = "top")
 ggsave(
   here("fig/application_nelson1997_bootstrapped_avg_rank.pdf"),
@@ -188,7 +192,9 @@ ggsave(
 )
 
 ## doubtful, but trying
-pdf_default(p_list$identity) + ylim(1.9, 6) + 
+pdf_default(p_list$identity) + 
+  ylim(1, 6) + 
+  geom_hline(yintercept=3.5, lty="dashed", col="gray")+    
   theme(legend.position = "top")
 ggsave(
   here("fig/application_identity_bootstrapped_avg_rank.pdf"),
