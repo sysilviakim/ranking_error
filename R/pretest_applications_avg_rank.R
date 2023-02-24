@@ -48,11 +48,15 @@ est_debiased_boot <-
 
 ## Quantiles calculated and into a single dataframe
 ggdat <- list(debiased = est_debiased_boot, naive = est_main_naive_boot) %>%
+  map(
+    ## Application-specific labels
+    ~ .x %>% rename(Policy = `1st`, Pork = `2nd`, Service = `3rd`)
+  ) %>%
   avg_rank_bootstrap_quantile()
 
 ### Visualization --------------------------------------------------------------
 p <- ggplot(ggdat, aes(x = variable, y = mean_val, color = Estimator)) +
-  geom_point(aes(x = variable, y = mean_val),
+  geom_point(aes(x = variable, y = mean_val, shape = Estimator),
     size = 2,
     position = position_dodge(width = 0.4)
   ) + # Reorder by point estimate
@@ -64,11 +68,11 @@ p <- ggplot(ggdat, aes(x = variable, y = mean_val, color = Estimator)) +
   theme_bw() +
   ylim(-0.2, 3.5) +
   ylab("Average Rank") +
-  xlab("Tate (1993): Representation") +
-  theme(legend.position = "top")
+  xlab("Tate (1993): Representation")
 
-p
+pdf_default(p) +
+  theme(legend.position = "top")
 ggsave(
-  here("fig/application_tate1993_bootped_avg_rank.pdf"),
+  here("fig/application_tate1993_bootstrapped_avg_rank.pdf"),
   width = 4, height = 4
 )
