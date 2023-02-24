@@ -1,94 +1,9 @@
-source(here::here("R", "utilities.R"))
-library(pwr)
-
-# Data import ==================================================================
-## Lucid Theorem
-df_raw <- read_csv(here(
-  "data", "raw", "pretest.csv"
-)) %>%
-  clean_names() %>%
-  filter(
-    start_date != "Start Date" &
-      start_date != '{"ImportId":"startDate","timeZone":"America/Denver"}'
-  ) %>%
-  mutate(
-    duration_in_seconds = as.numeric(duration_in_seconds),
-    q_recaptcha_score = as.numeric(q_recaptcha_score)
-  )
-
-## Separate out timing variables to actual responses
-timing <- df_raw %>%
-  select(response_id, contains("timing"))
-
-main <- df_raw %>%
-  select(-contains("timing"))
-
-# Sanity checks ================================================================
-## Plausible IP address, captcha scores, and survey duration -------------------
-## Is there an overlap in IP addresses? No? Great.
-assert_that(!any(duplicated(main$ip_address)))
-
-## What is the average duration?
-## Median 9.9 and Mean 12.0
-summary(main$duration_in_seconds) / 60
-
-## I find it implausible to have properly answered this survey under 5 min
-## but will keep them for now
-## 12 out of 100 (12.0%)
-sum(main$duration_in_seconds < 60 * 5)
-main %>%
-  filter(duration_in_seconds < 60 * 5)
-
-## Recaptcha score
-## Filtering for observations with recaptcha score < 0.8
-## One NA value here; not sure why
-## but if you look at the freeform, definitely a bot
-summary(main$q_recaptcha_score)
-sum(main$q_recaptcha_score < 0.8, na.rm = TRUE)
-sum(is.na(main$q_recaptcha_score), na.rm = TRUE)
-## 39 out of 100 (39.0%)
-sum(main$q_recaptcha_score < 1, na.rm = TRUE)
-
-## Ternovski attention filter --------------------------------------------------
-## 19 out of 100 (19.0%)
-sum(main$ternovsky_screener2 != "Extremely interested,Very interested")
-
-## Berinsky attention filter ---------------------------------------------------
-## Berinsky filter more robust; or is it fatigue (already?!)
-## 36 out of 100 (36.0%)
-sum(main$berinsky_screener != "California,New York")
-
-## Filtering after sanity checks -----------------------------------------------
-main <- main %>%
-  filter(q_recaptcha_score >= 0.8)
+source(here::here("R", "pretest_import.R"))
 
 # No-context questions =========================================================
-## Collapse into ranking pattern -----------------------------------------------
-no_context <- main %>%
-  mutate(
-    across(
-      no_context_3_opts_1_1:no_context_4_opts_2_4,
-      ~ case_when(.x == "-99" ~ "9", TRUE ~ .x)
-    )
-  ) %>%
-  unite(
-    "no_context_3opt",
-    sep = "", no_context_3_opts_1_1:no_context_3_opts_1_3
-  ) %>%
-  unite(
-    "no_context_4opt",
-    sep = "", no_context_4_opts_1_1:no_context_4_opts_1_4
-  ) %>%
-  unite(
-    "no_context_4opt_limit",
-    sep = "", no_context_4_opts_2_1:no_context_4_opts_2_4
-  ) %>%
-  select(no_context_3opt, no_context_4opt, no_context_4opt_limit, everything())
-
-## Temporary vector
-x3 <- no_context$no_context_3opt
-x4a <- no_context$no_context_4opt
-x4b <- no_context$no_context_4opt_limit
+x3 <- main$no_context_3_opts_1
+x4a <- main$no_context_4_opts_1
+x4b <- main$no_context_4_opts_2
 
 round(prop.table(table(x3)) * 100, digits = 1)
 round(prop.table(table(x4a)) * 100, digits = 1)

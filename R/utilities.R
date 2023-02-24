@@ -11,6 +11,7 @@ library(Kmisc)
 library(patchwork)
 library(janitor)
 library(assertthat)
+library(pwr)
 
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))
