@@ -21,18 +21,6 @@ assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 ### Naive and de-contaminated estimators of pi ---------------------------------
 ### Naive estimator 1: heroic assumption of zero non-sincere responses
 #### Function to compute average ranks
-avg_rank <- function(var) {
-  out <- var %>%
-    as_tibble() %>%
-    mutate(
-      Policy = as.numeric(substr(value, 1, 1)), # from 1st to 1st
-      Pork = as.numeric(substr(value, 2, 2)), # from 2nd to 2nd
-      Service = as.numeric(substr(value, 3, 3)) # from 3rd to 3rd
-    ) %>%
-    dplyr::select(Policy, Pork, Service) %>%
-    summarise_all(mean)
-  return(out)
-}
 
 est_naive_bootstrap <- seq(bootstrap_n) %>%
   map(~ avg_rank(tate1993$app_tate1993[unlist(indices[, .x])]))
