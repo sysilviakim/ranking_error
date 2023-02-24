@@ -8,7 +8,7 @@ tate1993 <- main %>%
   ## Lost 10 obs (10.2%)
   filter(!grepl("9", anc_tate1993) & !grepl("9", app_tate1993))
 
-### Parameters for bootsrapping
+### Parameters for bootstrapping
 N <- nrow(tate1993)
 set.seed(12345)
 indices <- seq(bootstrap_n) %>%

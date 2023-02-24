@@ -4,10 +4,10 @@ source(here::here("R", "pretest_import.R"))
 ## Missed the opportunity to see voting, because
 ## anchor question was incorrectly administered as a single choice question
 ## later, add voting = "12345"
-# sort(c(
-#   `1` = "gender", `2` = "city", `3` = "country", `4` = "socio",
-#   `5` = "rac", `6` = "poli", `7` = "relig"
-# ))
+sort(c(
+  `1` = "gender", `2` = "city", `3` = "country", `4` = "socio",
+  `5` = "rac", `6` = "poli", `7` = "relig"
+))
 
 ## Truly amazing thing is... that... nobody got the anchor question for
 ## identity (alphabetical) right?! Why?! It is "2316574"!
@@ -99,13 +99,13 @@ ggdat_list <- prep_list %>%
         (est_main_naive_boot - vec_pr_z0 * est_anch_naive_boot) / vec_pr_z1
 
       ## Quantiles calculated and into a single dataframe
-      ggdat <- list(
+      boot_list <- list(
         debiased = est_debiased_boot, naive = est_main_naive_boot
       )
 
       ## Application-specific labels
       if (.y == "tate1993") {
-        ggdat <- ggdat %>%
+        boot_list <- boot_list %>%
           map(
             ~ .x %>%
               rename(
@@ -113,7 +113,7 @@ ggdat_list <- prep_list %>%
               )
           )
       } else if (.y == "identity") {
-        ggdat <- ggdat %>%
+        boot_list <- boot_list %>%
           map(
             ~ .x %>%
               rename(
@@ -122,7 +122,7 @@ ggdat_list <- prep_list %>%
               )
           )
       } else if (.y == "nelson1997") {
-        ggdat <- ggdat %>%
+        boot_list <- boot_list %>%
           map(
             ~ .x %>%
               rename(
@@ -135,9 +135,9 @@ ggdat_list <- prep_list %>%
       }
 
       ## Bootstrap
-      ggdat <- avg_rank_bootstrap_quantile(ggdat)
+      summ <- avg_rank_bootstrap_quantile(boot_list)
       if (.y == "nelson1997") {
-        ggdat <- ggdat %>%
+        summ <- summ %>%
           mutate(
             variable = case_when(
               variable == "Anti-racism" ~ "Anti-\nracism",
@@ -147,12 +147,13 @@ ggdat_list <- prep_list %>%
           )
       }
 
-      return(ggdat)
+      return(list(boot_list = boot_list, summ = summ))
     }
   )
 
 ## Visualization ---------------------------------------------------------------
 p_list <- ggdat_list %>%
+  map("summ") %>%
   map(
     ~ ggplot(.x, aes(x = variable, y = mean_val, color = Estimator)) +
       geom_point(
@@ -193,3 +194,9 @@ ggsave(
   here("fig/application_identity_bootstrapped_avg_rank.pdf"),
   width = 5, height = 2.8
 )
+
+## non-overlapping CI? ---------------------------------------------------------
+## Although, interpret with caution: overlap doesn't necessarily mean yada yada
+ggdat_list$tate1993$summ %>% filter(variable == "Service") ## Yes
+ggdat_list$nelson1997$summ %>% filter(variable == "Anti-\nracism") ## Not quite
+ggdat_list$identity$summ %>% filter(variable == "SES") ## Yes
