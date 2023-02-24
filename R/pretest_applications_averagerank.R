@@ -4,34 +4,7 @@ source(here::here("R", "pretest_zero_weak_context.R"))
 ## Uniform distribution test ===================================================
 ### Use order of randomized items to recover observed ranking ------------------
 ### First, turn text into item numbers from the reference choice set.
-main <- main %>%
-  mutate(
-    across(
-      contains("tate1993"),
-      ~ gsub(
-        paste0(
-          "Federal government that create policies that affect people's lives at the federal level|",
-          "Working in Congress on bills concerning national issues"
-        ),
-        "1",
-        gsub(
-          paste0(
-            "State government that create policies that affect people's lives at the state level|",
-            "Helping people in the district who have personal problems with government"
-          ),
-          "2",
-          gsub(
-            paste0(
-              "Municipal government that create policies that affect people's lives at the city level|",
-              "Making sure the state/district gets its fair share of government money and projects"
-            ),
-            "3",
-            gsub("\\|", "", .x)
-          )
-        )
-      )
-    )
-  )
+main <- apps_wrangle(main)
 
 ### Collapse "resulting" ranking -----------------------------------------------
 tate1993 <- main %>%
@@ -85,8 +58,8 @@ plot_nolegend(pdf_default(plot_dist_ranking(temp)))
 ggsave(here("fig", "pretest-tate1993-anchor.pdf"), width = 4.5, height = 2.8)
 
 #### Yuki comment: These two graphs offer a great test for Assumptions 1-2
-#### It seems to me that one of them (or both) is violated. 
-#### If non-sincere responses have the same distribution, we should able to 
+#### It seems to me that one of them (or both) is violated.
+#### If non-sincere responses have the same distribution, we should able to
 #### observe similar empirical distributions in the two figures
 #### One solution is to randomize the order between the anchor and main Qs
 #### (Let's try it in our pre-test)
@@ -119,17 +92,18 @@ assert_that(!identical(sort(indices$x1), sort(indices$x2)))
 ### Naive and de-contaminated estimators of pi ---------------------------------
 ### Naive estimator 1: heroic assumption of zero non-sincere responses
 #### Function to compute average ranks
-avg_rank <- function(var){
-
-  out <-  var %>%
+avg_rank <- function(var) {
+  out <- var %>%
     as_tibble() %>%
-    mutate(Policy = as.numeric(substr(value, 1,1)),     # from 1st to 1st
-           Pork = as.numeric(substr(value, 2,2)),       # from 2nd to 2nd
-           Service = as.numeric(substr(value, 3,3))) %>%# from 3rd to 3rd
+    mutate(
+      Policy = as.numeric(substr(value, 1, 1)), # from 1st to 1st
+      Pork = as.numeric(substr(value, 2, 2)), # from 2nd to 2nd
+      Service = as.numeric(substr(value, 3, 3))
+    ) %>% # from 3rd to 3rd
     dplyr::select(Policy, Pork, Service) %>%
     summarise_all(mean)
 
-return(out)
+  return(out)
 }
 
 est_naive_bootstrap <- seq(bootstrap_n) %>%
@@ -160,42 +134,48 @@ tbl_pi_n_anc <- do.call(rbind.data.frame, est_pi_anc_naive_bootstrap)
 
 
 ## De-contaminated ranking data
-est_pi_bootstrap <- (tbl_pi - vec_pr_z0*tbl_pi_n_anc)/vec_pr_z1
+est_pi_bootstrap <- (tbl_pi - vec_pr_z0 * tbl_pi_n_anc) / vec_pr_z1
 
 gg_est <- est_pi_bootstrap %>%
-  gather("variable", "value") %>% 
-  group_by(variable) %>% 
-  summarize(mean_val = mean(value), 
-            low = quantile(value, probs = 0.025),
-            up = quantile(value, probs = 0.975)) %>%
+  gather("variable", "value") %>%
+  group_by(variable) %>%
+  summarize(
+    mean_val = mean(value),
+    low = quantile(value, probs = 0.025),
+    up = quantile(value, probs = 0.975)
+  ) %>%
   mutate(Estimator = "De-biased")
 
 gg_raw <- tbl_pi %>%
-  gather("variable", "value") %>% 
-  group_by(variable) %>% 
-  summarize(mean_val = mean(value), 
-            low = quantile(value, probs = 0.025),
-            up = quantile(value, probs = 0.975)) %>%
+  gather("variable", "value") %>%
+  group_by(variable) %>%
+  summarize(
+    mean_val = mean(value),
+    low = quantile(value, probs = 0.025),
+    up = quantile(value, probs = 0.975)
+  ) %>%
   mutate(Estimator = "Naive")
 
 
 ### Combine data ---------------------------------------------------------------
-ggdat <- rbind(gg_est, gg_raw) 
+ggdat <- rbind(gg_est, gg_raw)
 
 
 ### Visualization --------------------------------------------------------------
-p <- ggplot(ggdat, aes(x=variable, y=mean_val, color=Estimator)) +
-           geom_point(aes(x=variable, y=mean_val),
-                      size=2,
-                      position = position_dodge(width = 0.4)) +  # Reorder by point estimate
-           geom_linerange(aes(x=variable, ymin=low, ymax=up), 
-                          lwd=1,
-                          position = position_dodge(width = 0.4)) + 
-           scale_color_manual(values=c("#E69F00", "#999999")) +
-           theme_bw() + 
-           ylim(-0.2,3.5) +
-           ylab("Average Rank") + xlab("Tate (1993): Representation") +
-           theme(legend.position = "top")
+p <- ggplot(ggdat, aes(x = variable, y = mean_val, color = Estimator)) +
+  geom_point(aes(x = variable, y = mean_val),
+    size = 2,
+    position = position_dodge(width = 0.4)
+  ) + # Reorder by point estimate
+  geom_linerange(aes(x = variable, ymin = low, ymax = up),
+    lwd = 1,
+    position = position_dodge(width = 0.4)
+  ) +
+  scale_color_manual(values = c("#E69F00", "#999999")) +
+  theme_bw() +
+  ylim(-0.2, 3.5) +
+  ylab("Average Rank") +
+  xlab("Tate (1993): Representation") +
+  theme(legend.position = "top")
 p
-ggsave(here::here("fig/application_tate1993_bootstrapped_avg_rank.pdf"), width=4, height=4)
-
+ggsave(here::here("fig/application_tate1993_bootstrapped_avg_rank.pdf"), width = 4, height = 4)

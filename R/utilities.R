@@ -187,3 +187,41 @@ permn_augment <- function(tab, J = 4) {
       )
   )
 }
+
+# Applications: wrangle data ===================================================
+apps_wrangle <- function(x) {
+  ## Tate (1993) ---------------------------------------------------------------
+  out <- x %>%
+    mutate(
+      across(
+        contains("tate1993"),
+        ~ gsub(
+          paste0(
+            "Federal government that create policies that affect people's lives at the federal level|",
+            "Working in Congress on bills concerning national issues"
+          ),
+          "1",
+          gsub(
+            paste0(
+              "State government that create policies that affect people's lives at the state level|",
+              "Helping people in the district who have personal problems with government"
+            ),
+            "2",
+            gsub(
+              paste0(
+                "Municipal government that create policies that affect people's lives at the city level|",
+                "Making sure the state/district gets its fair share of government money and projects"
+              ),
+              "3",
+              gsub("\\|", "", .x)
+            )
+          )
+        )
+      )
+    )
+  
+  return(out)
+}
+
+
+
