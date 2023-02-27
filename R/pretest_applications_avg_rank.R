@@ -11,7 +11,7 @@ sort(c(
 
 ## Truly amazing thing is... that... nobody got the anchor question for
 ## identity (alphabetical) right?! Why?! It is "2316574"!
-## Most freq. pattern "3127456" which is 
+## Most freq. pattern "3127456" which is
 ## country - gender - city - religion - socioeconomic - racial - political???
 ## what. am. I. missing. Using 3127456 for now.
 
@@ -169,38 +169,38 @@ p_list <- ggdat_list %>%
       scale_color_manual(values = c("violetred3", "#999999")) +
       theme_bw() +
       xlab("") +
-      ylab("") 
+      ylab("")
   )
 
-pdf_default(p_list$tate1993) + 
-  ylim(1, 3) +
-  geom_hline(yintercept=2, lty="dashed", col="gray")+
-  theme(legend.position = "top")+
+pdf_default(p_list$tate1993) +
+  scale_y_continuous(limits = c(1, 3), breaks = seq(1, 3, by = .5)) + 
+  geom_hline(yintercept = 2, lty = "dashed", col = "gray") +
+  theme(legend.position = "top") +
   coord_flip()
 ggsave(
   here("fig/application_tate1993_bootstrapped_avg_rank.pdf"),
   width = 3.5, height = 2.8
 )
 
-pdf_default(p_list$nelson1997) + 
-  ylim(1, 4) +
-  geom_hline(yintercept=2.5, lty="dashed", col="gray")+  
-  theme(legend.position = "top")+
-  coord_flip()  
+pdf_default(p_list$nelson1997) +
+  scale_y_continuous(limits = c(1, 4), breaks = seq(1, 4, by = .5)) + 
+  geom_hline(yintercept = 2.5, lty = "dashed", col = "gray") +
+  theme(legend.position = "top") +
+  coord_flip()
 ggsave(
   here("fig/application_nelson1997_bootstrapped_avg_rank.pdf"),
   width = 3.5, height = 2.8
 )
 
 ## doubtful, but trying
-pdf_default(p_list$identity) + 
-  ylim(1, 6) + 
-  geom_hline(yintercept=3.5, lty="dashed", col="gray")+    
-  theme(legend.position = "top")+
-  coord_flip()  
+pdf_default(p_list$identity) +
+  scale_y_continuous(limits = c(1, 6), breaks = seq(1, 6, by = .5)) + 
+  geom_hline(yintercept = 3.5, lty = "dashed", col = "gray") +
+  theme(legend.position = "top") +
+  coord_flip()
 ggsave(
   here("fig/application_identity_bootstrapped_avg_rank.pdf"),
-  width = 5, height = 2.8*1.5
+  width = 5, height = 2.8 * 1.5
 )
 
 ## non-overlapping CI? ---------------------------------------------------------
