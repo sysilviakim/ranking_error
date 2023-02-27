@@ -484,3 +484,11 @@ avg_rank_bootstrap_quantile <- function(x) {
       )
     )
 }
+
+cor_and_condprob <- function(df, v1, v2) {
+  ## Something like with(df, table(tate = v1, identity = v2)) fails
+  ## Not much point in printing table, I guess...
+  print(cor(df[[v1]], df[[v2]]))
+  pretty_condprob(df, v1, 1, v2, 1)
+  pretty_condprob(df, v2, 1, v1, 1)
+}

@@ -2,9 +2,7 @@ source(here::here("R", "utilities.R"))
 
 # Data import ==================================================================
 ## Lucid Theorem
-df_raw <- read_csv(here(
-  "data", "raw", "pretest.csv"
-)) %>%
+df_raw <- read_csv(here("data", "raw", "pretest.csv")) %>%
   clean_names() %>%
   filter(
     start_date != "Start Date" &
