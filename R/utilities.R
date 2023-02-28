@@ -16,8 +16,17 @@ library(pwr)
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))
 
-# Parameters ===================================================================
+# Parameters/stored vectors ====================================================
 bootstrap_n <- 1000
+root_var <- c(
+  tate1993 = "123", identity = "1234567", nelson1997 = "1234", voting = "12345"
+)
+## Previously...
+# x <- c(
+#   `1` = "Gender", `2` = "City", `3` = "Country", `4` = "Socioeconomic Status",
+#   `5` = "Racial or Ethnic Group", `6` = "Political Party", `7` = "Religion"
+# )
+# match(x, sort(x)) %>% paste(collapse = "") ## 3127546
 
 # Functions ====================================================================
 ## Turn 1st, 2nd, and 3rd ranking columns into long data format
@@ -254,7 +263,8 @@ recov_ref_ranking <- function(dat, rank_var = "obs") {
 }
 
 ## Plot the distribution of observed rankings (over permutation space)
-plot_dist_ranking <- function(x, J = 3, ylim = 0.3) {
+plot_dist_ranking <- function(x, ylim = 0.3) {
+  J <- nchar(as.character(x$ranking[[1]]))
   x %>%
     ggplot(aes(x = ranking, y = prop, fill = "1")) +
     geom_col() +
