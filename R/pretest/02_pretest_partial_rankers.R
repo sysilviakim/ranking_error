@@ -1,4 +1,5 @@
 source(here::here("R", "utilities.R"))
+# Current comments are from first pretest
 # df_list <- qualtrics_import("pretest-01-sanitized-numeric.csv")
 df_list <- qualtrics_import("pretest-02.csv")
 main <- df_list$main

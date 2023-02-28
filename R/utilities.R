@@ -140,6 +140,7 @@ qualtrics_import <- function(fname) {
   main <- main %>%
     ## Filter out observations with recaptcha score < 0.8
     filter(q_recaptcha_score >= 0.8) %>%
+    mutate(across(ends_with("_do"), ~ gsub("\\|", "", .x))) %>%
     unite_ranking()
 
   ## Create binary indicators for partial rankers + attention check fails
@@ -280,15 +281,6 @@ unite_ranking <- function(x) {
     select(ends_with("_1")) %>%
     names() %>%
     str_sub(end = -3)
-
-  ## WHY are there five options yet Qualtrics decides to skip 5 and go to 6??
-  if ("app_voting_6" %in% names(x)) {
-    x <- x %>%
-      rename(app_voting_5 = app_voting_6)
-  }
-
-  ## No longer needed
-  ## x <- x[, sort(names(x))]
 
   ## Perform for each pattern
   for (v in var_list) {
