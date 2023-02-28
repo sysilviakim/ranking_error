@@ -1,46 +1,14 @@
 source(here::here("R", "utilities.R"))
-df_list <- qualtrics_import("pretest-01-sanitized-numeric.csv")
+# df_list <- qualtrics_import("pretest-01-sanitized-numeric.csv")
+df_list <- qualtrics_import("pretest-02.csv")
 main <- df_list$main
-
-# Create binary indicators =====================================================
-main <- main %>%
-  ## For nonsincerity + attention check fails
-  mutate(
-    ternovsky_fail = case_when(
-      ternovsky_screener2 != "Extremely interested,Very interested" ~ 1,
-      TRUE ~ 0
-    ),
-    berinsky_fail = case_when(
-      berinsky_screener != "California,New York" ~ 1,
-      TRUE ~ 0
-    ),
-    ns_tate = case_when(anc_tate1993 != "123" ~ 1, TRUE ~ 0),
-    ns_nelson = case_when(anc_nelson1997 != "1234" ~ 1, TRUE ~ 0),
-    ns_identity = case_when(anc_identity != "3127456" ~ 1, TRUE ~ 0),
-    ns_voting = case_when(anc_voting != "12345" ~ 1, TRUE ~ 0)
-  ) %>%
-  ## Partial rankers
-  mutate(
-    partial_tate_main = case_when(grepl("9", app_tate1993) ~ 1, TRUE ~ 0),
-    partial_tate_anc = case_when(grepl("9", anc_tate1993) ~ 1, TRUE ~ 0),
-    partial_nelson_main = case_when(grepl("9", app_nelson1997) ~ 1, TRUE ~ 0),
-    partial_nelson_anc = case_when(grepl("9", anc_nelson1997) ~ 1, TRUE ~ 0),
-    partial_identity_main = case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
-    partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
-    partial_voting_main = case_when(grepl("9", app_voting) ~ 1, TRUE ~ 0),
-    partial_voting_anc = case_when(grepl("9", anc_voting) ~ 1, TRUE ~ 0)
-  )
 
 # Correlation between attention filters ========================================
 ## Between two attention filters? ----------------------------------------------
-with(main, table(ternovsky = ternovsky_fail, berinsky = berinsky_fail))
-cor(main$ternovsky_fail, main$berinsky_fail)
-# 0.446
-pretty_condprob(main, "ternovsky_fail", 1, "berinsky_fail", 1)
+cor_and_condprob(main, "ternovsky_fail", "berinsky_fail")
+# [1] 0.4462482
 # Cond. on berinsky_fail == 1, Pr(ternovsky_fail == 1) is 42.9%
-pretty_condprob(main, "berinsky_fail", 1, "ternovsky_fail", 1)
 # Cond. on ternovsky_fail == 1, Pr(berinsky_fail == 1) is 78.9%
-# So definitely correlated and respondents found Berinsky filter harder
 
 ## Attention filters x nonsincerity? -------------------------------------------
 ## Conclusion: With some heterogeneity,
