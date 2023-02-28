@@ -5,10 +5,11 @@ source(here::here("R", "pretest_import.R"))
 ## anchor question was incorrectly administered as a single choice question
 ## later, add voting = "12345"
 x <- c(
-  `1` = "gender", `2` = "city", `3` = "country", `4` = "socio",
-  `5` = "rac", `6` = "poli", `7` = "relig"
+  `1` = "Gender", `2` = "City", `3` = "Country", `4` = "Socioeconomic Status",
+  `5` = "Racial or Ethnic Group", `6` = "Political Party", `7` = "Religion"
 )
-match(x, sort(x)) ## this is how you get the "correct" permutation. 3127456
+## this is how you get the "correct" permutation. 3127456
+match(x, sort(x)) %>% paste(collapse = "")
 root_var <- c(tate1993 = "123", identity = "3127456", nelson1997 = "1234")
 prep_list <- root_var %>%
   imap(

@@ -2,7 +2,7 @@ source(here::here("R", "utilities.R"))
 
 # Data import ==================================================================
 ## Lucid Theorem
-df_raw <- read_csv(here("data", "raw", "pretest.csv")) %>%
+df_raw <- read_csv(here("data", "raw", "pretest-01-sanitized.csv")) %>%
   clean_names() %>%
   filter(
     start_date != "Start Date" &
@@ -64,3 +64,12 @@ sum(main$berinsky_screener != "California,New York")
 # Wrangle and unite into ranking pattern =======================================
 main <- text_to_item_position(main) %>%
   unite_ranking()
+
+# Lucid-generated demographics sanity check ====================================
+## Age
+main %>%
+  filter(age != age_2) %>%
+  select(age, age_2) %>%
+  View()
+
+## Some very odd observations

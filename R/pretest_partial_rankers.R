@@ -227,3 +227,5 @@ cor_and_condprob(main, "partial_identity_main", "partial_identity_anc")
 cor_and_condprob(main, "partial_voting_main", "partial_voting_anc")
 
 ## Any demographic correlations? -----------------------------------------------
+
+## Duration of completion? -----------------------------------------------------
