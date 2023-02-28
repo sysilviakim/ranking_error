@@ -147,14 +147,38 @@ qualtrics_import <- function(fname) {
   main <- main %>%
     ## For nonsincerity + attention check fails
     mutate(
-      ternovsky_fail = case_when(
-        ternovsky_screener2 != "1,2" ~ 1,
-        TRUE ~ 0
+      ternovsky_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
+      berinsky_fail = case_when(berinsky_screener != "4,12" ~ 1, TRUE ~ 0),
+      ## nonsincere: weak context symbols
+      ns_symbol_3opts = case_when(symbols_3_opts_known == "123" ~ 1, TRUE ~ 0),
+      ns_symbol_4opts = case_when(symbols_4_opts_known == "1234" ~ 1, TRUE ~ 0),
+      ## nonsincere: weak context party ID
+      pid3 = case_when(
+        pid7 %in% c("1", "2", "3") ~ "Dem",
+        pid7 %in% c("5") ~ "Ind",
+        pid7 %in% c("6", "7", "8") ~ "Rep",
+        TRUE ~ "Not sure"
       ),
-      berinsky_fail = case_when(
-        berinsky_screener != "4,12" ~ 1,
-        TRUE ~ 0
+      ## Not easy to code. For now, allow "not sure" to be entirely sincere
+      ns_party_3cand = case_when(
+        ## If Dem, Dem - Ind - Rep, and if Rep, Rep - Ind - Dem
+        pid3 == "Dem" & party_id_3_cands == "132" ~ 0,
+        pid3 == "Rep" & party_id_3_cands == "231" ~ 0,
+        pid3 == "Ind" & substr(party_id_3_cands, 1, 1) == "3" ~ 0,
+        pid3 == "Not sure" ~ 0,
+        TRUE ~ 1
       ),
+      ## For 2-party context, allow "independent" and "not sure" to be sincere
+      ns_party_4cand = case_when(
+        ## If Dem, Dem - Ind - Rep
+        pid3 == "Dem" & 
+          party_id_4_cands %in% c("1234", "2134", "1243", "2143") ~ 0,
+        pid3 == "Rep" & 
+          party_id_4_cands %in% c("3412", "3421", "4312", "4321") ~ 0,
+        pid3 == "Ind" | pid3 == "Not sure" ~ 0,
+        TRUE ~ 1
+      ),
+      ## nonsincere: applications
       ns_tate = case_when(anc_tate1993 != "123" ~ 1, TRUE ~ 0),
       ns_nelson = case_when(anc_nelson1997 != "1234" ~ 1, TRUE ~ 0),
       ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
@@ -170,7 +194,23 @@ qualtrics_import <- function(fname) {
       partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
       partial_voting_main = case_when(grepl("9", app_voting) ~ 1, TRUE ~ 0),
       partial_voting_anc = case_when(grepl("9", anc_voting) ~ 1, TRUE ~ 0)
-    )
+    ) %>%
+    ## Transitivity (only relevant in pretest 1: 35% violated)
+    ## pretest 2 has only given respondent one of 3 or 4 symbols question
+    ## This is available in the symbols question. 
+    ## For example, if they said they prefer triangle > square > pentagon,
+    ## the addition of hexagon as an option should not reverse square > triangle
+    ## So that if the answer to symbols_3_opts was 321, with the addition of 4,
+    ## we should only allow 4321, 3421, 3241, or 3214. 
+    rowwise() %>%
+    mutate(
+      transitivity_violate = case_when(
+        is.na(symbols_4_opts) ~ NA_real_,
+        symbols_4_opts %in% transitivity_pattern(symbols_3_opts) ~ 1,
+        TRUE ~ 0
+      )
+    ) %>%
+    ungroup()
 
   return(list(main = main, timing = timing, raw = df_raw))
 }
@@ -374,10 +414,14 @@ cor_and_condprob <- function(df, v1, v2) {
 }
 
 transitivity_pattern <- function(x) {
-  split_x <- substring(x, seq(nchar(x)), seq(nchar(x)))
-  out <- seq(0, length(split_x)) %>%
-    map(~ append(split_x, as.character(length(split_x) + 1), .x)) %>%
-    map(~ paste(.x, collapse = "")) %>%
-    unlist()
+  if (is.na(x)) {
+    out <- NA_character_
+  } else {
+    split_x <- substring(x, seq(nchar(x)), seq(nchar(x)))
+    out <- seq(0, length(split_x)) %>%
+      map(~ append(split_x, as.character(length(split_x) + 1), .x)) %>%
+      map(~ paste(.x, collapse = "")) %>%
+      unlist()
+  }
   return(out)
 }
