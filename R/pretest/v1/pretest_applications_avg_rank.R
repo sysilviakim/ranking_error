@@ -1,4 +1,4 @@
-source(here::here("R", "pretest_import.R"))
+source(here::here("R", "pretest", "v1", "pretest_import.R"))
 
 # Setup ========================================================================
 ## Missed the opportunity to see voting, because
@@ -8,9 +8,9 @@ x <- c(
   `1` = "Gender", `2` = "City", `3` = "Country", `4` = "Socioeconomic Status",
   `5` = "Racial or Ethnic Group", `6` = "Political Party", `7` = "Religion"
 )
-## this is how you get the "correct" permutation. 3127456
-match(x, sort(x)) %>% paste(collapse = "")
-root_var <- c(tate1993 = "123", identity = "3127456", nelson1997 = "1234")
+## this is how you get the "correct" permutation.
+match(x, sort(x)) %>% paste(collapse = "") ## 3127546
+root_var <- c(tate1993 = "123", identity = "3127546", nelson1997 = "1234")
 prep_list <- root_var %>%
   imap(
     ~ {
@@ -168,7 +168,7 @@ p_list <- ggdat_list %>%
   )
 
 pdf_default(p_list$tate1993) +
-  scale_y_continuous(limits = c(1, 3), breaks = seq(1, 3, by = .5)) + 
+  scale_y_continuous(limits = c(1, 3), breaks = seq(1, 3, by = .5)) +
   geom_hline(yintercept = 2, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
   coord_flip()
@@ -178,7 +178,7 @@ ggsave(
 )
 
 pdf_default(p_list$nelson1997) +
-  scale_y_continuous(limits = c(1, 4), breaks = seq(1, 4, by = .5)) + 
+  scale_y_continuous(limits = c(1, 4), breaks = seq(1, 4, by = .5)) +
   geom_hline(yintercept = 2.5, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
   coord_flip()
@@ -189,7 +189,7 @@ ggsave(
 
 ## doubtful, but trying
 pdf_default(p_list$identity) +
-  scale_y_continuous(limits = c(1, 6), breaks = seq(1, 6, by = .5)) + 
+  scale_y_continuous(limits = c(1, 6), breaks = seq(1, 6, by = .5)) +
   geom_hline(yintercept = 3.5, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
   coord_flip()

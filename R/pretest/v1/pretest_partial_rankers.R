@@ -1,4 +1,4 @@
-source(here::here("R", "pretest_import.R"))
+source(here::here("R", "pretest", "v1", "pretest_import.R"))
 
 # Create binary indicators =====================================================
 main <- main %>%
@@ -118,8 +118,8 @@ cor_and_condprob(main, "ns_nelson", "ns_voting")
 cor_and_condprob(main, "ns_identity", "ns_voting")
 
 # Partial rankers ==============================================================
-## Who are the partial rankers? 
-## Can inattention predict partial ranking? 
+## Who are the partial rankers?
+## Can inattention predict partial ranking?
 
 ## Attention filter x partial ranking? -----------------------------------------
 ### Tate 1993 main question ----------------------------------------------------

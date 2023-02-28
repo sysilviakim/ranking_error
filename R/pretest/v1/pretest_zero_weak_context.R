@@ -1,4 +1,4 @@
-source(here::here("R", "pretest_import.R"))
+source(here::here("R", "pretest", "v1", "pretest_import.R"))
 
 # No-context questions =========================================================
 x3 <- main$no_context_3_opts_1
@@ -20,15 +20,15 @@ tab4a <- table(x4a[!grepl("9", x4a)])
 tab4b <- table(x4b[!grepl("9", x4b)])
 
 round(prop.table(tab3) * 100, digits = 1)
-#  123  132  213  231  312  321 
+#  123  132  213  231  312  321
 # 10.7 16.7 14.3 17.9 16.7 23.8
 
 ## Perhaps respondent fatigue?
 ## 4-option constrained to top 3 is similarly skewed towards 1-2-3-missing
 round(prop.table(tab4a) * 100, digits = 1)
-# 1234 1243 1324 1423 1432 2134 2143 2314 2341 3124 3214 3241 3412 3421 4132 
-# 60.0  1.2  9.4  1.2  2.4  5.9  2.4  1.2  1.2  1.2  1.2  1.2  1.2  1.2  1.2 
-# 4213 4231 4321 
+# 1234 1243 1324 1423 1432 2134 2143 2314 2341 3124 3214 3241 3412 3421 4132
+# 60.0  1.2  9.4  1.2  2.4  5.9  2.4  1.2  1.2  1.2  1.2  1.2  1.2  1.2  1.2
+# 4213 4231 4321
 #  3.5  2.4  2.4
 
 ## This assertion is necessary but does not apply to this small pretest sample

@@ -1,4 +1,4 @@
-source(here::here("R", "pretest_import.R"))
+source(here::here("R", "pretest", "v1", "pretest_import.R"))
 
 # Tate (1993) ==================================================================
 ## Uniform distribution test ===================================================
@@ -6,7 +6,7 @@ source(here::here("R", "pretest_import.R"))
 ### First, turn text into item numbers from the reference choice set.
 tate1993 <- main %>%
   ## Lost 10 obs out of 100
-  ## Note: when not doing uniformity tests but simply do 
+  ## Note: when not doing uniformity tests but simply do
   ## de-contamination, no need to filter for grepl("9", anc_tate1993)
   filter(!grepl("9", anc_tate1993) & !grepl("9", app_tate1993))
 

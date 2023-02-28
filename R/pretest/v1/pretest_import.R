@@ -1,8 +1,8 @@
-source(here::here("R", "utilities.R"))
+source(here::here("R", "pretest", "v1", "utilities.R"))
 
 # Data import ==================================================================
 ## Lucid Theorem
-df_raw <- read_csv(here("data", "raw", "pretest-01-sanitized.csv")) %>%
+df_raw <- read_csv(here("data", "raw", "pretest-02.csv")) %>%
   clean_names() %>%
   filter(
     start_date != "Start Date" &
@@ -15,10 +15,10 @@ df_raw <- read_csv(here("data", "raw", "pretest-01-sanitized.csv")) %>%
 
 ## Separate out timing variables to actual responses
 timing <- df_raw %>%
-  select(response_id, contains("timing"))
+  select(response_id, contains("timing"), -contains("time"))
 
 main <- df_raw %>%
-  select(-contains("timing"))
+  select(-contains("timing"), -contains("time"))
 
 # Sanity checks ================================================================
 ## Plausible IP address, captcha scores, and survey duration -------------------
