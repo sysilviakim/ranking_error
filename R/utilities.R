@@ -44,38 +44,38 @@ loop_stated_rank_preference <- function(true_rank, choice) {
     pattern2 = integer(),
     pattern3 = integer()
   )
-
+  
   # For each i-th unit in true_rank
   for (i in 1:dim(true_rank)[1]) {
     # Cast numbers to alphabets
     vec_pref <- true_rank[i, ] %>%
       pivot_longer(cols = c(a, b, c), names_to = "variable")
     vec_pref # Check
-
+    
     # Alphabet unit i sees in each position
     position1 <- choice[i, 1] %>% pull()
     position2 <- choice[i, 2] %>% pull()
     position3 <- choice[i, 3] %>% pull()
-
+    
     # Assign a value (rank) for each position
     # given the alphabet unit i sees there
     pattern1 <- vec_pref$value[vec_pref$variable == position1]
     pattern2 <- vec_pref$value[vec_pref$variable == position2]
     pattern3 <- vec_pref$value[vec_pref$variable == position3]
-
+    
     # Combine the result
     comb <- data.frame(
       pattern1 = pattern1,
       pattern2 = pattern2,
       pattern3 = pattern3
     )
-
+    
     # Stack in the storage
     obs_pattern <- rbind(obs_pattern, comb)
-
+    
     # End of i loop
   }
-
+  
   obs_pattern <- obs_pattern %>% unite(obs_rank, sep = "")
   return(as_tibble(obs_pattern))
 }
@@ -110,7 +110,7 @@ recov_ref_ranking <- function(dat, rank_var = "obs") {
           ## V1, V2, and V3 are randomized choice order given to respondent
           select(first, second, third, contains("V")) %>%
           pivot_longer(cols = c(V1, V2, V3), names_to = "variable")
-
+        
         ## Recovering the true ranking given the reference set (abc)
         ## case_when is faster outside a pipe
         temp$recover <- case_when(
@@ -118,7 +118,7 @@ recov_ref_ranking <- function(dat, rank_var = "obs") {
           temp$variable == "V2" ~ temp$second,
           temp$variable == "V3" ~ temp$third
         )
-
+        
         temp <- temp %>%
           arrange(value) %>%
           .$recover %>%
@@ -157,7 +157,7 @@ chisq_power <- function(tab, power = 0.95) {
   ## Chi-square test
   message("The chi-square test result is:")
   print(chisq.test(tab, p = rep(1 / length(tab), length(tab))))
-
+  
   ## Power test. We could do the power = 0.8, sure
   P0 <- rep(1 / length(tab), length(tab))
   P1 <- as.numeric(prop.table(tab))
@@ -185,9 +185,9 @@ permn_augment <- function(tab, J = 4) {
     enframe(tab) %>%
       bind_rows(
         ., tibble(name = permn(seq(J)) %>%
-          map(~ paste(.x, collapse = "")) %>%
-          unlist() %>%
-          setdiff(., names(tab)), value = as.table(0))
+                    map(~ paste(.x, collapse = "")) %>%
+                    unlist() %>%
+                    setdiff(., names(tab)), value = as.table(0))
       )
   )
 }
@@ -201,25 +201,25 @@ text_to_item_position <- function(x) {
       -contains("no_context_4_opts_1_do"),
       -contains("no_context_4_opts_2_do")
     )
-
+  
   ## Identity ------------------------------------------------------------------
   x <- x %>%
     mutate(
       across(
         contains("identity"),
         ~ gsub(
-          "Gender", "1",
+          "City", "1",
           gsub(
-            "City", "2",
+            "Economic Status", "2",
             gsub(
-              "Country", "3",
+              "Gender", "3",
               gsub(
-                "Socioeconomic Status", "4",
+                "Political Party", "4",
                 gsub(
-                  "Racial or Ethnic Group", "5",
+                  "Race or Ethnicity", "5",
                   gsub(
-                    "Political Party", "6",
-                    gsub("Religion", "7", gsub("\\|", "", .x))
+                    "Religion", "6",
+                    gsub("United States", "7", gsub("\\|", "", .x))
                   )
                 )
               )
@@ -228,7 +228,7 @@ text_to_item_position <- function(x) {
         ),
       )
     )
-
+  
   ## Nelson (1997) -------------------------------------------------------------
   x <- x %>%
     mutate(
@@ -265,36 +265,36 @@ text_to_item_position <- function(x) {
         )
       )
     )
-
+  
   ## Voting Mode ---------------------------------------------------------------
   x <- x %>%
     mutate(
       across(
         contains("voting"),
         ~ gsub(
-          "Primary elections|Vote in-person on Election Day",
+          "Primary elections \\(Mar-May 2024\\)|Vote in-person on Election Day",
           "1",
           gsub(
             paste0(
-              "Nomination of primary winners as candidates in the general election|",
+              "Nomination of primary winners as general election candidates \\(after primaries\\)|",
               "Vote in-person during the early voting period"
             ),
             "2",
             gsub(
               paste0(
-                "Early Voting starts \\(Before Election Day\\)|",
+                "Early voting starts \\(Oct 2024\\)|",
                 "Send a mail ballot by post"
               ),
               "3",
               gsub(
                 paste0(
-                  "Election Day \\(November 5, 2024\\)|",
+                  "Election Day \\(Nov 5, 2024\\)|",
                   "Drop a mail ballot at a dropbox or polling place"
                 ),
                 "4",
                 gsub(
                   paste0(
-                    "Winner of general election sworn in as the next president|",
+                    "Winner of general election sworn in as the next president \\(after Election Day\\)|",
                     "Not vote"
                   ),
                   "5",
@@ -306,7 +306,7 @@ text_to_item_position <- function(x) {
         )
       )
     )
-
+  
   ## Partisanship --------------------------------------------------------------
   x <- x %>%
     mutate(
@@ -321,7 +321,7 @@ text_to_item_position <- function(x) {
         )
       )
     )
-
+  
   x <- x %>%
     mutate(
       across(
@@ -338,7 +338,7 @@ text_to_item_position <- function(x) {
         )
       )
     )
-
+  
   ## Symbols -------------------------------------------------------------------
   x <- x %>%
     mutate(
@@ -356,7 +356,7 @@ text_to_item_position <- function(x) {
         )
       )
     )
-
+  
   ## Tate (1993) ---------------------------------------------------------------
   x <- x %>%
     mutate(
@@ -386,28 +386,28 @@ text_to_item_position <- function(x) {
         )
       )
     )
-
+  
   return(x)
 }
 
 ## Collapse into resulting ranking pattern in the permutation space
 unite_ranking <- function(x) {
   x_raw <- x
-
+  
   ## Find all patterns and bring it to its "root," i.e., without the _1
   var_list <- x %>%
     select(ends_with("_1")) %>%
     names() %>%
     str_sub(end = -3)
-
+  
   ## WHY are there five options yet Qualtrics decides to skip 5 and go to 6??
   if ("app_voting_6" %in% names(x)) {
     x <- x %>%
       rename(app_voting_5 = app_voting_6)
   }
-
+  
   x <- x[, sort(names(x))]
-
+  
   ## Perform for each pattern
   for (v in var_list) {
     ## Is it 3-option or 4-option?
@@ -415,14 +415,14 @@ unite_ranking <- function(x) {
       select(contains(v)) %>%
       select(-ends_with("_do")) %>%
       ncol()
-
+    
     ## Shows how important variable naming is in Qualtrics :)
     if (v == "symbols_3_opts") {
       l <- 3
     } else if (v == "symbols_4_opts") {
       l <- 4
     }
-
+    
     x <- x %>%
       mutate(
         across(
@@ -435,7 +435,7 @@ unite_ranking <- function(x) {
         sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l))
       )
   }
-
+  
   ## restructure variable order
   x <- x %>%
     select(
@@ -445,7 +445,7 @@ unite_ranking <- function(x) {
       political_party, region, zip,
       everything()
     )
-
+  
   return(x)
 }
 
