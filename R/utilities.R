@@ -44,38 +44,38 @@ loop_stated_rank_preference <- function(true_rank, choice) {
     pattern2 = integer(),
     pattern3 = integer()
   )
-  
+
   # For each i-th unit in true_rank
   for (i in 1:dim(true_rank)[1]) {
     # Cast numbers to alphabets
     vec_pref <- true_rank[i, ] %>%
       pivot_longer(cols = c(a, b, c), names_to = "variable")
     vec_pref # Check
-    
+
     # Alphabet unit i sees in each position
     position1 <- choice[i, 1] %>% pull()
     position2 <- choice[i, 2] %>% pull()
     position3 <- choice[i, 3] %>% pull()
-    
+
     # Assign a value (rank) for each position
     # given the alphabet unit i sees there
     pattern1 <- vec_pref$value[vec_pref$variable == position1]
     pattern2 <- vec_pref$value[vec_pref$variable == position2]
     pattern3 <- vec_pref$value[vec_pref$variable == position3]
-    
+
     # Combine the result
     comb <- data.frame(
       pattern1 = pattern1,
       pattern2 = pattern2,
       pattern3 = pattern3
     )
-    
+
     # Stack in the storage
     obs_pattern <- rbind(obs_pattern, comb)
-    
+
     # End of i loop
   }
-  
+
   obs_pattern <- obs_pattern %>% unite(obs_rank, sep = "")
   return(as_tibble(obs_pattern))
 }
@@ -95,6 +95,85 @@ pivot_join <- function(x, y) {
   return(pivot_sim(left_join(y, x)) %>% select(id, obs_rank, item, rank))
 }
 
+## import and wrangle Qualtrics data
+qualtrics_import <- function(fname) {
+  df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE) %>%
+    clean_names() %>%
+    filter(
+      start_date != "Start Date" &
+        start_date != '{"ImportId":"startDate","timeZone":"America/Denver"}'
+    ) %>%
+    mutate(
+      duration_in_seconds = as.numeric(duration_in_seconds),
+      q_recaptcha_score = as.numeric(q_recaptcha_score)
+    ) %>%
+    rename(rcv_support = rc_vsupport_1)
+
+  ## Status needs to be "IP Address" which is 0.
+  temp <- df_raw %>%
+    filter(status == "0")
+
+  ## If IP addresses overlap, that's a major red flag so stop
+  ## assert_that(!any(duplicated(main$ip_address)))
+  if (any(duplicated(temp$ip_address))) {
+    stop("There are duplicates in IP addresses. Please investigate.")
+  }
+
+  message(paste0("We have total ", nrow(temp), " respondents."))
+
+  ## Separate out timing variables to actual responses
+  timing <- temp %>%
+    select(response_id, contains("timing"), -contains("time"))
+
+  main <- temp %>%
+    select(-contains("timing"), -contains("time"))
+
+  x <- sum(main$q_recaptcha_score < 0.8, na.rm = TRUE) +
+    sum(is.na(main$q_recaptcha_score))
+  message(
+    x, " out of ", nrow(main), ", or ",
+    paste0(
+      round(x / nrow(main) * 100, digits = 1),
+      "% of rows have recaptcha score less than 0.8."
+    )
+  )
+  main <- main %>%
+    ## Filter out observations with recaptcha score < 0.8
+    filter(q_recaptcha_score >= 0.8) %>%
+    unite_ranking()
+
+  ## Create binary indicators for partial rankers + attention check fails
+  main <- main %>%
+    ## For nonsincerity + attention check fails
+    mutate(
+      ternovsky_fail = case_when(
+        ternovsky_screener2 != "1,2" ~ 1,
+        TRUE ~ 0
+      ),
+      berinsky_fail = case_when(
+        berinsky_screener != "4,12" ~ 1,
+        TRUE ~ 0
+      ),
+      ns_tate = case_when(anc_tate1993 != "123" ~ 1, TRUE ~ 0),
+      ns_nelson = case_when(anc_nelson1997 != "1234" ~ 1, TRUE ~ 0),
+      ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
+      ns_voting = case_when(anc_voting != "12345" ~ 1, TRUE ~ 0)
+    ) %>%
+    ## Partial rankers
+    mutate(
+      partial_tate_main = case_when(grepl("9", app_tate1993) ~ 1, TRUE ~ 0),
+      partial_tate_anc = case_when(grepl("9", anc_tate1993) ~ 1, TRUE ~ 0),
+      partial_nelson_main = case_when(grepl("9", app_nelson1997) ~ 1, TRUE ~ 0),
+      partial_nelson_anc = case_when(grepl("9", anc_nelson1997) ~ 1, TRUE ~ 0),
+      partial_identity_main = case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
+      partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
+      partial_voting_main = case_when(grepl("9", app_voting) ~ 1, TRUE ~ 0),
+      partial_voting_anc = case_when(grepl("9", anc_voting) ~ 1, TRUE ~ 0)
+    )
+
+  return(list(main = main, timing = timing, raw = df_raw))
+}
+
 ## Recover the reference (true) ranking
 ## with respect to the reference item set (here: {abc})
 recov_ref_ranking <- function(dat, rank_var = "obs") {
@@ -110,7 +189,7 @@ recov_ref_ranking <- function(dat, rank_var = "obs") {
           ## V1, V2, and V3 are randomized choice order given to respondent
           select(first, second, third, contains("V")) %>%
           pivot_longer(cols = c(V1, V2, V3), names_to = "variable")
-        
+
         ## Recovering the true ranking given the reference set (abc)
         ## case_when is faster outside a pipe
         temp$recover <- case_when(
@@ -118,7 +197,7 @@ recov_ref_ranking <- function(dat, rank_var = "obs") {
           temp$variable == "V2" ~ temp$second,
           temp$variable == "V3" ~ temp$third
         )
-        
+
         temp <- temp %>%
           arrange(value) %>%
           .$recover %>%
@@ -157,7 +236,7 @@ chisq_power <- function(tab, power = 0.95) {
   ## Chi-square test
   message("The chi-square test result is:")
   print(chisq.test(tab, p = rep(1 / length(tab), length(tab))))
-  
+
   ## Power test. We could do the power = 0.8, sure
   P0 <- rep(1 / length(tab), length(tab))
   P1 <- as.numeric(prop.table(tab))
@@ -185,229 +264,32 @@ permn_augment <- function(tab, J = 4) {
     enframe(tab) %>%
       bind_rows(
         ., tibble(name = permn(seq(J)) %>%
-                    map(~ paste(.x, collapse = "")) %>%
-                    unlist() %>%
-                    setdiff(., names(tab)), value = as.table(0))
+          map(~ paste(.x, collapse = "")) %>%
+          unlist() %>%
+          setdiff(., names(tab)), value = as.table(0))
       )
   )
-}
-
-# Text options wrangle to number ===============================================
-text_to_item_position <- function(x) {
-  ## For no-context questions, the presented order doesn't matter --------------
-  x <- x %>%
-    select(
-      -contains("no_context_3_opts_1_do"),
-      -contains("no_context_4_opts_1_do"),
-      -contains("no_context_4_opts_2_do")
-    )
-  
-  ## Identity ------------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("identity"),
-        ~ gsub(
-          "City", "1",
-          gsub(
-            "Economic Status", "2",
-            gsub(
-              "Gender", "3",
-              gsub(
-                "Political Party", "4",
-                gsub(
-                  "Race or Ethnicity", "5",
-                  gsub(
-                    "Religion", "6",
-                    gsub("United States", "7", gsub("\\|", "", .x))
-                  )
-                )
-              )
-            )
-          )
-        ),
-      )
-    )
-  
-  ## Nelson (1997) -------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("nelson1997"),
-        ~ gsub(
-          paste0(
-            "Print media|",
-            "A person's freedom to speak and hear what he or she wants should be protected"
-          ),
-          "1",
-          gsub(
-            paste0(
-              "Television|",
-              "Campus and workplace safety and security should be protected"
-            ),
-            "2",
-            gsub(
-              paste0(
-                "The Internet|",
-                "School or workplace's reputation should be protected"
-              ),
-              "3",
-              gsub(
-                paste0(
-                  "Social media|Social Media|", ## corrected capitalization
-                  "Racism and prejudice should be opposed"
-                ),
-                "4",
-                gsub("\\|", "", .x)
-              )
-            )
-          )
-        )
-      )
-    )
-  
-  ## Voting Mode ---------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("voting"),
-        ~ gsub(
-          "Primary elections \\(Mar-May 2024\\)|Vote in-person on Election Day",
-          "1",
-          gsub(
-            paste0(
-              "Nomination of primary winners as general election candidates \\(after primaries\\)|",
-              "Vote in-person during the early voting period"
-            ),
-            "2",
-            gsub(
-              paste0(
-                "Early voting starts \\(Oct 2024\\)|",
-                "Send a mail ballot by post"
-              ),
-              "3",
-              gsub(
-                paste0(
-                  "Election Day \\(Nov 5, 2024\\)|",
-                  "Drop a mail ballot at a dropbox or polling place"
-                ),
-                "4",
-                gsub(
-                  paste0(
-                    "Winner of general election sworn in as the next president \\(after Election Day\\)|",
-                    "Not vote"
-                  ),
-                  "5",
-                  gsub("\\|", "", .x)
-                )
-              )
-            )
-          )
-        )
-      )
-    )
-  
-  ## Partisanship --------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("party_id_3_cands"),
-        ~ gsub(
-          "Registered Democrat", "1",
-          gsub(
-            "Registered Republican", "2",
-            gsub("Independent", "3", gsub("\\|", "", .x))
-          )
-        )
-      )
-    )
-  
-  x <- x %>%
-    mutate(
-      across(
-        contains("party_id_4_cands"),
-        ~ gsub(
-          "Registered Democrat 1", "1",
-          gsub(
-            "Registered Democrat 2", "2",
-            gsub(
-              "Registered Republican 1", "3",
-              gsub("Registered Republican 2", "4", gsub("\\|", "", .x))
-            )
-          )
-        )
-      )
-    )
-  
-  ## Symbols -------------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("symbol"),
-        ~ gsub(
-          "△", "1",
-          gsub(
-            "□", "2",
-            gsub(
-              "⬠", "3",
-              gsub("⬡", "4", gsub("\\|", "", .x))
-            )
-          )
-        )
-      )
-    )
-  
-  ## Tate (1993) ---------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("tate1993"),
-        ~ gsub(
-          paste0(
-            "Federal government that create policies that affect people's lives at the federal level|",
-            "Working in Congress on bills concerning national issues"
-          ),
-          "1",
-          gsub(
-            paste0(
-              "State government that create policies that affect people's lives at the state level|",
-              "Helping people in the district who have personal problems with government"
-            ),
-            "2",
-            gsub(
-              paste0(
-                "Municipal government that create policies that affect people's lives at the city level|",
-                "Making sure the state/district gets its fair share of government money and projects"
-              ),
-              "3",
-              gsub("\\|", "", .x)
-            )
-          )
-        )
-      )
-    )
-  
-  return(x)
 }
 
 ## Collapse into resulting ranking pattern in the permutation space
 unite_ranking <- function(x) {
   x_raw <- x
-  
+
   ## Find all patterns and bring it to its "root," i.e., without the _1
   var_list <- x %>%
     select(ends_with("_1")) %>%
     names() %>%
     str_sub(end = -3)
-  
+
   ## WHY are there five options yet Qualtrics decides to skip 5 and go to 6??
   if ("app_voting_6" %in% names(x)) {
     x <- x %>%
       rename(app_voting_5 = app_voting_6)
   }
-  
-  x <- x[, sort(names(x))]
-  
+
+  ## No longer needed
+  ## x <- x[, sort(names(x))]
+
   ## Perform for each pattern
   for (v in var_list) {
     ## Is it 3-option or 4-option?
@@ -415,14 +297,14 @@ unite_ranking <- function(x) {
       select(contains(v)) %>%
       select(-ends_with("_do")) %>%
       ncol()
-    
+
     ## Shows how important variable naming is in Qualtrics :)
     if (v == "symbols_3_opts") {
       l <- 3
     } else if (v == "symbols_4_opts") {
       l <- 4
     }
-    
+
     x <- x %>%
       mutate(
         across(
@@ -433,9 +315,15 @@ unite_ranking <- function(x) {
       unite(
         !!as.name(v),
         sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l))
+      ) %>%
+      mutate(
+        !!as.name(v) := case_when(
+          grepl("NANA", !!as.name(v)) ~ NA_character_,
+          TRUE ~ !!as.name(v)
+        )
       )
   }
-  
+
   ## restructure variable order
   x <- x %>%
     select(
@@ -445,11 +333,11 @@ unite_ranking <- function(x) {
       political_party, region, zip,
       everything()
     )
-  
+
   return(x)
 }
 
-## Avg. rank compute 
+## Avg. rank compute
 avg_rank <- function(df, var) {
   l <- nchar(df[[var]][[1]])
   v <- c("1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th")
@@ -491,4 +379,13 @@ cor_and_condprob <- function(df, v1, v2) {
   print(cor(df[[v1]], df[[v2]]))
   pretty_condprob(df, v1, 1, v2, 1)
   pretty_condprob(df, v2, 1, v1, 1)
+}
+
+transitivity_pattern <- function(x) {
+  split_x <- substring(x, seq(nchar(x)), seq(nchar(x)))
+  out <- seq(0, length(split_x)) %>%
+    map(~ append(split_x, as.character(length(split_x) + 1), .x)) %>%
+    map(~ paste(.x, collapse = "")) %>%
+    unlist()
+  return(out)
 }
