@@ -1,4 +1,6 @@
-source(here::here("R", "pretest", "v1", "pretest_import.R"))
+source(here::here("R", "utilities.R"))
+df_list <- qualtrics_import("pretest-01-sanitized-numeric.csv")
+main <- df_list$main
 
 # Tate (1993) ==================================================================
 ## Uniform distribution test ===================================================

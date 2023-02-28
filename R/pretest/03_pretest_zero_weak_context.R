@@ -1,4 +1,6 @@
-source(here::here("R", "pretest", "v1", "pretest_import.R"))
+source(here::here("R", "utilities.R"))
+df_list <- qualtrics_import("pretest-01-sanitized-numeric.csv")
+main <- df_list$main
 
 # No-context questions =========================================================
 x3 <- main$no_context_3_opts_1
@@ -52,4 +54,42 @@ plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = 0.65)))
 ggsave(here("fig", "pretest-nocontext-4opt.pdf"), width = 7.5, height = 2.8)
 
 # Weak context questions =======================================================
-## Second priority for now
+## Transitivity test -----------------------------------------------------------
+## This is available in the symbols question. 
+## For example, if they said they prefer triangle > square > pentagon,
+## the addition of hexagon as an option should not reverse square > triangle
+## So that if the answer to symbols_3_opts was 321, with the addition of 4,
+## we should only allow 4321, 3421, 3241, or 3214. 
+
+## Whopping 35%(!) violated
+main <- main %>%
+  rowwise() %>%
+  mutate(
+    transitivity_violate = case_when(
+      symbols_4_opts %in% transitivity_pattern(symbols_3_opts) ~ 1,
+      TRUE ~ 0
+    )
+  )
+summary(x$transitivity_violate)
+
+## What if we drop nonsincere/inattentive respondents?
+main %>%
+  mutate(
+    nonsincere_symbol_3opts = case_when(
+      symbols_3_opts_known == "123" ~ 1,
+      TRUE ~ 0
+    ),
+    nonsincere_symbol_4opts = case_when(
+      symbols_4_opts_known == "1234" ~ 1,
+      TRUE ~ 0
+    )
+  ) %>%
+  group_by(nonsincere_symbol_3opts, nonsincere_symbol_4opts) %>%
+  summarise(transitivity_violate = mean(transitivity_violate))
+
+#   nonsincere_symbol_3opts nonsincere_symbol_4opts transitivity_violate
+#                     <dbl>                   <dbl>                <dbl>
+# 1                       0                       0               0.0968
+# 2                       0                       1               0.222 
+# 3                       1                       0               0.0769
+# 4                       1                       1               0.617 
