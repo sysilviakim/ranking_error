@@ -19,15 +19,15 @@ tab4a <- table(x4a[!grepl("9", x4a)])
 round(prop.table(tab3) * 100, digits = 1)
 #  123  132  213  231  312  321
 # 10.7 16.7 14.3 17.9 16.7 23.8 (pretest 01)
-#  8.9 15.6 17.8 17.8 26.7 13.3 (pretest 02)
+#  8.2 14.3 18.4 16.3 30.6 12.2 (pretest 02)
 
 ## Definitely respondent fatigue; no longer has that 1-2-3-4 skew
 ## 4-option constrained to top 3 is similarly skewed towards 1-2-3-missing
 round(prop.table(tab4a) * 100, digits = 1)
-# 1234 1243 1324 1342 1423 2134 2143 2314 2341 2413 2431 3124 
-#  2.2  6.5  4.3  8.7  2.2  2.2  4.3  4.3  6.5  2.2  4.3  2.2 
-# 3142 3214 3241 3412 3421 4123 4132 4213 4231 4312 4321 
-#  2.2  2.2  4.3  2.2  6.5  2.2  8.7  6.5  6.5  2.2  6.5
+# 1234 1243 1324 1342 1423 2134 2143 2314 2341 2413 2431 3124 3142 
+#    2    6    8    8    2    2    4    6    6    2    4    2    2 
+# 3214 3241 3412 3421 4123 4132 4213 4231 4312 4321 
+#    2    4    2    6    2    8    6    6    2    8 
 
 ## This assertion is necessary but does not apply to this small pretest sample
 ## assert_that(length(tab4a) == 24)
@@ -35,8 +35,8 @@ round(prop.table(tab4a) * 100, digits = 1)
 tab4 <- permn_augment(tab4a)
 
 ## Chi-square test and power test ----------------------------------------------
-chisq_power(tab3) ## p-value = 0.4493, ES = 0.3243, need N = 188+
-chisq_power(tab4) ## p-value = 0.911,  ES = 0.5619, need N = 102+
+chisq_power(tab3) ## p-value = 0.1228, ES = 0.4207, need N = 111+
+chisq_power(tab4) ## p-value = 0.7993, ES = 0.5865, need N =  94+
 
 ## Visualize -------------------------------------------------------------------
 ### 3-option
