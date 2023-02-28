@@ -192,204 +192,6 @@ permn_augment <- function(tab, J = 4) {
   )
 }
 
-# Text options wrangle to number ===============================================
-text_to_item_position <- function(x) {
-  ## For no-context questions, the presented order doesn't matter --------------
-  x <- x %>%
-    select(
-      -contains("no_context_3_opts_1_do"),
-      -contains("no_context_4_opts_1_do"),
-      -contains("no_context_4_opts_2_do")
-    )
-
-  ## Identity ------------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("identity"),
-        ~ gsub(
-          "Gender", "1",
-          gsub(
-            "City", "2",
-            gsub(
-              "Country", "3",
-              gsub(
-                "Socioeconomic Status", "4",
-                gsub(
-                  "Racial or Ethnic Group", "5",
-                  gsub(
-                    "Political Party", "6",
-                    gsub("Religion", "7", gsub("\\|", "", .x))
-                  )
-                )
-              )
-            )
-          )
-        ),
-      )
-    )
-
-  ## Nelson (1997) -------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("nelson1997"),
-        ~ gsub(
-          paste0(
-            "Print media|",
-            "A person's freedom to speak and hear what he or she wants should be protected"
-          ),
-          "1",
-          gsub(
-            paste0(
-              "Television|",
-              "Campus and workplace safety and security should be protected"
-            ),
-            "2",
-            gsub(
-              paste0(
-                "The Internet|",
-                "School or workplace's reputation should be protected"
-              ),
-              "3",
-              gsub(
-                paste0(
-                  "Social media|Social Media|", ## corrected capitalization
-                  "Racism and prejudice should be opposed"
-                ),
-                "4",
-                gsub("\\|", "", .x)
-              )
-            )
-          )
-        )
-      )
-    )
-
-  ## Voting Mode ---------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("voting"),
-        ~ gsub(
-          "Primary elections|Vote in-person on Election Day",
-          "1",
-          gsub(
-            paste0(
-              "Nomination of primary winners as candidates in the general election|",
-              "Vote in-person during the early voting period"
-            ),
-            "2",
-            gsub(
-              paste0(
-                "Early Voting starts \\(Before Election Day\\)|",
-                "Send a mail ballot by post"
-              ),
-              "3",
-              gsub(
-                paste0(
-                  "Election Day \\(November 5, 2024\\)|",
-                  "Drop a mail ballot at a dropbox or polling place"
-                ),
-                "4",
-                gsub(
-                  paste0(
-                    "Winner of general election sworn in as the next president|",
-                    "Not vote"
-                  ),
-                  "5",
-                  gsub("\\|", "", .x)
-                )
-              )
-            )
-          )
-        )
-      )
-    )
-
-  ## Partisanship --------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("party_id_3_cands"),
-        ~ gsub(
-          "Registered Democrat", "1",
-          gsub(
-            "Registered Republican", "2",
-            gsub("Independent", "3", gsub("\\|", "", .x))
-          )
-        )
-      )
-    )
-
-  x <- x %>%
-    mutate(
-      across(
-        contains("party_id_4_cands"),
-        ~ gsub(
-          "Registered Democrat 1", "1",
-          gsub(
-            "Registered Democrat 2", "2",
-            gsub(
-              "Registered Republican 1", "3",
-              gsub("Registered Republican 2", "4", gsub("\\|", "", .x))
-            )
-          )
-        )
-      )
-    )
-
-  ## Symbols -------------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("symbol"),
-        ~ gsub(
-          "△", "1",
-          gsub(
-            "□", "2",
-            gsub(
-              "⬠", "3",
-              gsub("⬡", "4", gsub("\\|", "", .x))
-            )
-          )
-        )
-      )
-    )
-
-  ## Tate (1993) ---------------------------------------------------------------
-  x <- x %>%
-    mutate(
-      across(
-        contains("tate1993"),
-        ~ gsub(
-          paste0(
-            "Federal government that create policies that affect people's lives at the federal level|",
-            "Working in Congress on bills concerning national issues"
-          ),
-          "1",
-          gsub(
-            paste0(
-              "State government that create policies that affect people's lives at the state level|",
-              "Helping people in the district who have personal problems with government"
-            ),
-            "2",
-            gsub(
-              paste0(
-                "Municipal government that create policies that affect people's lives at the city level|",
-                "Making sure the state/district gets its fair share of government money and projects"
-              ),
-              "3",
-              gsub("\\|", "", .x)
-            )
-          )
-        )
-      )
-    )
-
-  return(x)
-}
-
 ## Collapse into resulting ranking pattern in the permutation space
 unite_ranking <- function(x) {
   x_raw <- x
@@ -406,7 +208,8 @@ unite_ranking <- function(x) {
       rename(app_voting_5 = app_voting_6)
   }
 
-  x <- x[, sort(names(x))]
+  ## No longer needed
+  ## x <- x[, sort(names(x))]
 
   ## Perform for each pattern
   for (v in var_list) {
@@ -433,6 +236,12 @@ unite_ranking <- function(x) {
       unite(
         !!as.name(v),
         sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l))
+      ) %>%
+      mutate(
+        !!as.name(v) := case_when(
+          grepl("NANA", !!as.name(v)) ~ NA_character_,
+          TRUE ~ !!as.name(v)
+        )
       )
   }
 
