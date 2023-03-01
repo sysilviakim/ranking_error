@@ -263,7 +263,7 @@ recov_ref_ranking <- function(dat, rank_var = "obs") {
 }
 
 ## Plot the distribution of observed rankings (over permutation space)
-plot_dist_ranking <- function(x, ylim = 0.3) {
+plot_dist_ranking <- function(x, ylim = 0.315) {
   J <- nchar(as.character(x$ranking[[1]]))
   x %>%
     ggplot(aes(x = ranking, y = prop, fill = "1")) +
