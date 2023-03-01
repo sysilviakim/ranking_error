@@ -19,7 +19,7 @@ tab4a <- table(x4a[!grepl("9", x4a)])
 round(prop.table(tab3) * 100, digits = 1)
 #  123  132  213  231  312  321
 # 10.7 16.7 14.3 17.9 16.7 23.8 (pretest 01)
-#  8.2 14.3 18.4 16.3 30.6 12.2 (pretest 02)
+#  8   14   18   18   30   12   (pretest 02)
 
 ## Definitely respondent fatigue; no longer has that 1-2-3-4 skew
 ## 4-option constrained to top 3 is similarly skewed towards 1-2-3-missing

@@ -58,6 +58,11 @@ prep_list <- root_var %>%
     }
   )
 
+# Correct answer rate for each anchor question =================================
+prep_list %>% map("correct") %>% map(mean) %>% unlist()
+# tate1993   identity nelson1997     voting 
+#     0.49       0.47       0.51       0.33 
+
 # Uniform distribution test ====================================================
 ## Table prep ------------------------------------------------------------------
 uniform_list <- prep_list %>%
@@ -89,6 +94,7 @@ uniform_list <- prep_list %>%
   )
 
 ## Visualization ---------------------------------------------------------------
+## For voting and identity, not much point in visualizing
 print(uniform_list$tate1993$main)
 ggsave(here("fig", "pretest-tate1993-main.pdf"), width = 4.5, height = 2.8)
 
@@ -96,22 +102,10 @@ print(uniform_list$tate1993$anch)
 ggsave(here("fig", "pretest-tate1993-anchor.pdf"), width = 4.5, height = 2.8)
 
 print(uniform_list$nelson1997$main)
-ggsave(here("fig", "pretest-nelson1997-main.pdf"), width = 4.5, height = 2.8)
+ggsave(here("fig", "pretest-nelson1997-main.pdf"), width = 7, height = 2.8)
 
 print(uniform_list$nelson1997$anch)
-ggsave(here("fig", "pretest-nelson1997-anchor.pdf"), width = 4.5, height = 2.8)
-
-print(uniform_list$voting$main)
-ggsave(here("fig", "pretest-voting-main.pdf"), width = 4.5, height = 2.8)
-
-print(uniform_list$voting$anch)
-ggsave(here("fig", "pretest-voting-anchor.pdf"), width = 4.5, height = 2.8)
-
-print(uniform_list$identity$main)
-ggsave(here("fig", "pretest-identity-main.pdf"), width = 4.5, height = 2.8)
-
-print(uniform_list$identity$anch)
-ggsave(here("fig", "pretest-identity-anchor.pdf"), width = 4.5, height = 2.8)
+ggsave(here("fig", "pretest-nelson1997-anchor.pdf"), width = 7, height = 2.8)
 
 # Decontaminating: \pi =========================================================
 
@@ -370,7 +364,7 @@ avg_rank_list <- prep_list %>%
           map(
             ~ .x %>%
               rename(
-                Policy = `1st`, Pork = `2nd`, Service = `3rd`
+                Policy = `1st`, Service = `2nd`, Pork = `3rd`
               )
           )
       } else if (.y == "identity") {
