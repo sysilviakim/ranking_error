@@ -53,11 +53,14 @@ prep_list <- root_var %>%
 
       return(
         list(
-          dat = dat, N = N, indices = indices, correct = correct, answer = .y
+          dat = dat, N = N, indices = indices, correct = correct, answer = .x
         )
       )
     }
   )
+
+## Sanity check
+assert_that(nchar(prep_list$tate1993$answer) == 3)
 
 # Uniform distribution test ====================================================
 ## Table prep ------------------------------------------------------------------
@@ -454,7 +457,7 @@ avg_rank_list <- prep_list %>%
           )
         )
 
-      return(list(boot_list = boot_list, summ = summ, p = est_p_z1_boot))
+      return(list(boot_list = boot_list, summ = summ, p = vec_pr_z1))
     }
   )
 
@@ -549,7 +552,7 @@ p1
 
 ## Corrected
 p2 <- avg_rank_list %>%
-  map(~ mean(unlist(.x$p))) %>%
+  map(~ mean(.x$p)) %>%
   unlist() %>%
   formatC(., format = "f", digits = 4)
 p2
