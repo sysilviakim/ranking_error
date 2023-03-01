@@ -59,9 +59,12 @@ prep_list <- root_var %>%
   )
 
 # Correct answer rate for each anchor question =================================
-prep_list %>% map("correct") %>% map(mean) %>% unlist()
-# tate1993   identity nelson1997     voting 
-#     0.49       0.47       0.51       0.33 
+prep_list %>%
+  map("correct") %>%
+  map(mean) %>%
+  unlist()
+# tate1993   identity nelson1997     voting
+#     0.49       0.47       0.51       0.33
 
 # Uniform distribution test ====================================================
 ## Table prep ------------------------------------------------------------------
@@ -403,6 +406,7 @@ avg_rank_list <- prep_list %>%
 
       ## Bootstrap
       summ <- avg_rank_bootstrap_quantile(boot_list)
+
       if (.y == "nelson1997") {
         summ <- summ %>%
           mutate(
@@ -414,7 +418,49 @@ avg_rank_list <- prep_list %>%
           )
       }
 
-      return(list(boot_list = boot_list, summ = summ))
+      ## Application-specific labels
+      if (.y == "tate1993") {
+        summ <- summ %>%
+          mutate(
+            variable = factor(
+              variable,
+              levels = c("Policy", "Service", "Pork")
+            )
+          )
+      } else if (.y == "identity") {
+        summ <- summ %>%
+          ## Alphabetical, so this is good enough
+          mutate(variable = factor(variable))
+      } else if (.y == "nelson1997") {
+        summ <- summ %>%
+          mutate(
+            variable = factor(
+              variable,
+              levels = c(
+                "Freedom\nof Speech", "Security", "Reputation", "Anti-\nracism"
+              )
+            )
+          )
+      } else if (.y == "voting") {
+        summ <- summ %>%
+          mutate(
+            variable = factor(
+              variable,
+              levels = c(
+                "Election Day", "Early", "VBM", "VBM Dropoff", "Not Vote"
+              )
+            )
+          )
+      }
+      
+      summ <- summ %>%
+        mutate(
+          variable = factor(
+            variable, labels = str_pad(levels(variable), width = 12)
+          )
+        )
+
+      return(list(boot_list = boot_list, summ = summ, p = est_p_z1_boot))
     }
   )
 
@@ -422,15 +468,15 @@ avg_rank_list <- prep_list %>%
 p_list <- avg_rank_list %>%
   map("summ") %>%
   map(
-    ~ ggplot(.x, aes(x = variable, y = mean_val, color = Estimator)) +
+    ~ ggplot(.x, aes(x = fct_rev(variable), y = mean_val, color = Estimator)) +
       geom_point(
-        aes(x = variable, y = mean_val, shape = Estimator),
+        aes(shape = Estimator),
         size = 3,
         position = position_dodge(width = 0.6)
       ) +
       # Reorder by point estimate
       geom_linerange(
-        aes(x = variable, ymin = low, ymax = up),
+        aes(ymin = low, ymax = up),
         lwd = 1.5, position = position_dodge(width = 0.6)
       ) +
       scale_color_manual(values = c("violetred3", "#999999")) +
@@ -459,12 +505,12 @@ ggsave(
   width = 3.5, height = 2.8
 )
 
-## doubtful, but trying
 pdf_default(p_list$identity) +
   scale_y_continuous(limits = c(0, 7), breaks = seq(0, 7, by = .5)) +
   geom_hline(yintercept = 3.5, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
-  coord_flip()
+  coord_flip() + 
+  theme(axis.text = element_text(size = 12))
 ggsave(
   here("fig/application-identity-bootstrapped-avg-rank.pdf"),
   width = 5, height = 2.8 * 1.5
@@ -474,7 +520,8 @@ pdf_default(p_list$voting) +
   scale_y_continuous(limits = c(-0.5, 6.5), breaks = seq(-0.5, 6.5, by = .5)) +
   geom_hline(yintercept = 3, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
-  coord_flip()
+  coord_flip() + 
+  theme(axis.text = element_text(size = 12))
 ggsave(
   here("fig/application-voting-bootstrapped-avg-rank.pdf"),
   width = 5, height = 2.8 * 1.5
@@ -488,3 +535,11 @@ avg_rank_list$identity$summ %>% filter(variable == "SES")
 avg_rank_list$identity$summ %>% filter(variable == "US")
 avg_rank_list$identity$summ %>% filter(variable == "City")
 avg_rank_list$voting$summ %>% filter(variable == "VBM Dropoff")
+
+# Corrected Pr(z = 1) ==========================================================
+avg_rank_list %>%
+  map(~ mean(unlist(.x$p))) %>%
+  unlist()
+
+#  tate1993   identity nelson1997     voting 
+# 0.4907374  0.4680668  0.5079299  0.3292584 
