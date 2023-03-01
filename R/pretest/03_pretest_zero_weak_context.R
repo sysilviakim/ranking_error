@@ -34,8 +34,11 @@ round(prop.table(tab4a) * 100, digits = 1)
 ## Therefore, supplement missing permutations
 tab4 <- permn_augment(tab4a)
 
+assert_that(sum(tab3) == 50)
+assert_that(sum(tab4) == 50)
+
 ## Chi-square test and power test ----------------------------------------------
-chisq_power(tab3) ## p-value = 0.1228, ES = 0.4207, need N = 111+
+chisq_power(tab3) ## p-value = 0.1280, ES = 0.4138, need N = 115+
 chisq_power(tab4) ## p-value = 0.7993, ES = 0.5865, need N =  94+
 
 ## Visualize -------------------------------------------------------------------
