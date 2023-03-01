@@ -12,6 +12,7 @@ library(patchwork)
 library(janitor)
 library(assertthat)
 library(pwr)
+library(xtable)
 
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))

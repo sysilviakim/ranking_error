@@ -17,6 +17,7 @@ prep_list <- root_var %>%
       N <- nrow(dat)
 
       ## Indices
+      set.seed(123)
       indices <- seq(bootstrap_n) %>%
         map(
           function(y) {
@@ -57,14 +58,6 @@ prep_list <- root_var %>%
       )
     }
   )
-
-# Correct answer rate for each anchor question =================================
-prep_list %>%
-  map("correct") %>%
-  map(mean) %>%
-  unlist()
-# tate1993   identity nelson1997     voting
-#     0.49       0.47       0.51       0.33
 
 # Uniform distribution test ====================================================
 ## Table prep ------------------------------------------------------------------
@@ -452,11 +445,12 @@ avg_rank_list <- prep_list %>%
             )
           )
       }
-      
+
       summ <- summ %>%
         mutate(
           variable = factor(
-            variable, labels = str_pad(levels(variable), width = 12)
+            variable,
+            labels = str_pad(levels(variable), width = 12)
           )
         )
 
@@ -506,10 +500,13 @@ ggsave(
 )
 
 pdf_default(p_list$identity) +
-  scale_y_continuous(limits = c(0, 7), breaks = seq(0, 7, by = .5)) +
+  scale_y_continuous(
+    limits = c(0, 7), breaks = seq(0, 7, by = 1),
+    labels = scales::number_format(accuracy = 0.1)
+  ) +
   geom_hline(yintercept = 3.5, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
-  coord_flip() + 
+  coord_flip() +
   theme(axis.text = element_text(size = 12))
 ggsave(
   here("fig/application-identity-bootstrapped-avg-rank.pdf"),
@@ -517,10 +514,13 @@ ggsave(
 )
 
 pdf_default(p_list$voting) +
-  scale_y_continuous(limits = c(-0.5, 6.5), breaks = seq(-0.5, 6.5, by = .5)) +
+  scale_y_continuous(
+    limits = c(-0.5, 6.5), breaks = seq(-0, 6, by = 1),
+    labels = scales::number_format(accuracy = 0.1)
+  ) +
   geom_hline(yintercept = 3, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
-  coord_flip() + 
+  coord_flip() +
   theme(axis.text = element_text(size = 12))
 ggsave(
   here("fig/application-voting-bootstrapped-avg-rank.pdf"),
@@ -537,9 +537,45 @@ avg_rank_list$identity$summ %>% filter(variable == "City")
 avg_rank_list$voting$summ %>% filter(variable == "VBM Dropoff")
 
 # Corrected Pr(z = 1) ==========================================================
-avg_rank_list %>%
-  map(~ mean(unlist(.x$p))) %>%
-  unlist()
+## Uncorrected
+p1 <- prep_list %>%
+  map("correct") %>%
+  map(mean) %>%
+  unlist() %>%
+  formatC(., format = "f", digits = 4)
+p1
+# tate1993   identity nelson1997     voting
+# "0.4900"   "0.4700"   "0.5100"   "0.3300"
 
-#  tate1993   identity nelson1997     voting 
-# 0.4907374  0.4680668  0.5079299  0.3292584 
+## Corrected
+p2 <- avg_rank_list %>%
+  map(~ mean(unlist(.x$p))) %>%
+  unlist() %>%
+  formatC(., format = "f", digits = 4)
+p2
+# tate1993   identity nelson1997     voting
+# "0.4866"   "0.4685"   "0.5072"   "0.3243"
+
+## Export it to table
+tab <- bind_rows(
+  enframe(p1) %>% mutate(type = "Uncorrected"),
+  enframe(p2) %>% mutate(type = "Corrected")
+) %>%
+  pivot_wider(id_cols = "type") %>%
+  rename(
+    Type = type,
+    `Tate 1993` = tate1993,
+    Identity = identity,
+    `Nelson 1997` = nelson1997,
+    `Voting Mode` = voting
+  )
+
+print.xtable(
+  xtable(tab),
+  include.rownames = FALSE,
+  comment = FALSE,
+  type = "latex",
+  file = here("tab", "pr_z1_application.tex"),
+  floating = FALSE,
+  booktabs = TRUE
+)
