@@ -483,7 +483,7 @@ p_list <- avg_rank_list %>%
   )
 
 pdf_default(p_list$tate1993) +
-  scale_y_continuous(limits = c(1, 3), breaks = seq(1, 3, by = .5)) +
+  scale_y_continuous(limits = c(0, 4), breaks = seq(0, 4, by = .5)) +
   geom_hline(yintercept = 2, lty = "dashed", col = "gray") +
   theme(legend.position = "top") +
   coord_flip()
