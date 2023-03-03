@@ -1,7 +1,7 @@
 # Script Description ===========================================================
 # sim_recover.R
 # Aim: given observed rankings, attempt to recover true underlying rankings
-source(here::here("R", "sim.R"))
+source(here::here("R", "sim", "sim.R"))
 
 # Proof of concept for our bias-correction strategy
 ## Use data with item order randomization (Assumption 1)
