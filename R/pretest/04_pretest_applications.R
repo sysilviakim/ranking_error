@@ -159,6 +159,8 @@ pi_list <- prep_list %>%
             ) / (1 - est_p_z1_boot[[x]])
           }
         )
+      # est_anch_naive_boot <- seq(bootstrap_n) %>%
+      #   map(~ rep(1 / factorial(J), factorial(J)))
 
       assert_that(all(near(est_anch_naive_boot %>% map(sum) %>% unlist(), 1)))
       assert_that(all(est_anch_naive_boot %>% map(min) %>% unlist() >= 0))
@@ -175,10 +177,10 @@ pi_list <- prep_list %>%
           }
         )
       ## These might not be met...
-      ## assert_that(all(est_pi_boot %>% map(sum) %>% unlist() == 1))
+      # assert_that(all(est_pi_boot %>% map(sum) %>% unlist() == 1))
       assert_that(all(near(est_pi_boot %>% map(sum) %>% unlist(), 1)))
-      ## assert_that(all(est_pi_boot %>% map(min) %>% unlist() >= 0)) --> false
-      ## assert_that(all(est_pi_boot %>% map(max) %>% unlist() <= 1))
+      assert_that(all(est_pi_boot %>% map(min) %>% unlist() >= 0))
+      assert_that(all(est_pi_boot %>% map(max) %>% unlist() <= 1))
 
       ## Recovering reference rankings from respondents who got the right answer
       correct_answer_boot <- seq(bootstrap_n) %>%
