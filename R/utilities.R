@@ -18,6 +18,13 @@ library(xtable)
 source(here("R", "rpluce.R"))
 
 # Parameters/stored vectors ====================================================
+qualtrics_meta <- c(
+  "start_date", "end_date", "status", "ip_address", "progress", 
+  "duration_in_seconds", "finished", "recorded_date", "response_id", 
+  "recipient_last_name", "recipient_first_name", "recipient_email", 
+  "external_reference", "location_latitude", "location_longitude", 
+  "distribution_channel", "user_language", "q_recaptcha_score", "consent"
+)
 bootstrap_n <- 1000
 root_var <- c(
   tate1993 = "123", identity = "1234567", nelson1997 = "1234", voting = "12345"
@@ -133,10 +140,14 @@ qualtrics_import <- function(fname) {
 
   ## Separate out timing variables to actual responses
   timing <- temp %>%
-    select(response_id, contains("timing"), -contains("time"))
+    select(
+      response_id, contains("timing"), contains("time"),
+      matches(qualtrics_meta %>% paste(collapse = "|"))
+    )
 
   main <- temp %>%
-    select(-contains("timing"), -contains("time"))
+    select(-contains("timing"), -contains("time")) %>%
+    select(-matches(qualtrics_meta %>% paste(collapse = "|")))
 
   x <- sum(main$q_recaptcha_score < 0.8, na.rm = TRUE) +
     sum(is.na(main$q_recaptcha_score))
