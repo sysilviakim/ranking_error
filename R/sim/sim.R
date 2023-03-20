@@ -216,3 +216,8 @@ for (scenario in names(prob_vec_list)) {
 # Export =======================================================================
 save(permn_list, file = here("output", "sim_permn_list.Rda"))
 save(chisq_list, file = here("output", "sim_chisq_list.Rda"))
+
+# Average ranking contamination proof ==========================================
+permn_list$homogeneous %>%
+  map(~ avg_rank(.x, "obs_rank")) %>%
+  bind_rows(.id = "pane")

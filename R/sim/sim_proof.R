@@ -2,7 +2,7 @@
 # sim_proof.R
 # Created: 2/6/2023
 # Aim: simulate our methodology
-source(here::here("R", "sim.R"))
+source(here::here("R", "sim", "sim.R"))
 set.seed(12345)
 z_overlap <- 0.8 ## Another parameter that we could tweak
 
@@ -265,3 +265,5 @@ ggsave(
   here("fig", "proof_of_concept_bootstrapped.pdf"),
   width = 5.5, height = 4
 )
+
+save(list = ls(), file = here("output", "sim_proof_dump.Rda"))
