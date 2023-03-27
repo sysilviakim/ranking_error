@@ -7,12 +7,7 @@ main <- df_list$main
 x3 <- main$no_context_3_opts_1
 x4a <- main$no_context_4_opts_1
 
-## For a chi-squared test, exclude partial rankings
-## 16 out of 100
-# sum(grepl("9", x3))
-## 15 out of 100
-# sum(grepl("9", x4a))
-
+## For a chi-squared test, exclude partial rankings, but in v2, none such
 tab3 <- table(x3[!grepl("9", x3)])
 tab4a <- table(x4a[!grepl("9", x4a)])
 
@@ -51,6 +46,35 @@ ggsave(here("fig", "pretest-nocontext-3opt.pdf"), width = 4.5, height = 2.8)
 temp <- table_to_tibble(tab4)
 plot_nolegend(pdf_default(plot_dist_ranking(temp))) ## , ylim = 0.65
 ggsave(here("fig", "pretest-nocontext-4opt.pdf"), width = 7.5, height = 2.8)
+
+## Is it attention? ------------------------------------------------------------
+temp <- main %>%
+  group_by(ternovsky_fail) %>%
+  group_split() %>%
+  `names<-`({.} %>% map(~ .x$ternovsky_fail[1]) %>% unlist()) %>%
+  map(
+    ~ round(
+      permn_augment(prop.table(table(.x$no_context_3_opts_1)), J = 3) * 100,
+      digits = 1
+    )
+  )
+temp
+temp %>%
+  map(chisq_power)
+
+temp <- main %>%
+  group_by(berinsky_fail) %>%
+  group_split() %>%
+  `names<-`({.} %>% map(~ .x$berinsky_fail[1]) %>% unlist()) %>%
+  map(
+    ~ round(
+      permn_augment(prop.table(table(.x$no_context_3_opts_1)), J = 3) * 100,
+      digits = 1
+    )
+  )
+temp
+temp %>%
+  map(chisq_power)
 
 # Weak context questions =======================================================
 ## Average of transitivity violations
