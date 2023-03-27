@@ -19,10 +19,10 @@ source(here("R", "rpluce.R"))
 
 # Parameters/stored vectors ====================================================
 qualtrics_meta <- c(
-  "start_date", "end_date", "status", "ip_address", "progress", 
-  "duration_in_seconds", "finished", "recorded_date", "response_id", 
-  "recipient_last_name", "recipient_first_name", "recipient_email", 
-  "external_reference", "location_latitude", "location_longitude", 
+  "start_date", "end_date", "status", "ip_address", "progress",
+  "duration_in_seconds", "finished", "recorded_date", "response_id",
+  "recipient_last_name", "recipient_first_name", "recipient_email",
+  "external_reference", "location_latitude", "location_longitude",
   "distribution_channel", "user_language", "q_recaptcha_score", "consent"
 )
 bootstrap_n <- 1000
@@ -147,10 +147,16 @@ qualtrics_import <- function(fname) {
 
   main <- temp %>%
     select(-contains("timing"), -contains("time")) %>%
-    select(-matches(qualtrics_meta %>% paste(collapse = "|")))
+    select(
+      -matches(
+        setdiff(qualtrics_meta, c("q_recaptcha_score", "response_id")) %>%
+          paste(collapse = "|")
+      )
+    )
 
   x <- sum(main$q_recaptcha_score < 0.8, na.rm = TRUE) +
     sum(is.na(main$q_recaptcha_score))
+  
   message(
     x, " out of ", nrow(main), ", or ",
     paste0(
@@ -158,6 +164,7 @@ qualtrics_import <- function(fname) {
       "% of rows have recaptcha score less than 0.8."
     )
   )
+  
   main <- main %>%
     ## Filter out observations with recaptcha score < 0.8
     filter(q_recaptcha_score >= 0.8) %>%
@@ -192,9 +199,9 @@ qualtrics_import <- function(fname) {
       ## For 2-party context, allow "independent" and "not sure" to be sincere
       ns_party_4cand = case_when(
         ## If Dem, Dem - Ind - Rep
-        pid3 == "Dem" & 
+        pid3 == "Dem" &
           party_id_4_cands %in% c("1234", "2134", "1243", "2143") ~ 0,
-        pid3 == "Rep" & 
+        pid3 == "Rep" &
           party_id_4_cands %in% c("3412", "3421", "4312", "4321") ~ 0,
         pid3 == "Ind" | pid3 == "Not sure" ~ 0,
         TRUE ~ 1
@@ -218,11 +225,11 @@ qualtrics_import <- function(fname) {
     ) %>%
     ## Transitivity (only relevant in pretest 1: 35% violated)
     ## pretest 2 has only given respondent one of 3 or 4 symbols question
-    ## This is available in the symbols question. 
+    ## This is available in the symbols question.
     ## For example, if they said they prefer triangle > square > pentagon,
     ## the addition of hexagon as an option should not reverse square > triangle
     ## So that if the answer to symbols_3_opts was 321, with the addition of 4,
-    ## we should only allow 4321, 3421, 3241, or 3214. 
+    ## we should only allow 4321, 3421, 3241, or 3214.
     rowwise() %>%
     mutate(
       transitivity_violate = case_when(
@@ -381,7 +388,7 @@ unite_ranking <- function(x) {
   ## restructure variable order
   x <- x %>%
     select(
-      names(x_raw %>% select(start_date:berinsky_screener)),
+      ## names(x_raw %>% select(start_date:berinsky_screener)),
       ## Lucid generated
       rid, age_2, gender_2, hhi, ethnicity, hispanic, education_2,
       political_party, region, zip,
