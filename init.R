@@ -1,8 +1,8 @@
 renv::init()
 
-install.packages("devtools")
-install.packages("remotes")
-install.packages("colorspace")
+utils::install.packages("devtools")
+utils::install.packages("remotes")
+utils::install.packages("colorspace")
 library(remotes)
 install_github(
   "sysilviakim/Kmisc", INSTALL_opts = c("--no-multiarch"), dependencies = TRUE
@@ -16,20 +16,20 @@ install_github(
 Kmisc::proj_skeleton()
 
 # Install typically used libraries
-install.packages("plyr")
-install.packages("tidyverse")
-install.packages("lubridate")
-install.packages("here")
-install.packages("assertthat")
-install.packages("janitor")
-install.packages("xtable")
-install.packages("styler")
+utils::install.packages("plyr")
+utils::install.packages("tidyverse")
+utils::install.packages("lubridate")
+utils::install.packages("here")
+utils::install.packages("assertthat")
+utils::install.packages("janitor")
+utils::install.packages("xtable")
+utils::install.packages("styler")
 
 # For this project
-install.packages("Matrix")
-install.packages("combinat")
-install.packages("gtools")
-install.packages("PLMIX")
+utils::install.packages("Matrix")
+utils::install.packages("combinat")
+utils::install.packages("gtools")
+utils::install.packages("PLMIX")
 
 renv::snapshot()
 ## Sys.setenv(RENV_DOWNLOAD_METHOD = "libcurl")
