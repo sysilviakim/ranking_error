@@ -13,6 +13,7 @@ main <- df_list$main
 # Duration =====================================================================
 ## What is the average duration?
 ## Median 12.39 and mean 19.58 in the pre-test
+## Qualtrics estimated runtime is 19.3 minutes
 ## One respondent took 2 hours, another 7.4 hours
 summary(main$duration_in_minutes)
 

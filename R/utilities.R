@@ -175,11 +175,11 @@ qualtrics_import <- function(fname) {
 
   ## Create binary indicators for partial rankers + attention check fails
   main <- main %>%
-    ## For nonsincerity + attention check fails
+    ## Geometric patterns + attention check fails
     mutate(
       ternovsky_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
       berinsky_fail = case_when(berinsky_screener != "4,12" ~ 1, TRUE ~ 0),
-      ## nonsincere: applications
+      ## Geometric patterns: applications (ns is for old term "non-sincere")
       ns_tate = case_when(anc_tate_1993 != "123" ~ 1, TRUE ~ 0),
       ns_esystem = case_when(anc_e_systems != "1234567" ~ 1, TRUE ~ 0),
       ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
@@ -397,7 +397,7 @@ avg_rank_bootstrap_quantile <- function(x) {
 cor_and_condprob <- function(df, v1, v2) {
   ## Something like with(df, table(tate = v1, identity = v2)) fails
   ## Not much point in printing table, I guess...
-  print(cor(df[[v1]], df[[v2]]))
+  print(cor(df[[v1]], df[[v2]], use = "pairwise"))
   pretty_condprob(df, v1, 1, v2, 1)
   pretty_condprob(df, v2, 1, v1, 1)
 }
