@@ -27,7 +27,7 @@ qualtrics_meta <- c(
 )
 bootstrap_n <- 1000
 root_var <- c(
-  tate1993 = "123", identity = "1234567", nelson1997 = "1234", voting = "12345"
+  tate_1993 = "123", identity = "1234567", nelson1997 = "1234", voting = "12345"
 )
 ## Previously...
 # x <- c(
@@ -114,6 +114,7 @@ pivot_join <- function(x, y) {
 
 ## import and wrangle Qualtrics data
 qualtrics_import <- function(fname) {
+  ## Exported using not the choice text but numeric values
   df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE) %>%
     clean_names() %>%
     filter(
@@ -123,8 +124,7 @@ qualtrics_import <- function(fname) {
     mutate(
       duration_in_seconds = as.numeric(duration_in_seconds),
       q_recaptcha_score = as.numeric(q_recaptcha_score)
-    ) %>%
-    rename(rcv_support = rc_vsupport_1)
+    )
 
   ## Status needs to be "IP Address" which is 0.
   temp <- df_raw %>%
@@ -141,8 +141,9 @@ qualtrics_import <- function(fname) {
   ## Separate out timing variables to actual responses
   timing <- temp %>%
     select(
-      response_id, contains("timing"), contains("time"),
-      matches(qualtrics_meta %>% paste(collapse = "|"))
+      response_id, 
+      matches(qualtrics_meta %>% paste(collapse = "|")),
+      contains("timing"), contains("time")
     )
 
   main <- temp %>%
@@ -177,68 +178,24 @@ qualtrics_import <- function(fname) {
     mutate(
       ternovsky_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
       berinsky_fail = case_when(berinsky_screener != "4,12" ~ 1, TRUE ~ 0),
-      ## nonsincere: weak context symbols
-      ns_symbol_3opts = case_when(symbols_3_opts_known == "123" ~ 1, TRUE ~ 0),
-      ns_symbol_4opts = case_when(symbols_4_opts_known == "1234" ~ 1, TRUE ~ 0),
-      ## nonsincere: weak context party ID
-      pid3 = case_when(
-        pid7 %in% c("1", "2", "3") ~ "Dem",
-        pid7 %in% c("5") ~ "Ind",
-        pid7 %in% c("6", "7", "8") ~ "Rep",
-        TRUE ~ "Not sure"
-      ),
-      ## Not easy to code. For now, allow "not sure" to be entirely sincere
-      ns_party_3cand = case_when(
-        ## If Dem, Dem - Ind - Rep, and if Rep, Rep - Ind - Dem
-        pid3 == "Dem" & party_id_3_cands == "132" ~ 0,
-        pid3 == "Rep" & party_id_3_cands == "231" ~ 0,
-        pid3 == "Ind" & substr(party_id_3_cands, 1, 1) == "3" ~ 0,
-        pid3 == "Not sure" ~ 0,
-        TRUE ~ 1
-      ),
-      ## For 2-party context, allow "independent" and "not sure" to be sincere
-      ns_party_4cand = case_when(
-        ## If Dem, Dem - Ind - Rep
-        pid3 == "Dem" &
-          party_id_4_cands %in% c("1234", "2134", "1243", "2143") ~ 0,
-        pid3 == "Rep" &
-          party_id_4_cands %in% c("3412", "3421", "4312", "4321") ~ 0,
-        pid3 == "Ind" | pid3 == "Not sure" ~ 0,
-        TRUE ~ 1
-      ),
       ## nonsincere: applications
-      ns_tate = case_when(anc_tate1993 != "123" ~ 1, TRUE ~ 0),
-      ns_nelson = case_when(anc_nelson1997 != "1234" ~ 1, TRUE ~ 0),
+      ns_tate = case_when(anc_tate_1993 != "123" ~ 1, TRUE ~ 0),
+      ns_esystem = case_when(anc_e_systems != "1234567" ~ 1, TRUE ~ 0),
       ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
-      ns_voting = case_when(anc_voting != "12345" ~ 1, TRUE ~ 0)
+      ns_polar = case_when(anc_polarization != "12345678" ~ 1, TRUE ~ 0)
     ) %>%
     ## Partial rankers
     mutate(
-      partial_tate_main = case_when(grepl("9", app_tate1993) ~ 1, TRUE ~ 0),
-      partial_tate_anc = case_when(grepl("9", anc_tate1993) ~ 1, TRUE ~ 0),
-      partial_nelson_main = case_when(grepl("9", app_nelson1997) ~ 1, TRUE ~ 0),
-      partial_nelson_anc = case_when(grepl("9", anc_nelson1997) ~ 1, TRUE ~ 0),
+      partial_tate_main = case_when(grepl("9", app_tate_1993) ~ 1, TRUE ~ 0),
+      partial_tate_anc = case_when(grepl("9", anc_tate_1993) ~ 1, TRUE ~ 0),
+      partial_esystem_main = case_when(grepl("9", app_e_systems) ~ 1, TRUE ~ 0),
+      partial_esystem_anc = case_when(grepl("9", anc_e_systems) ~ 1, TRUE ~ 0),
       partial_identity_main = case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
       partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
-      partial_voting_main = case_when(grepl("9", app_voting) ~ 1, TRUE ~ 0),
-      partial_voting_anc = case_when(grepl("9", anc_voting) ~ 1, TRUE ~ 0)
-    ) %>%
-    ## Transitivity (only relevant in pretest 1: 35% violated)
-    ## pretest 2 has only given respondent one of 3 or 4 symbols question
-    ## This is available in the symbols question.
-    ## For example, if they said they prefer triangle > square > pentagon,
-    ## the addition of hexagon as an option should not reverse square > triangle
-    ## So that if the answer to symbols_3_opts was 321, with the addition of 4,
-    ## we should only allow 4321, 3421, 3241, or 3214.
-    rowwise() %>%
-    mutate(
-      transitivity_violate = case_when(
-        is.na(symbols_4_opts) ~ NA_real_,
-        symbols_4_opts %in% transitivity_pattern(symbols_3_opts) ~ 1,
-        TRUE ~ 0
-      )
-    ) %>%
-    ungroup()
+      ## Naming was accidentally inconsistent
+      partial_polar_main = case_when(grepl("9", app_affective_polar) ~ 1, TRUE ~ 0),
+      partial_polar_anc = case_when(grepl("9", anc_polarization) ~ 1, TRUE ~ 0)
+    )
 
   return(list(main = main, timing = timing, raw = df_raw))
 }
@@ -353,19 +310,21 @@ unite_ranking <- function(x) {
 
   ## Perform for each pattern
   for (v in var_list) {
-    ## Is it 3-option or 4-option?
+    ## Is it 3-option, 4-option, 7, 8, ...?
     l <- x %>%
       select(contains(v)) %>%
-      select(-ends_with("_do")) %>%
-      ncol()
-
-    ## Shows how important variable naming is in Qualtrics :)
-    if (v == "symbols_3_opts") {
-      l <- 3
-    } else if (v == "symbols_4_opts") {
-      l <- 4
+      select(-ends_with("_do"))
+    
+    if (!grepl("repeat", v)) {
+      l <- l %>%
+        select(-contains("repeat")) %>%
+        ncol()
+    } else {
+      l <- l %>%
+        select(contains("repeat")) %>%
+        ncol()
     }
-
+    
     x <- x %>%
       mutate(
         across(

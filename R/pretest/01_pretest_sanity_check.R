@@ -1,6 +1,5 @@
 source(here::here("R", "utilities.R"))
-# df_list <- qualtrics_import("pretest-01-sanitized-numeric.csv")
-df_list <- qualtrics_import("pretest-02.csv")
+df_list <- qualtrics_import("pretest-03.csv")
 main <- df_list$main
 # 3 out of 100, or 3% of rows have recaptcha score less than 0.8.
 
