@@ -123,6 +123,7 @@ qualtrics_import <- function(fname) {
     ) %>%
     mutate(
       duration_in_seconds = as.numeric(duration_in_seconds),
+      duration_in_minutes = duration_in_seconds / 60,
       q_recaptcha_score = as.numeric(q_recaptcha_score)
     )
 
