@@ -27,7 +27,10 @@ qualtrics_meta <- c(
 )
 bootstrap_n <- 1000
 root_var <- c(
-  tate_1993 = "123", identity = "1234567", nelson1997 = "1234", voting = "12345"
+  tate_1993 = "123", 
+  e_systems = "1234567",
+  identity = "1234567", 
+  polar = "12345678"
 )
 ## Previously...
 # x <- c(
@@ -175,6 +178,12 @@ qualtrics_import <- function(fname) {
 
   ## Create binary indicators for partial rankers + attention check fails
   main <- main %>%
+    rename(
+      app_polar = app_affective_polar,
+      anc_polar = anc_polarization,
+      anc_polar_do = anc_polarization_do,
+      app_polar_do = app_affective_polar_do
+    ) %>%
     ## Geometric patterns + attention check fails
     mutate(
       ternovsky_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
@@ -183,7 +192,7 @@ qualtrics_import <- function(fname) {
       ns_tate = case_when(anc_tate_1993 != "123" ~ 1, TRUE ~ 0),
       ns_esystem = case_when(anc_e_systems != "1234567" ~ 1, TRUE ~ 0),
       ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
-      ns_polar = case_when(anc_polarization != "12345678" ~ 1, TRUE ~ 0)
+      ns_polar = case_when(anc_polar != "12345678" ~ 1, TRUE ~ 0)
     ) %>%
     ## Partial rankers
     mutate(
@@ -193,9 +202,8 @@ qualtrics_import <- function(fname) {
       partial_esystem_anc = case_when(grepl("9", anc_e_systems) ~ 1, TRUE ~ 0),
       partial_identity_main = case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
       partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
-      ## Naming was accidentally inconsistent
-      partial_polar_main = case_when(grepl("9", app_affective_polar) ~ 1, TRUE ~ 0),
-      partial_polar_anc = case_when(grepl("9", anc_polarization) ~ 1, TRUE ~ 0)
+      partial_polar_main = case_when(grepl("9", app_polar) ~ 1, TRUE ~ 0),
+      partial_polar_anc = case_when(grepl("9", anc_polar) ~ 1, TRUE ~ 0)
     )
 
   return(list(main = main, timing = timing, raw = df_raw))
@@ -269,10 +277,14 @@ chisq_power <- function(tab, power = 0.95) {
   P0 <- rep(1 / length(tab), length(tab))
   P1 <- as.numeric(prop.table(tab))
   message(paste0("Effect size is ", ES.w1(P0, P1)))
-  message("The chi-square power test result is:")
-  print(
-    pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab) - 1), power = power)
-  )
+  if (all(P0 == P1)) {
+    message("Everything is equally distributed.")
+  } else {
+    message("The chi-square power test result is:")
+    print(
+      pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab) - 1), power = power)
+    )
+  }
 }
 
 ## Turn ranking dist. summary table to a tibble
