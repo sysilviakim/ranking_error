@@ -204,6 +204,24 @@ qualtrics_import <- function(fname) {
       partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
       partial_polar_main = case_when(grepl("9", app_polar) ~ 1, TRUE ~ 0),
       partial_polar_anc = case_when(grepl("9", anc_polar) ~ 1, TRUE ~ 0)
+    ) %>%
+    ## pid7 
+    mutate(
+      pid7 = case_when(
+        pid3 == "1" & pid7_dem == "1" ~ "Strong Democrat",
+        pid3 == "1" & pid7_dem == "2" ~ "Not so strong Democrat",
+        pid3 == "3" & pid7_ind == "2" ~ "Leaning Democrat",
+        pid3 == "3" & pid7_ind == "3" ~ "Independent",
+        pid3 == "3" & pid7_ind == "1" ~ "Leaning Republican",
+        pid3 == "2" & pid7_rep == "2" ~ "Not so strong Republican",
+        pid3 == "2" & pid7_rep == "1" ~ "Strong Republican"
+      ),
+      ## Including leaners
+      pid3alt = case_when(
+        grepl("Democrat", pid7) ~ "Dem",
+        grepl("Republican", pid7) ~ "Rep",
+        TRUE ~ "Ind"
+      )
     )
 
   return(list(main = main, timing = timing, raw = df_raw))
