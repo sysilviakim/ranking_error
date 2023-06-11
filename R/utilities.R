@@ -27,9 +27,9 @@ qualtrics_meta <- c(
 )
 bootstrap_n <- 1000
 root_var <- c(
-  tate_1993 = "123", 
+  tate_1993 = "123",
   e_systems = "1234567",
-  identity = "1234567", 
+  identity = "1234567",
   polar = "12345678"
 )
 ## Previously...
@@ -145,7 +145,7 @@ qualtrics_import <- function(fname) {
   ## Separate out timing variables to actual responses
   timing <- temp %>%
     select(
-      response_id, 
+      response_id,
       matches(qualtrics_meta %>% paste(collapse = "|")),
       contains("timing"), contains("time")
     )
@@ -161,7 +161,7 @@ qualtrics_import <- function(fname) {
 
   x <- sum(main$q_recaptcha_score < 0.8, na.rm = TRUE) +
     sum(is.na(main$q_recaptcha_score))
-  
+
   message(
     x, " out of ", nrow(main), ", or ",
     paste0(
@@ -169,7 +169,7 @@ qualtrics_import <- function(fname) {
       "% of rows have recaptcha score less than 0.8."
     )
   )
-  
+
   main <- main %>%
     ## Filter out observations with recaptcha score < 0.8
     filter(q_recaptcha_score >= 0.8) %>%
@@ -205,7 +205,7 @@ qualtrics_import <- function(fname) {
       partial_polar_main = case_when(grepl("9", app_polar) ~ 1, TRUE ~ 0),
       partial_polar_anc = case_when(grepl("9", anc_polar) ~ 1, TRUE ~ 0)
     ) %>%
-    ## pid7 
+    ## pid7
     mutate(
       pid7 = case_when(
         pid3 == "1" & pid7_dem == "1" ~ "Strong Democrat",
@@ -345,7 +345,7 @@ unite_ranking <- function(x) {
     l <- x %>%
       select(contains(v)) %>%
       select(-ends_with("_do"))
-    
+
     if (!grepl("repeat", v)) {
       l <- l %>%
         select(-contains("repeat")) %>%
@@ -355,7 +355,7 @@ unite_ranking <- function(x) {
         select(contains("repeat")) %>%
         ncol()
     }
-    
+
     x <- x %>%
       mutate(
         across(
@@ -446,4 +446,15 @@ transitivity_pattern <- function(x) {
       unlist()
   }
   return(out)
+}
+
+repeat_coherent <- function(x, v1, v2) {
+  x <- sum(main[[v1]] == main[[v2]], na.rm = TRUE)
+  y <- sum(main[[v1]] != main[[v2]], na.rm = TRUE)
+  return(
+    paste0(
+      "Repeated task for ", v1, " yields a ",
+      round(x / (x + y) * 100, digits = 1), "% rate of same answers."
+    )
+  )
 }

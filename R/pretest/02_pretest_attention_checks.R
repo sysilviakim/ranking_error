@@ -104,7 +104,13 @@ cor_and_condprob(main, "ns_identity", "ns_polar")
 # Cond. on ns_polar == 1, Pr(ns_identity == 1) is 95.6%
 # Cond. on ns_identity == 1, Pr(ns_polar == 1) is 60.6%
 
-# Partial rankers ==============================================================
+# Repeated answers? ============================================================
+repeat_coherent(main, "app_tate_1993", "app_tate_repeat") ## 52.6%
+repeat_coherent(main, "app_e_systems", "app_e_systems_repeat") ## 12.8% 
+repeat_coherent(main, "app_identity", "app_identity_repeat") ## 26.5%
+repeat_coherent(main, "app_polar", "app_pol_repeat") ## 16.3%
+
+# Partial rankers? =============================================================
 ## Who are the partial rankers?
 ## Can inattention predict partial ranking?
 
