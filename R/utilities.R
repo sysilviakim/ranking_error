@@ -389,13 +389,16 @@ unite_ranking <- function(x) {
 }
 
 ## Avg. rank compute
-avg_rank <- function(df, var) {
+avg_rank <- function(df, var, split_only = FALSE) {
   l <- nchar(df[[var]][[1]])
   v <- c("1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th")
   out <- df %>%
     select(!!as.name(var)) %>%
-    separate(!!as.name(var), sep = seq(9)[1:l], into = v[1:l]) %>%
-    summarise(across(everything(), ~ mean(as.numeric(.x))))
+    separate(!!as.name(var), sep = seq(9)[1:l], into = v[1:l])
+  if (split_only == FALSE) {
+    out <- out %>%
+      summarise(across(everything(), ~ mean(as.numeric(.x))))
+  }
   return(out)
 }
 
