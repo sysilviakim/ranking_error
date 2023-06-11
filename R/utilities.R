@@ -184,16 +184,83 @@ qualtrics_import <- function(fname) {
       anc_polar_do = anc_polarization_do,
       app_polar_do = app_affective_polar_do
     ) %>%
-    ## Geometric patterns + attention check fails
+    ## Geometric patterns + attention check fails + repeat task fails
     mutate(
-      ternovsky_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
+      ternovski_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
       berinsky_fail = case_when(berinsky_screener != "4,12" ~ 1, TRUE ~ 0),
       ## Geometric patterns: applications (ns is for old term "non-sincere")
       ns_tate = case_when(anc_tate_1993 != "123" ~ 1, TRUE ~ 0),
       ns_esystem = case_when(anc_e_systems != "1234567" ~ 1, TRUE ~ 0),
       ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
-      ns_polar = case_when(anc_polar != "12345678" ~ 1, TRUE ~ 0)
+      ns_polar = case_when(anc_polar != "12345678" ~ 1, TRUE ~ 0),
+      ## Repeat coherence: applications
+      ## 1 means incoherent!
+      repeat_tate = case_when(
+        app_tate_1993 == app_tate_repeat ~ 0,
+        app_tate_1993 != app_tate_repeat ~ 1
+      ),
+      repeat_esystem = case_when(
+        app_e_systems == app_e_systems_repeat ~ 0,
+        app_e_systems != app_e_systems_repeat ~ 1
+      ),
+      repeat_identity = case_when(
+        app_identity == app_identity_repeat ~ 0,
+        app_identity != app_identity_repeat ~ 1
+      ),
+      repeat_polar = case_when(
+        app_polar == app_pol_repeat ~ 0,
+        app_polar != app_pol_repeat ~ 1
+      )
     ) %>%
+    rowwise() %>%
+    mutate(
+      app_tate_trunc1 = str_sub(app_tate_1993, 1, 1),
+      app_tate_trunc1_repeat = str_sub(app_tate_repeat, 1, 1),
+      
+      app_esystem_trunc1 = str_sub(app_e_systems, 1, 1),
+      app_esystem_trunc1_repeat = str_sub(app_e_systems_repeat, 1, 1),
+      
+      app_identity_trunc1 = str_sub(app_identity, 1, 1),
+      app_identity_trunc1_repeat = str_sub(app_identity_repeat, 1, 1),
+      
+      app_polar_trunc1 = str_sub(app_polar, 1, 1),
+      app_polar_trunc1_repeat = str_sub(app_pol_repeat, 1, 1),
+      
+      app_esystem_trunc2 = str_sub(app_e_systems, 1, 2),
+      app_esystem_trunc2_repeat = str_sub(app_e_systems_repeat, 1, 2),
+      
+      app_identity_trunc2 = str_sub(app_identity, 1, 2),
+      app_identity_trunc2_repeat = str_sub(app_identity_repeat, 1, 2),
+      
+      app_polar_trunc2 = str_sub(app_polar, 1, 2),
+      app_polar_trunc2_repeat = str_sub(app_pol_repeat, 1, 2),
+      
+      app_tate_trunc3 = str_sub(app_tate_1993, 1, 3),
+      app_tate_trunc3_repeat = str_sub(app_tate_repeat, 1, 3),
+      
+      app_esystem_trunc3 = str_sub(app_e_systems, 1, 3),
+      app_esystem_trunc3_repeat = str_sub(app_e_systems_repeat, 1, 3),
+      
+      app_identity_trunc3 = str_sub(app_identity, 1, 3),
+      app_identity_trunc3_repeat = str_sub(app_identity_repeat, 1, 3),
+      
+      app_polar_trunc3 = str_sub(app_polar, 1, 3),
+      app_polar_trunc3_repeat = str_sub(app_pol_repeat, 1, 3),
+      
+      # repeat_trunc_esystem = case_when(
+      #   app_esystem_trunc == app_esystem_trunc_repeat ~ 0,
+      #   app_esystem_trunc != app_esystem_trunc_repeat ~ 1
+      # ),
+      # repeat_trunc_identity = case_when(
+      #   app_identity_trunc == app_identity_trunc_repeat ~ 0,
+      #   app_identity_trunc != app_identity_trunc_repeat ~ 1
+      # ),
+      # repeat_trunc_polar = case_when(
+      #   app_polar_trunc == app_polar_trunc_repeat ~ 0,
+      #   app_polar_trunc != app_polar_trunc_repeat ~ 1
+      # )
+    ) %>%
+    ungroup() %>%
     ## Partial rankers
     mutate(
       partial_tate_main = case_when(grepl("9", app_tate_1993) ~ 1, TRUE ~ 0),
@@ -428,6 +495,9 @@ avg_rank_bootstrap_quantile <- function(x) {
 }
 
 cor_and_condprob <- function(df, v1, v2) {
+  if (!(v1 %in% names(df)) | !(v2 %in% names(df))) {
+    stop("One or more of the variables does not exist in the dataframe.")
+  }
   ## Something like with(df, table(tate = v1, identity = v2)) fails
   ## Not much point in printing table, I guess...
   print(cor(df[[v1]], df[[v2]], use = "pairwise"))
@@ -457,4 +527,45 @@ repeat_coherent <- function(x, v1, v2) {
       round(x / (x + y) * 100, digits = 1), "% rate of same answers."
     )
   )
+}
+
+venn_diagram_fill <- function(x, v1, v2, v3) {
+  ## This is a slapdash function to fill in the Lucidchart venn diagram
+  ## manually; use at discretion
+  list(
+    x1 = c(1, 0, 0),
+    x2 = c(1, 1, 0),
+    x3 = c(1, 1, 1), 
+    x4 = c(1, 0, 1),
+    x5 = c(0, 1, 0),
+    x6 = c(0, 1, 1),
+    x7 = c(0, 0, 1),
+    x8 = c(0, 0, 0)
+  ) %>%
+    map_chr(
+      ~ main %>%
+        filter(
+          !!as.name(v1) == .x[1] &
+            !!as.name(v2) == .x[2] &
+            !!as.name(v3) == .x[3]
+        ) %>%
+        nrow() %>%
+        {
+          formatC(
+            round(
+              . / nrow(
+                main %>% 
+                  filter(
+                    !is.na(!!as.name(v1)) & 
+                      !is.na(!!as.name(v2)) & 
+                      !is.na(!!as.name(v3))
+                  )
+              ) * 100, 
+              digits = 1
+            ),
+            digits = 1,
+            format = "f"
+          )
+        }
+    )
 }
