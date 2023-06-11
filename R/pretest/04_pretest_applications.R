@@ -2,6 +2,23 @@ source(here::here("R", "utilities.R"))
 df_list <- qualtrics_import("pretest-03.csv")
 main <- df_list$main
 
+# Wrangle data before splitting ================================================
+main <- main %>%
+  mutate(
+    white = case_when(
+      race == "1" ~ "White",
+      TRUE ~ "Non-white"
+    ),
+    turnout2022 = case_when(
+      turnout2022 == "1" ~ "Yes",
+      TRUE ~ "No"
+    ),
+    college = case_when(
+      education %in% c("1", "2", "3") ~ "Less Than BA",
+      TRUE ~ "Bachelor's Degree or Higher"
+    )
+  )
+
 # Setup ========================================================================
 prep_list <- root_var %>%
   imap(
