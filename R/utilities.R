@@ -519,18 +519,18 @@ transitivity_pattern <- function(x) {
 }
 
 repeat_coherent <- function(x, v1, v2) {
-  x <- sum(main[[v1]] == main[[v2]], na.rm = TRUE)
-  y <- sum(main[[v1]] != main[[v2]], na.rm = TRUE)
+  y1 <- sum(x[[v1]] == x[[v2]], na.rm = TRUE)
+  y2 <- sum(x[[v1]] != x[[v2]], na.rm = TRUE)
   return(
     paste0(
       "Repeated task for ", v1, " yields a ",
-      round(x / (x + y) * 100, digits = 1), "% rate of same answers."
+      round(y1 / (y1 + y2) * 100, digits = 1), "% rate of same answers."
     )
   )
 }
 
 venn_diagram_fill <- function(x, v1, v2, v3) {
-  ## This is a slapdash function to fill in the Lucidchart venn diagram
+  ## This is a slapdash function to fill in the Lucidchart Venn diagram
   ## manually; use at discretion
   list(
     x1 = c(1, 0, 0),

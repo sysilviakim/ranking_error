@@ -5,7 +5,7 @@ main <- df_list$main
 # Geometric patterning rates ===================================================
 main %>%
   select(matches("^ns_")) %>%
-  map( ~ sum(.x == 1) / nrow(main))
+  map(~ sum(.x == 1) / nrow(main))
 
 ## Tate 1993: 48.0%
 ## Electoral systems: 84.7%
@@ -107,24 +107,96 @@ cor_and_condprob(main, "ns_identity", "ns_polar")
 # Repeated answers? ============================================================
 ## Proportions -----------------------------------------------------------------
 repeat_coherent(main, "app_tate_1993", "app_tate_repeat") # 52.6%
-repeat_coherent(main, "app_e_systems", "app_e_systems_repeat") # 12.8% 
+repeat_coherent(main, "app_e_systems", "app_e_systems_repeat") # 12.8%
 repeat_coherent(main, "app_identity", "app_identity_repeat") # 26.5%
 repeat_coherent(main, "app_polar", "app_pol_repeat") # 16.3%
 
 ## If truncated 1-3? -----------------------------------------------------------
-repeat_coherent(main, "app_esystem_trunc3", "app_esystem_trunc3_repeat") # 17.0% 
+repeat_coherent(main, "app_esystem_trunc3", "app_esystem_trunc3_repeat") # 17.0%
 repeat_coherent(main, "app_identity_trunc3", "app_identity_trunc3_repeat") # 32.7%
 repeat_coherent(main, "app_polar_trunc3", "app_polar_trunc3_repeat") # 27.9%
 
-repeat_coherent(main, "app_tate_trunc2", "app_tate_trunc2_repeat") # 19.1% 
-repeat_coherent(main, "app_esystem_trunc2", "app_esystem_trunc2_repeat") # 19.1% 
+repeat_coherent(main, "app_esystem_trunc2", "app_esystem_trunc2_repeat") # 19.1%
 repeat_coherent(main, "app_identity_trunc2", "app_identity_trunc2_repeat") # 40.8%
 repeat_coherent(main, "app_polar_trunc2", "app_polar_trunc2_repeat") # 34.9%
 
-repeat_coherent(main, "app_tate_trunc1", "app_tate_trunc1_repeat") # 19.1% 
-repeat_coherent(main, "app_esystem_trunc1", "app_esystem_trunc1_repeat") # 23.4% 
+repeat_coherent(main, "app_tate_trunc1", "app_tate_trunc1_repeat") # 64.9%
+repeat_coherent(main, "app_esystem_trunc1", "app_esystem_trunc1_repeat") # 23.4%
 repeat_coherent(main, "app_identity_trunc1", "app_identity_trunc1_repeat") # 44.9%
 repeat_coherent(main, "app_polar_trunc1", "app_polar_trunc1_repeat") # 41.9%
+
+## Mm... if non-geometric and/or truncated? ---------------------------------------
+## 44.4%
+repeat_coherent(
+  main %>% filter(ns_esystem == 0),
+  "app_e_systems", "app_e_systems_repeat"
+)
+
+## 44.4%
+repeat_coherent(
+  main %>% filter(ns_esystem == 0),
+  "app_esystem_trunc3", "app_esystem_trunc3_repeat"
+)
+
+## 44.4%
+repeat_coherent(
+  main %>% filter(ns_esystem == 0),
+  "app_esystem_trunc2", "app_esystem_trunc2_repeat"
+)
+
+## 44.4%
+repeat_coherent(
+  main %>% filter(ns_esystem == 0),
+  "app_esystem_trunc1", "app_esystem_trunc1_repeat"
+)
+
+## 46.2%
+repeat_coherent(
+  main %>% filter(ns_identity == 0),
+  "app_identity", "app_identity_repeat"
+)
+
+## 61.5%
+repeat_coherent(
+  main %>% filter(ns_identity == 0),
+  "app_identity_trunc3", "app_identity_trunc3_repeat"
+)
+
+## 69.2%
+repeat_coherent(
+  main %>% filter(ns_identity == 0),
+  "app_identity_trunc2", "app_identity_trunc2_repeat"
+)
+
+## 69.2%
+repeat_coherent(
+  main %>% filter(ns_identity == 0),
+  "app_identity_trunc1", "app_identity_trunc1_repeat"
+)
+
+## 30.4%
+repeat_coherent(
+  main %>% filter(ns_polar == 0),
+  "app_polar", "app_pol_repeat"
+)
+
+## 47.8%
+repeat_coherent(
+  main %>% filter(ns_polar == 0),
+  "app_polar_trunc3", "app_polar_trunc3_repeat"
+)
+
+## 60.9%
+repeat_coherent(
+  main %>% filter(ns_polar == 0),
+  "app_polar_trunc2", "app_polar_trunc2_repeat"
+)
+
+## 65.2%
+repeat_coherent(
+  main %>% filter(ns_polar == 0),
+  "app_polar_trunc1", "app_polar_trunc1_repeat"
+)
 
 ## Correlation with attention filters ------------------------------------------
 cor_and_condprob(main, "repeat_tate", "ternovski_fail")
