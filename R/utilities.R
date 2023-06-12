@@ -305,40 +305,40 @@ qualtrics_import <- function(fname) {
 
 ## Recover the reference (true) ranking
 ## with respect to the reference item set (here: {abc})
-recov_ref_ranking <- function(dat, rank_var = "obs") {
-  # For each i-th unit in data
-  ref_data <- seq(nrow(dat)) %>%
-    map(
-      ~ {
-        temp <- dat[.x, ] %>%
-          separate(
-            !!as.name(rank_var),
-            sep = c(1, 2), into = c("first", "second", "third")
-          ) %>%
-          ## V1, V2, and V3 are randomized choice order given to respondent
-          select(first, second, third, contains("V")) %>%
-          pivot_longer(cols = c(V1, V2, V3), names_to = "variable")
-
-        ## Recovering the true ranking given the reference set (abc)
-        ## case_when is faster outside a pipe
-        temp$recover <- case_when(
-          temp$variable == "V1" ~ temp$first,
-          temp$variable == "V2" ~ temp$second,
-          temp$variable == "V3" ~ temp$third
-        )
-
-        temp <- temp %>%
-          arrange(value) %>%
-          .$recover %>%
-          ## ref_ranking, i.e., concatenated true rankings
-          paste(collapse = "")
-        return(temp)
-      }
-    ) %>%
-    ## combine
-    unlist() %>%
-    tibble(ref = .)
-  return(ref_data)
+recover_ranking <- function(presented_order, response_order, df = NULL) {
+  if (is.null(df)) {
+    ## Expect as inputs simple strings such as "312" "321" 
+    presented_order <- strsplit(presented_order, "")[[1]]
+    response_order <- strsplit(response_order, "")[[1]]
+    recovered_order <- vector("character", length = length(response_order))
+    
+    # Iterate through each character in the respondent's response string
+    for (i in seq(length(presented_order))) {
+      # Find the position of this character in the presented order string
+      position_in_presented <- which(as.character(i) == presented_order)
+      # Use this position to index into the original order
+      recovered_order[i] <- response_order[position_in_presented]
+    }
+    
+    # Concatenate the characters
+    # to form a string representing the recovered order
+    return(paste(recovered_order, collapse = ""))
+  } else {
+    variable_name <- gsub("_do", "_recovered", presented_order)
+    presented_order <- strsplit(df[[presented_order]], "")[[1]]
+    response_order <- strsplit(df[[response_order]], "")[[1]]
+    recovered_order <- vector("character", length = length(response_order))
+    
+    for (i in seq(length(presented_order))) {
+      # Find the position of this character in the presented order string
+      position_in_presented <- which(as.character(i) == presented_order)
+      # Use this position to index into the original order
+      recovered_order[i] <- response_order[position_in_presented]
+    }
+    
+    df[[variable_name]] <- paste(recovered_order, collapse = "")
+    return(df)
+  }
 }
 
 ## Plot the distribution of observed rankings (over permutation space)
@@ -441,7 +441,8 @@ unite_ranking <- function(x) {
       ) %>%
       unite(
         !!as.name(v),
-        sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l))
+        sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l)),
+        remove = FALSE
       ) %>%
       mutate(
         !!as.name(v) := case_when(
