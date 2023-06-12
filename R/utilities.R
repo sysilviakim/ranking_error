@@ -174,16 +174,38 @@ qualtrics_import <- function(fname) {
     ## Filter out observations with recaptcha score < 0.8
     filter(q_recaptcha_score >= 0.8) %>%
     mutate(across(ends_with("_do"), ~ gsub("\\|", "", .x))) %>%
-    ## Remember, this will bring out the observed ranking
-    ## and not the true ranking of the respondent unless the randomization 
-    ## has given a 1234... order
+    ## Remember, this will bring out the true ranking
+    ## and not the *observed* ranking of the respondent 
+    ## (i.e., permutation pattern) 
+    ## unless the randomization has given a 1234... order
     
-    ## So if the permutation pattern is      3-2-1
-    ##        but the order provided is      3-1-2
-    ## the true order respondent provided is 2-1-3
-    ## unite_ranking() will give 321 for this respondent!
+    ## So if the true order respondent gave out  is 3-2-1
+    ## but the order provided is                    3-1-2
+    ## the *observed* ranking is                    1-3-2
+    ## unite_ranking() will give 321 for this respondent! The true ranking!
     
-    unite_ranking()
+    ## Note that Qualtrics' "View Response" will always align the
+    ## randomized orders into the original order and show the true ranking
+    ## in the "recovered" fashion
+    
+    ## If the true order respondent gave out is     6-3-2-7-1-4-5
+    ## but the order provided is                    6-1-5-2-7-3-4
+    ## the true order respondent provided is        4-6-1-3-5-2-7
+    
+    unite_ranking() %>%
+    
+    ## Recovered observed rankings
+    recover_observed_ranking("no_context_3_options_do", "no_context_3_options", .) %>%
+    recover_observed_ranking("no_context_4_options_do", "no_context_4_options", .) %>%
+    recover_observed_ranking("app_tate_1993_do", "app_tate_1993", .) %>%
+    recover_observed_ranking("app_e_systems_do", "app_e_systems", .) %>%
+    recover_observed_ranking("app_identity_do", "app_identity", .) %>%
+    recover_observed_ranking("app_affective_polar_do", "app_affective_polar", .) %>%
+    ## For anchor questions, too
+    recover_observed_ranking("anc_tate_1993_do", "anc_tate_1993", .) %>%
+    recover_observed_ranking("anc_e_systems_do", "anc_e_systems", .) %>%
+    recover_observed_ranking("anc_identity_do", "anc_identity", .) %>%
+    recover_observed_ranking("anc_polarization_do", "anc_polarization", .)
 
   ## Create binary indicators for partial rankers + attention check fails
   main <- main %>%
@@ -305,38 +327,53 @@ qualtrics_import <- function(fname) {
 
 ## Recover the reference (true) ranking
 ## with respect to the reference item set (here: {abc})
-recover_ranking <- function(presented_order, response_order, df = NULL) {
+recover_observed_ranking <- function(presented_order, true_order, df = NULL) {
   if (is.null(df)) {
     ## Expect as inputs simple strings such as "312" "321" 
     presented_order <- strsplit(presented_order, "")[[1]]
-    response_order <- strsplit(response_order, "")[[1]]
-    recovered_order <- vector("character", length = length(response_order))
+    true_order <- strsplit(true_order, "")[[1]]
+    recovered_order <- vector("character", length = length(true_order))
     
     # Iterate through each character in the respondent's response string
     for (i in seq(length(presented_order))) {
-      # Find the position of this character in the presented order string
-      position_in_presented <- which(as.character(i) == presented_order)
-      # Use this position to index into the original order
-      recovered_order[i] <- response_order[position_in_presented]
+      recovered_order[i] <- true_order[[as.numeric(presented_order[i])]]
     }
     
     # Concatenate the characters
     # to form a string representing the recovered order
     return(paste(recovered_order, collapse = ""))
   } else {
-    variable_name <- gsub("_do", "_recovered", presented_order)
-    presented_order <- strsplit(df[[presented_order]], "")[[1]]
-    response_order <- strsplit(df[[response_order]], "")[[1]]
-    recovered_order <- vector("character", length = length(response_order))
-    
-    for (i in seq(length(presented_order))) {
-      # Find the position of this character in the presented order string
-      position_in_presented <- which(as.character(i) == presented_order)
-      # Use this position to index into the original order
-      recovered_order[i] <- response_order[position_in_presented]
+    if (!(presented_order %in% names(df))) {
+      stop("Presented order variable is not in the dataframe.")
+    }
+    if (!(true_order %in% names(df))) {
+      stop("Response order variable is not in the dataframe.")
     }
     
-    df[[variable_name]] <- paste(recovered_order, collapse = "")
+    variable_name <- gsub("_do", "_observed", presented_order)
+    presented_order <- df[[presented_order]] %>% 
+      map(~ strsplit(.x, "")[[1]])
+    true_order <- df[[true_order]] %>% 
+      map(~ strsplit(.x, "")[[1]])
+    
+    recovered_order <- seq(length(true_order)) %>%
+      map(
+        ~ {
+          out <- vector("character", length = length(true_order[[.x]]))
+          if (any(is.na(true_order[[.x]]))) {
+            out <- NA
+            return(out)
+          } else {
+            for (i in seq(length(presented_order[[.x]]))) {
+              out[i] <- true_order[[.x]][[as.numeric(presented_order[[.x]][i])]]
+            }
+            return(paste(out, collapse = ""))
+          }
+        }
+      ) %>%
+      unlist()
+    
+    df[[variable_name]] <- recovered_order
     return(df)
   }
 }

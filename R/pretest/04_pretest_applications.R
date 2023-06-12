@@ -121,7 +121,7 @@ ggsave(here("fig", "pretest03-tate_1993-anchor.pdf"), width = 4.5, height = 2.8)
 ## Tate 1993 (representation) --------------------------------------------------
 
 ### All responses
-avg_rank(main %>% filter(!grepl("9", app_tate_1993)), "app_tate_1993")
+avg_rank(main %>% filter(!grepl("9", app_tate_1993)), "app_tate_1993_recovered")
 # (1) Working in Congress on bills concerning national issues ---> 1.84
 # (2) Making sure the state/district gets its fair share of government money and projects ---> 1.91
 # (3) Helping people in the district who have personal problems with government ---> 2.26
