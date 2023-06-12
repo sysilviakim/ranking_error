@@ -174,6 +174,15 @@ qualtrics_import <- function(fname) {
     ## Filter out observations with recaptcha score < 0.8
     filter(q_recaptcha_score >= 0.8) %>%
     mutate(across(ends_with("_do"), ~ gsub("\\|", "", .x))) %>%
+    ## Remember, this will bring out the observed ranking
+    ## and not the true ranking of the respondent unless the randomization 
+    ## has given a 1234... order
+    
+    ## So if the permutation pattern is      3-2-1
+    ##        but the order provided is      3-1-2
+    ## the true order respondent provided is 2-1-3
+    ## unite_ranking() will give 321 for this respondent!
+    
     unite_ranking()
 
   ## Create binary indicators for partial rankers + attention check fails
