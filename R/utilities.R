@@ -137,7 +137,7 @@ qualtrics_import <- function(fname) {
   ## If IP addresses overlap, that's a major red flag so stop
   ## assert_that(!any(duplicated(main$ip_address)))
   if (any(duplicated(temp$ip_address))) {
-    stop("There are duplicates in IP addresses. Please investigate.")
+    message("There are duplicates in IP addresses. Please investigate.")
   }
 
   message(paste0("We have total ", nrow(temp), " respondents."))
@@ -191,6 +191,10 @@ qualtrics_import <- function(fname) {
     ## If the true order respondent gave out is     6-3-2-7-1-4-5
     ## but the order provided is                    6-1-5-2-7-3-4
     ## the true order respondent provided is        4-6-1-3-5-2-7
+  
+    ## IMPORTANT: THIS REQUIRES THAT THE RECODING IS IN NATURAL PROGRESSION
+    ## i.e., the ference set is 1-2-3-4-5-6-7
+    ## If it is 1-2-3-4-6-5-7 or something that's different, doesn't work
     
     unite_ranking() %>%
     
