@@ -215,3 +215,51 @@ avg_rank(
 # (6) Democratic citizens ---> 5.49
 # (7) Republican citizens ---> 4.86
 # (8) Electoral systems ---> 5.65
+
+# Descriptive Statistics========================================================
+## Tate 1993 (representation) --------------------------------------------------
+
+dt_id <-  main %>% 
+   filter(!grepl("9", app_identity)) %>% 
+   mutate(anc_correct = ifelse(anc_identity == "1234567", 1, 0)) %>%
+   select(app_identity_1:app_identity_7, 
+          app_identity, anc_identity, anc_correct) %>%
+   rename(party = app_identity_1,
+          job =  app_identity_2,
+          religion = app_identity_3,
+          gender =  app_identity_4,
+          family_role = app_identity_5,
+          race = app_identity_6,
+          American =  app_identity_7)
+
+others <- c("job", "religion", "gender", 
+            "family_role", "race", "American")
+
+vis_r(
+ data = dt_id,
+ target_item = "party", # Political party
+ other_items = others
+ )
+
+ggsave(here::here("fig", "pretest03-statistics-id-party.pdf"), 
+       width = 6, height = 4.5)
+
+
+# Compute weights
+
+data_w <- imprr(data = dt_id,
+                rank_q = c("party", "job", "religion", "gender", 
+                            "family_role", "race", "American"),
+                main = "app_identity",
+                anchor = "anc_identity",
+                anc_correct = "anc_correct",
+                J = 7)
+head(data_w$weight)
+
+# [1] 0.01063827 0.01063827 0.01063827 0.01063827 0.01063827
+# [6] 0.01063827
+# --> This seems shady. Needs more checks
+
+
+
+

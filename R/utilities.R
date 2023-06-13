@@ -13,6 +13,7 @@ library(janitor)
 library(assertthat)
 library(pwr)
 library(xtable)
+library(estimatr)
 
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))
@@ -620,3 +621,494 @@ venn_diagram_fill <- function(x, v1, v2, v3) {
         }
     )
 }
+
+
+vis_r <- function(data, 
+                  target_item, 
+                  other_items,
+                  treat=NULL
+                  ){
+
+#' @description  \code{est_r} visualizes all ATEs in a typical effect set
+#'
+#' @param data A dataset 
+#' @param target_item A string for the target item
+#' @param other_items A set of strings for other items of interest 
+#'
+#' @return A ggplot that visualizes all treatment effects
+#' @examples
+#' dt <- read_csv("ex_police.csv") 
+#' my_target_item <- "victim"
+#' my_other_items <- c("officers", "PDchief", "mayor", "DA", "governor", "senators")
+#' est_r(data = dt,
+#'       treat = my_treat,
+#'       target_item = my_target_item,
+#'       other_items = my_other_items)
+#' @export
+
+
+library(estimatr)
+library(tidyverse)
+use_col <- c("#b0015a", "black")
+  
+# Size
+N <- dim(data)[1]  
+  
+# Treatment indicator
+if(!is.null(treat)){
+  D <- data[treat] %>% pull()
+}
+  
+
+# Process raw ranking data
+J_1 <- length(other_items) # J - 1
+J <- J_1 + 1
+
+dt <- data 
+
+Y_rank_target <- dt[target_item] %>% pull() # Average ranks
+Y_rank_others <- list()
+for(i in 1:J_1){
+Y_rank_others[[i]] <- dt[other_items[i]]  %>% pull() 
+}
+
+Y_pairwise <- list()                 # Pairwise ranking P 
+for(i in 1:J_1){
+compar <- dt[other_items[i]] %>% pull() # Comparison item
+Y_pairwise[[i]] <- ifelse(Y_rank_target < compar, 1, 0)
+}
+
+Y_top1 <- ifelse(Y_rank_target <= 1, 1, 0)  # Top-1 ranking Probability (P)
+Y_top2 <- ifelse(Y_rank_target <= 2, 1, 0)  # Top-2 ranking P
+Y_top3 <- ifelse(Y_rank_target <= 3, 1, 0)  # Top-3 ranking P
+Y_top4 <- ifelse(Y_rank_target <= 4, 1, 0)  # Top-4 ranking P
+Y_top5 <- ifelse(Y_rank_target <= 5, 1, 0)  # Top-5 ranking P
+Y_top6 <- ifelse(Y_rank_target <= 6, 1, 0)  # Top-6 ranking P
+Y_top7 <- ifelse(Y_rank_target <= 7, 1, 0)  # Top-7 ranking P
+
+Y_marginal <- list()
+tgt <- dt[target_item] %>% pull()  
+for(i in 1:J){
+Y_marginal[[i]] <- ifelse(tgt == i, 1, 0)  
+}
+
+
+
+
+
+# Collect estimated means: without treatment
+if(is.null(treat)){
+  
+# Estimate baseline outcome values via OLS
+m_rank_target <- lm_robust(Y_rank_target ~ 1) %>% tidy()
+m_rank_others <- list()
+for(i in 1:J_1){
+m_rank_others[[i]] <- lm_robust(Y_rank_others[[i]] ~ 1) %>% tidy()  
+}  
+
+m_top1 <- lm_robust(Y_top1 ~ 1) %>% tidy()
+m_top2 <- lm_robust(Y_top2 ~ 1) %>% tidy()
+m_top3 <- lm_robust(Y_top3 ~ 1) %>% tidy()
+m_top4 <- lm_robust(Y_top4 ~ 1) %>% tidy()
+m_top5 <- lm_robust(Y_top5 ~ 1) %>% tidy()
+m_top6 <- lm_robust(Y_top6 ~ 1) %>% tidy()
+m_top7 <- lm_robust(Y_top7 ~ 1) %>% tidy()
+
+m_pairwise <- list()
+for(i in 1:J_1){
+m_pairwise[[i]] <- lm_robust(Y_pairwise[[i]] ~ 1) %>% tidy()
+}
+
+m_marginal <- list()
+for(i in 1:J){
+m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ 1) %>% tidy()
+}  
+m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
+  mutate(outcome = paste0(other_items),
+         target = "B")
+m_rank <- m_rank_target %>%
+  mutate(outcome = paste0(target_item),
+         target = "A")  
+  
+m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
+  mutate(outcome = paste0(other_items),
+         target = "B")
+m_rank <- m_rank_target %>%
+  mutate(outcome = paste0(target_item),
+         target = "A")
+gg_averagerank <- rbind(m_rank, m_rank_catch) 
+
+gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
+  mutate(outcome = paste0('v.', ' ', other_items))
+
+gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
+  mutate(outcome = paste0('Ranked', ' ', 1:J))
+
+
+gg_topk <- rbind(m_top1, m_top2, m_top3, m_top4,
+                 m_top5, m_top6, m_top7) %>%
+  mutate(outcome = c("Top-1", "Top-2", "Top-3", "Top-4",
+                     "Top-5", "Top-6", "Top-7"))
+
+# Visualize all effects
+p_ave <- ggplot(gg_averagerank, 
+                aes(fct_reorder(outcome, desc(estimate)), 
+                y=estimate)) +
+  geom_point(aes(color=target), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high,
+                     color = target), 
+                 lwd=1) +
+  scale_colour_manual(values = use_col) +
+  ylab("") +
+  xlab("") +
+  ylim(1,(1+J_1)) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("A. Average Ranks")) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+
+p_pair <- ggplot(gg_pairwise, 
+                aes(fct_reorder(outcome, desc(estimate)), 
+                y=estimate)) +
+  geom_point(aes(), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high), 
+                 lwd=1) +
+  ylab("") +
+  xlab("") +
+  ylim(0,1) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("B. Pairwise Ranking of", ' ', target_item, ' ', "Over")) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+p_topk <- ggplot(gg_topk, 
+                aes(x=outcome,  y=estimate)) +
+  geom_point(aes(), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high), 
+                 lwd=1) +
+  ylab("") +
+  xlab("") +
+  ylim(0,1) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("C. Top-k Ranking of", ' ', target_item)) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+
+p_marginal <- ggplot(gg_marginal, 
+                aes(x=outcome,  y=estimate)) +
+  geom_point(aes(), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high), 
+                 lwd=1) +
+  ylab("") +
+  xlab("") +
+  ylim(0,1) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("D. Marginal Ranking of", ' ', target_item)) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+
+ggpubr::ggarrange(p_ave, p_pair, p_topk, p_marginal)
+
+}else{
+  
+  
+# Prep for visualization
+scenario <- list(c("Not_significant", "Negative", "Positive"),
+                 c("Not_significant", "Negative"),
+                 c("Not_significant", "Positive"),
+                 c("Negative", "Positive"),
+                 c("Not_significant"),
+                 c("Negative"),
+                 c("Positive"))
+scena_col <- list(c("gray",  "#b0015a", "#128ba0"),
+                  c("gray", "#b0015a"),
+                  c("gray", "#128ba0"),
+                  c("#b0015a", "#128ba0"),
+                  c("gray"),
+                  c("#b0015a"),
+                  c("#128ba0"))
+
+av_scenario <- list(c("Not_significant", "Negative", "Positive"),
+                 c("Not_significant", "Negative"),
+                 c("Not_significant", "Positive"),
+                 c("Negative", "Positive"),
+                 c("Not_significant"),
+                 c("Negative"),
+                 c("Positive"))
+av_scena_col <- list(c("gray", "#128ba0",  "#b0015a"),
+                  c("gray", "#128ba0"),
+                  c("gray",  "#b0015a"),
+                  c("#128ba0", "#b0015a"),
+                  c("gray"),
+                  c("#128ba0"),
+                  c("#b0015a"))
+
+
+# Estimate ATEs with Difference-in-means via OLS
+m_rank_target <- lm_robust(Y_rank_target ~ D) %>% tidy()
+
+m_top1 <- lm_robust(Y_top1 ~ D) %>% tidy()
+m_top2 <- lm_robust(Y_top2 ~ D) %>% tidy()
+m_top3 <- lm_robust(Y_top3 ~ D) %>% tidy()
+m_top4 <- lm_robust(Y_top4 ~ D) %>% tidy()
+m_top5 <- lm_robust(Y_top5 ~ D) %>% tidy()
+m_top6 <- lm_robust(Y_top6 ~ D) %>% tidy()
+m_top7 <- lm_robust(Y_top7 ~ D) %>% tidy()
+
+m_pairwise <- list()
+for(i in 1:J_1){
+m_pairwise[[i]] <- lm_robust(Y_pairwise[[i]] ~ D) %>% tidy()
+}
+
+m_marginal <- list()
+for(i in 1:J){
+m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ D) %>% tidy()
+}  
+
+m_rank <- m_rank_target %>%
+  filter(term=="D") %>%  
+  mutate(outcome = paste0(target_item),
+         target = "A")
+gg_averagerank <- rbind(m_rank) 
+
+gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
+  filter(term=="D") %>%  
+  mutate(outcome = paste0('v.', ' ', other_items))
+
+gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
+  filter(term=="D") %>%  
+  mutate(outcome = paste0('Ranked', ' ', 1:J))
+
+gg_topk <- rbind(m_top1, m_top2, m_top3, m_top4,
+                 m_top5, m_top6, m_top7) %>%
+  filter(term=="D") %>%  
+  mutate(outcome = c("Top-1", "Top-2", "Top-3", "Top-4",
+                     "Top-5", "Top-6", "Top-7"))
+
+# Visualize all effects
+gg_averagerank$col = ifelse(gg_averagerank$conf.low  >0 ,"Positive", "Not_significant")
+gg_averagerank$col = ifelse(gg_averagerank$conf.high <0 ,"Negative", gg_averagerank$col)
+names(av_scena_col) <- av_scenario
+pattern <- unique(gg_averagerank$col) # Observed pattern
+use_col <- av_scena_col[pattern] # Use this color pallet
+
+
+p_ave <- ggplot(gg_averagerank, 
+                aes(fct_reorder(outcome, desc(estimate)), 
+                y=estimate)) +
+  geom_point(aes(color = col), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high, color = col), 
+                 lwd=1) +
+  scale_colour_manual(values = use_col)+  
+  geom_hline(yintercept = 0, linetype="dashed") +
+  scale_colour_manual(values = use_col) +
+  ylab("") +
+  xlab("") +
+#  ylim(1,(1+J_1)) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("A. Average Ranks")) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+gg_pairwise$col = ifelse(gg_pairwise$conf.low  >0 ,"Positive", "Not_significant")
+gg_pairwise$col = ifelse(gg_pairwise$conf.high <0 ,"Negative", gg_pairwise$col)
+names(scena_col) <- scenario
+pattern <- unique(gg_pairwise$col) # Observed pattern
+use_col <- scena_col[pattern] # Use this color pallet
+
+
+p_pair <- ggplot(gg_pairwise, 
+                aes(fct_reorder(outcome, desc(estimate)), 
+                y=estimate)) +
+  geom_point(aes(color = col), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high, color = col), 
+                 lwd=1) +
+  scale_colour_manual(values = use_col)+  
+  geom_hline(yintercept = 0, linetype="dashed") +  
+  ylab("") +
+  xlab("") +
+#  ylim(0,1) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("B. Pairwise Ranking of", ' ', target_item, ' ', "Over")) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+
+gg_topk$col = ifelse(gg_topk$conf.low  >0 ,"Positive", "Not_significant")
+gg_topk$col = ifelse(gg_topk$conf.high <0 ,"Negative", gg_topk$col)
+names(scena_col) <- scenario
+pattern <- unique(gg_topk$col) # Observed pattern
+use_col <- scena_col[pattern] # Use this color pallet
+
+p_topk <- ggplot(gg_topk, 
+                aes(x=outcome,  y=estimate)) +
+  geom_point(aes(color = col), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high, color = col), 
+                 lwd=1) +
+  scale_colour_manual(values = use_col)+  
+  geom_hline(yintercept = 0, linetype="dashed") +  
+  ylab("") +
+  xlab("") +
+#  ylim(0,1) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("C. Top-k Ranking of", ' ', target_item)) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+gg_marginal$col = ifelse(gg_marginal$conf.low  >0 ,"Positive", "Not_significant")
+gg_marginal$col = ifelse(gg_marginal$conf.high <0 ,"Negative", gg_marginal$col)
+names(scena_col) <- scenario
+pattern <- unique(gg_marginal$col) # Observed pattern
+use_col <- scena_col[pattern] # Use this color pallet
+
+
+p_marginal <- ggplot(gg_marginal, 
+                aes(x=outcome,  y=estimate)) +
+  geom_point(aes(color = col), size=2) +
+  geom_linerange(aes(x=outcome, ymin=conf.low, ymax=conf.high, color = col), 
+                 lwd=1) +
+  scale_colour_manual(values = use_col)+  
+  geom_hline(yintercept = 0, linetype="dashed") +    
+  ylab("") +
+  xlab("") +
+#  ylim(0,1) +
+  coord_flip() +
+  theme_bw() +
+  ggtitle(paste0("D. Marginal Ranking of", ' ', target_item)) +
+  theme(legend.position='none',
+        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+        text=element_text(size=10),
+        plot.title = element_text(size=10))
+
+
+ggpubr::ggarrange(p_ave, p_pair, p_topk, p_marginal)
+}
+
+}
+
+data <- dt_id
+
+
+imprr <- function(data,        # all data
+                  rank_q,      # string for ranking names
+                  main,
+                  anchor,      # string for anchor names
+                  anc_correct, # string for correctness indicator
+                  J            # number of items
+                  ){
+
+# # Do not run
+# data <- dt_id
+# rank_q <- c("party", "job", "religion", "gender", 
+#             "family_role", "race", "American")
+# main <- "app_identity"
+# anchor <- "anc_identity"
+# anc_correct <- "anc_correct"
+# J <- 7  
+
+    
+  N <- dim(data)[1]
+
+# Equation (8) -- proportion of random answers  
+  C <- data[anc_correct] %>% pull()
+  adjust <- mean(C) - 1/factorial(J)
+  normalizer <- (1 - 1/factorial(J))
+  p_non_random <- adjust/normalizer
+  
+# Equation (9) -- distribution of random answers  
+  
+ # Generate PMF of anchor rankings
+  temp <- table(data[anchor])
+  length(temp) # 60 unique ranking out of 5040
+  perm_j <- combinat::permn(1:7) 
+  perm_j <- do.call(rbind.data.frame, perm_j) 
+  colnames(perm_j) <- c(paste0("position_", 1:J)) 
+  perm_j <- perm_j %>% unite(col = "match", sep="")
+  
+  obs_anchor_freq <- table(data[anchor]) %>%
+    data.frame()
+  colnames(obs_anchor_freq) <- c("match", "Freq")
+  
+  f_anchor <- perm_j %>%
+    left_join(obs_anchor_freq) %>%
+    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0s
+
+  f_anc_true <- data.frame(perm_j, 0)
+  f_anc_true[1,"X0"] <- 1 # True density for anchor -- 1234567  
+  
+ A <- f_anchor$Freq
+ B <- p_non_random
+ C <- f_anc_true$X0
+
+ f_random <-  (A - (B * C) )/(1 - B)
+ f_random <- f_random / N # Normalize to be probability
+
+ sum(f_random) # This must be 1 
+
+ # Alternatively, asymptotics gives us 
+ f_random <- rep(1/factorial(J), factorial(J))
+ sum(f_random) # This must be 1 
+  
+ 
+# Equation (10) -- distribution of error-free rankings
+ obs_main_freq <- table(data[main]) %>%
+   data.frame()
+  colnames(obs_main_freq) <- c("match", "Freq") 
+ 
+  f_main <- perm_j %>%
+   left_join(obs_main_freq) %>%
+    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0s
+ 
+D <- f_main$Freq  
+E <- f_random
+ 
+ f_true <- (D - ((1 - B) * E) ) / B
+ f_true <- f_true / N
+
+  sum(f_true) # This must be 1
+  
+# Equation 4
+ w <- f_true / D  # weight vector
+ w[which(!is.finite(w))] <- 0
+ w <- w/sum(w)
+ sum(w) # This must be 1
+ 
+ 
+ w_frame <- data.frame(
+   main = perm_j$match,
+   weight = w)
+ colnames(w_frame) <- c(main, "weight")
+  
+data_w <- data %>%
+  left_join(w_frame)
+
+ 
+}
+
+
+
+
