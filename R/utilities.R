@@ -40,6 +40,38 @@ root_var <- c(
 # )
 # match(x, sort(x)) %>% paste(collapse = "") ## 3127546
 
+option_crosswalk <- c(
+  ## Tate
+  policy = "app_tate_1",
+  pork = "app_tate_2",
+  service = "app_tate_3",
+  ## Electoral systems
+  account_pol = "app_e_systems_1",
+  account_gov = "app_e_systems_2",
+  stable = "app_e_systems_3",
+  prop = "app_e_systems_4",
+  women = "app_e_systems_5",
+  minority = "app_e_systems_6",
+  median = "app_e_systems_7",
+  ## Identity
+  party = "app_identity_1",
+  job = "app_identity_2",
+  religion = "app_identity_3",
+  gender = "app_identity_4",
+  family_role = "app_identity_5",
+  race = "app_identity_6",
+  American = "app_identity_7",
+  ## Polarization
+  dem_pol = "app_polar_1",
+  rep_pol = "app_polar_2",
+  media = "app_polar_3",
+  social_media = "app_polar_4",
+  interest_groups = "app_polar_5",
+  dem_citizens = "app_polar_6",
+  rep_citizens = "app_polar_7",
+  e_systems = "app_polar_8"
+)
+
 # Functions ====================================================================
 ## Turn 1st, 2nd, and 3rd ranking columns into long data format
 pivot_sim <- function(x) {
@@ -296,14 +328,22 @@ qualtrics_import <- function(fname) {
     ungroup() %>%
     ## Partial rankers
     mutate(
-      partial_tate_main = case_when(grepl("9", app_tate) ~ 1, TRUE ~ 0),
-      partial_tate_anc = case_when(grepl("9", anc_tate) ~ 1, TRUE ~ 0),
-      partial_e_systems_main = case_when(grepl("9", app_e_systems) ~ 1, TRUE ~ 0),
-      partial_e_systems_anc = case_when(grepl("9", anc_e_systems) ~ 1, TRUE ~ 0),
-      partial_identity_main = case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
-      partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
-      partial_polar_main = case_when(grepl("9", app_polar) ~ 1, TRUE ~ 0),
-      partial_polar_anc = case_when(grepl("9", anc_polar) ~ 1, TRUE ~ 0)
+      partial_tate_main =
+        case_when(grepl("9", app_tate) ~ 1, TRUE ~ 0),
+      partial_tate_anc =
+        case_when(grepl("9", anc_tate) ~ 1, TRUE ~ 0),
+      partial_e_systems_main =
+        case_when(grepl("9", app_e_systems) ~ 1, TRUE ~ 0),
+      partial_e_systems_anc =
+        case_when(grepl("9", anc_e_systems) ~ 1, TRUE ~ 0),
+      partial_identity_main =
+        case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
+      partial_identity_anc =
+        case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
+      partial_polar_main =
+        case_when(grepl("9", app_polar) ~ 1, TRUE ~ 0),
+      partial_polar_anc =
+        case_when(grepl("9", anc_polar) ~ 1, TRUE ~ 0)
     ) %>%
     ## pid7
     mutate(
@@ -321,6 +361,10 @@ qualtrics_import <- function(fname) {
         grepl("Democrat", pid7) ~ "Dem",
         grepl("Republican", pid7) ~ "Rep",
         TRUE ~ "Ind"
+      ),
+      white = case_when(
+        race == "1" ~ "White",
+        TRUE ~ "Non-white"
       )
     )
 
@@ -642,6 +686,7 @@ vis_r <- function(data,
   #' @export
 
   use_col <- c("#b0015a", "black")
+  label <- simple_cap(gsub("_", " ", simple_cap(target_item)))
 
   # Size
   N <- dim(data)[1]
@@ -792,7 +837,9 @@ vis_r <- function(data,
       ylim(0, 1) +
       coord_flip() +
       theme_bw() +
-      ggtitle(paste0("B. Pairwise Ranking of", " ", target_item, " ", "Over")) +
+      ggtitle(
+        paste0("B. Pairwise Ranking of", " ", label, " ", "Over Other Options")
+      ) +
       theme(
         legend.position = "none",
         plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
@@ -813,7 +860,7 @@ vis_r <- function(data,
       ylim(0, 1) +
       coord_flip() +
       theme_bw() +
-      ggtitle(paste0("C. Top-k Ranking of", " ", target_item)) +
+      ggtitle(paste0("C. Top-k Ranking of", " ", label)) +
       theme(
         legend.position = "none",
         plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
@@ -834,7 +881,7 @@ vis_r <- function(data,
       ylim(0, 1) +
       coord_flip() +
       theme_bw() +
-      ggtitle(paste0("D. Marginal Ranking of", " ", target_item)) +
+      ggtitle(paste0("D. Marginal Ranking of", " ", label)) +
       theme(
         legend.position = "none",
         plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),

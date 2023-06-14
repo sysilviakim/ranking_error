@@ -2,64 +2,33 @@ source(here::here("R", "utilities.R"))
 df_list <- qualtrics_import("pretest-03-straightlining-test.csv")
 main <- df_list$main
 
-# Wrangle data before splitting ================================================
-main <- main %>%
-  mutate(
-    white = case_when(
-      race == "1" ~ "White",
-      TRUE ~ "Non-white"
-    ),
-    turnout2022 = case_when(
-      turnout2022 == "1" ~ "Yes",
-      TRUE ~ "No"
-    ),
-    college = case_when(
-      education %in% c("1", "2", "3") ~ "Less Than BA",
-      TRUE ~ "Bachelor's Degree or Higher"
-    )
-  )
-
 # Setup ========================================================================
 prep_list <- root_var %>%
   imap(
     ~ {
-      ## For each application, delete partial rankings for both
-      ## main and anchor variable. Need respondent to answer both fully.
-
       dat <- main %>%
+        ## For each application, delete partial rankings for both
+        ## main and anchor variable. Need respondent to answer both fully.
         filter(
           !grepl("9", !!as.name(paste0("anc_", .y))) &
             !grepl("9", !!as.name(paste0("app_", .y)))
-        )
-      N <- nrow(dat)
-
-      ## Indices
-      set.seed(123)
-      indices <- seq(bootstrap_n) %>%
-        map(
-          function(y) {
-            tibble(
-              !!as.name(paste0("x", y)) :=
-                sample(seq(N), size = N, replace = TRUE)
-            )
-          }
         ) %>%
-        bind_cols()
-      assert_that(!identical(sort(indices$x1), sort(indices$x2)))
+        select(
+          contains(paste0("app_", .y)),
+          matches(paste0("anc_", .y, "$")),
+          matches(paste0("anc_correct_", .y, "$")),
+          matches(paste0("anc_", .y, "_observed"))
+        ) %>%
+        select(-contains("repeat"), -contains("trunc"))
 
-      ## Correct answers to the anchor question
-      correct <- ifelse(dat[[paste0("anc_", .y)]] == .x, 1, 0)
-
+      crosswalk <- option_crosswalk[option_crosswalk %in% names(dat)]
+      dat <- dat %>% rename(!!!crosswalk)
+      N <- nrow(dat)
       return(
-        list(
-          dat = dat, N = N, indices = indices, correct = correct, answer = .x
-        )
+        list(dat = dat, N = N, crosswalk = crosswalk, labels = names(crosswalk))
       )
     }
   )
-
-## Sanity check
-assert_that(nchar(prep_list$tate$answer) == 3)
 
 # Uniform distribution test ====================================================
 ## Table prep ------------------------------------------------------------------
@@ -200,106 +169,32 @@ avg_rank(
 
 # Descriptive Statistics========================================================
 ## Tate 1993 (representation) --------------------------------------------------
-
-dt_id <- main %>%
-  filter(!grepl("9", app_identity)) %>%
-  mutate(anc_correct = ifelse(anc_identity == "1234567", 1, 0)) %>%
-  select(
-    app_identity_1:app_identity_7,
-    app_identity, anc_identity, anc_correct
-  ) %>%
-  rename(
-    party = app_identity_1,
-    job = app_identity_2,
-    religion = app_identity_3,
-    gender = app_identity_4,
-    family_role = app_identity_5,
-    race = app_identity_6,
-    American = app_identity_7
-  )
-
-others <- c(
-  "job", "religion", "gender",
-  "family_role", "race", "American"
-)
-
-vis_r(
-  data = dt_id,
-  target_item = "party", # Political party
-  other_items = others
-)
-
-ggsave(
-  here::here("fig", "pretest03-statistics-id-party.pdf"),
-  width = 6, height = 4.5
-)
-
-
-# Compute weights
-
-dt_id_w <- imprr(
-  data = dt_id,
-  rank_q = c(
-    "party", "job", "religion", "gender",
-    "family_role", "race", "American"
-  ),
-  main_q = "app_identity",
-  anchor = "anc_identity",
-  anc_correct = "anc_correct",
-  J = 7
-)
-
-head(dt_id_w)
-
-head(dt_id_w$weight)
-table(dt_id_w$weight)
-
-# [1] 0.01063827 0.01063827 0.01063827 0.01063827 0.01063827
-# [6] 0.01063827
-# --> This seems shady. Needs more checks
-
-## Tate 1993 (representation) --------------------------------------------------
-dt_rep <- main %>%
-  filter(!grepl("9", app_tate)) %>%
-  mutate(anc_correct = ifelse(anc_tate == "123", 1, 0)) %>%
-  select(
-    app_tate_1:app_tate_3,
-    app_tate, anc_tate, anc_correct
-  ) %>%
-  rename(
-    policy = app_tate_1,
-    pork = app_tate_2,
-    service = app_tate_3
-  )
-
-dt_rep_w <- imprr(
-  data = dt_rep,
-  rank_q = c("policy", "pork", "service"),
+dt_tate_w <- imprr(
+  data = prep_list$tate$dat,
+  rank_q = prep_list$tate$labels,
   main_q = "app_tate",
   anchor = "anc_tate",
-  anc_correct = "anc_correct",
+  anc_correct = "anc_correct_tate",
   J = 3
 )
 
-head(dt_rep_w) # --> Looks good!
-table(
-  dt_rep_w$weight,
-  dt_rep_w$app_tate
-)
+head(dt_tate_w)
+head(dt_tate_w$weight)
+table(dt_tate_w$weight, dt_tate_w$app_tate)
 
 # Unit check -- bias pulls the PMF to uniform distribution
 
-N <- dim(dt_rep_w)[1]
-w <- unique(dt_rep_w$weight)
+N <- dim(dt_tate_w)[1]
+w <- unique(dt_tate_w$weight)
 
-freq_raw <- round(table(dt_rep_w$app_tate) / N, d = 2)
-freq_imp <- round(table(dt_rep_w$app_tate) * w / N, d = 2)
+freq_raw <- round(table(dt_tate_w$app_tate) / N, d = 2)
+freq_imp <- round(table(dt_tate_w$app_tate) * w / N, d = 2)
 
 # Raw frequency
-freq_raw_dev <- round(table(dt_rep_w$app_tate) / N - 1 / 6, d = 2)
+freq_raw_dev <- round(table(dt_tate_w$app_tate) / N - 1 / 6, d = 2)
 
 # Improved frequency
-freq_imp_dev <- round(table(dt_rep_w$app_tate) * w / N - 1 / 6, d = 2)
+freq_imp_dev <- round(table(dt_tate_w$app_tate) * w / N - 1 / 6, d = 2)
 
 freq_raw
 freq_imp
@@ -307,49 +202,75 @@ freq_imp
 mean(freq_raw_dev)
 mean(freq_imp_dev)
 
-
-## Electoral sys ---------------------------------------------------------------
-dt_es <- main %>%
-  filter(!grepl("9", app_e_systems)) %>%
-  mutate(anc_correct = ifelse(anc_e_systems == "1234567", 1, 0)) %>%
-  select(
-    app_e_systems_1:app_e_systems_7,
-    app_e_systems, anc_e_systems, anc_correct
-  ) %>%
-  rename(
-    account_pol = app_e_systems_1,
-    account_gov = app_e_systems_2,
-    stable = app_e_systems_3,
-    prop = app_e_systems_4,
-    women = app_e_systems_5,
-    minority = app_e_systems_6,
-    median = app_e_systems_7
-  )
-
-dt_es_w <- imprr(
-  data = dt_es,
-  rank_q = c(
-    "account_pol", "account_gov", "stable",
-    "prop", "women", "minority", "median"
-  ),
+## Electoral systems -----------------------------------------------------------
+dt_e_systems_w <- imprr(
+  data = prep_list$e_systems$dat,
+  rank_q = prep_list$e_systems$labels,
   main_q = "app_e_systems",
   anchor = "anc_e_systems",
-  anc_correct = "anc_correct",
+  anc_correct = "anc_correct_e_systems",
   J = 7
 )
 
-head(dt_es_w) # --> Looks NOT good
-table(dt_es_w$weight)
+head(dt_e_systems_w)
+table(dt_e_systems_w$weight)
 
-# Proportion of non-random answers
-# Representation (J=3)
-# 0.4244898
-mean(dt_rep_w$p_non_random)
+## Identity --------------------------------------------------------------------
+vis_r(
+  data = prep_list$identity$dat,
+  target_item = "party",
+  other_items = setdiff(prep_list$identity$labels, "party")
+)
 
-# Identity (J=7)
-# 0.2753664
-mean(dt_id_w$p_non_random)
+ggsave(
+  here("fig", "pretest03-statistics-id-party.pdf"),
+  width = 6, height = 4.5
+)
 
-# Electoral systems (J=8)
-# 0.1921474
-mean(dt_es_w$p_non_random)
+# Compute weights
+dt_identity_w <- imprr(
+  data = prep_list$identity$dat,
+  rank_q = prep_list$identity$labels,
+  main_q = "app_identity",
+  anchor = "anc_identity",
+  anc_correct = "anc_correct_identity",
+  J = 7
+)
+
+head(dt_identity_w)
+head(dt_identity_w$weight)
+table(dt_identity_w$weight)
+
+## Polarization ----------------------------------------------------------------
+vis_r(
+  data = prep_list$polar$dat,
+  target_item = "media",
+  other_items = setdiff(prep_list$polar$labels, "media")
+)
+
+# Compute weights
+dt_polar_w <- imprr(
+  data = prep_list$polar$dat,
+  rank_q = prep_list$polar$labels,
+  main_q = "app_polar",
+  anchor = "anc_polar",
+  anc_correct = "anc_correct_polar",
+  J = 8
+)
+
+head(dt_polar_w)
+head(dt_polar_w$weight)
+table(dt_polar_w$weight)
+
+# Proportion of non-random answers =============================================
+# Representation (J=3): 41.2%
+mean(dt_tate_w$p_non_random)
+
+# Electoral systems (J=7): 21.1%
+mean(dt_e_systems_w$p_non_random)
+
+# Identity (J=7): 27.0%
+mean(dt_identity_w$p_non_random)
+
+# Polarization (J=8): 65.4%
+mean(dt_polar_w$p_non_random)
