@@ -667,7 +667,8 @@ venn_diagram_fill <- function(x, v1, v2, v3) {
 vis_r <- function(data,
                   target_item,
                   other_items,
-                  treat = NULL) {
+                  treat = NULL,
+                  single_plot = TRUE) {
   #' @description  \code{est_r} visualizes all ATEs in a typical effect set
   #'
   #' @param data A dataset
@@ -695,7 +696,6 @@ vis_r <- function(data,
   if (!is.null(treat)) {
     D <- data[treat] %>% pull()
   }
-
 
   # Process raw ranking data
   J_1 <- length(other_items) # J - 1
@@ -788,13 +788,18 @@ vis_r <- function(data,
       m_top1, m_top2, m_top3, m_top4,
       m_top5, m_top6, m_top7
     ) %>%
-      mutate(outcome = c(
-        "Top-1", "Top-2", "Top-3", "Top-4",
-        "Top-5", "Top-6", "Top-7"
-      ))
+      mutate(
+        outcome = c(
+          "Top-1", "Top-2", "Top-3", "Top-4",
+          "Top-5", "Top-6", "Top-7"
+        )
+      ) %>%
+      select(outcome, everything()) %>%
+      ## Limit to less than 7 if J<7
+      .[1:(J - 1), ]
 
     # Visualize all effects
-    p_ave <- ggplot(
+    p_avg <- ggplot(
       gg_averagerank,
       aes(fct_reorder(outcome, desc(estimate)),
         y = estimate
@@ -889,8 +894,18 @@ vis_r <- function(data,
         plot.title = element_text(size = 10)
       )
 
-
-    ggpubr::ggarrange(p_ave, p_pair, p_topk, p_marginal)
+    if (single_plot == TRUE) {
+      ggpubr::ggarrange(p_avg, p_pair, p_topk, p_marginal)
+    } else {
+      return(
+        list(
+          p_avg = p_avg,
+          p_pair = p_pair,
+          p_topk = p_topk,
+          p_marginal = p_marginal
+        )
+      )
+    }
   } else {
     # Prep for visualization
     scenario <- list(
@@ -989,7 +1004,7 @@ vis_r <- function(data,
     pattern <- unique(gg_averagerank$col) # Observed pattern
     use_col <- av_scena_col[pattern] # Use this color pallet
 
-    p_ave <- ggplot(
+    p_avg <- ggplot(
       gg_averagerank,
       aes(fct_reorder(outcome, desc(estimate)),
         y = estimate
@@ -1026,7 +1041,6 @@ vis_r <- function(data,
     pattern <- unique(gg_pairwise$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
 
-
     p_pair <- ggplot(
       gg_pairwise,
       aes(fct_reorder(outcome, desc(estimate)),
@@ -1052,7 +1066,6 @@ vis_r <- function(data,
         text = element_text(size = 10),
         plot.title = element_text(size = 10)
       )
-
 
     gg_topk$col <- ifelse(gg_topk$conf.low > 0, "Positive", "Not_significant")
     gg_topk$col <- ifelse(gg_topk$conf.high < 0, "Negative", gg_topk$col)
@@ -1118,7 +1131,18 @@ vis_r <- function(data,
         plot.title = element_text(size = 10)
       )
 
-    ggpubr::ggarrange(p_ave, p_pair, p_topk, p_marginal)
+    if (single_plot == TRUE) {
+      ggpubr::ggarrange(p_avg, p_pair, p_topk, p_marginal)
+    } else {
+      return(
+        list(
+          p_avg = p_avg,
+          p_pair = p_pair,
+          p_topk = p_topk,
+          p_marginal = p_marginal
+        )
+      )
+    }
   }
 }
 

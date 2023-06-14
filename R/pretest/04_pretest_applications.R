@@ -167,8 +167,49 @@ avg_rank(
 # (7) Republican citizens ---> 4.86
 # (8) Electoral systems ---> 5.65
 
-# Descriptive Statistics========================================================
+# Descriptive statistics========================================================
 ## Tate 1993 (representation) --------------------------------------------------
+
+### Full visualization
+vis_r(
+  data = prep_list$tate$dat,
+  target_item = "pork",
+  other_items = setdiff(prep_list$tate$labels, "pork")
+)
+
+### Compare substantial understanding
+p1 <- vis_r(
+  data = prep_list$tate$dat,
+  target_item = "pork",
+  other_items = setdiff(prep_list$tate$labels, "pork"),
+  single_plot = FALSE
+) %>% 
+  .$p_avg
+
+p2 <- vis_r(
+  data = prep_list$tate$dat %>% filter(anc_correct_tate == 1),
+  target_item = "pork",
+  other_items = setdiff(prep_list$tate$labels, "pork"),
+  single_plot = FALSE
+) %>% 
+  .$p_avg
+
+p3 <- vis_r(
+  data = prep_list$tate$dat %>% filter(anc_correct_tate == 0),
+  target_item = "pork",
+  other_items = setdiff(prep_list$tate$labels, "pork"),
+  single_plot = FALSE
+) %>% 
+  .$p_avg
+
+### Just a placeholder for future corrected figure
+plot_nolegend(pdf_default(p2)) + ggtitle("")
+ggsave(here("fig", "tate_anchor_passed.pdf"), width = 3, height = 2.2)
+
+plot_nolegend(pdf_default(p3)) + ggtitle("")
+ggsave(here("fig", "tate_anchor_failed.pdf"), width = 3, height = 2.2)
+
+### Weight
 dt_tate_w <- imprr(
   data = prep_list$tate$dat,
   rank_q = prep_list$tate$labels,
