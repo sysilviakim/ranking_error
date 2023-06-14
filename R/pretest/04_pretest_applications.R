@@ -293,16 +293,22 @@ table(dt_rep_w$weight,
 N <- dim(dt_rep_w)[1]
 w <- unique(dt_rep_w$weight)
 
+freq_raw <- round(table(dt_rep_w$app_tate_1993) / N, d=2)
+freq_imp <- round(table(dt_rep_w$app_tate_1993) * w / N, d=2)
+
+
 # Raw frequency
-freq_raw <- round(table(dt_rep_w$app_tate_1993) / N - 1/6, d=2)
+freq_raw_dev <- round(table(dt_rep_w$app_tate_1993) / N - 1/6, d=2)
 
 # Improved frequency
-freq_imp <- round(table(dt_rep_w$app_tate_1993) * w / N - 1/6, d=2)
+freq_imp_dev <- round(table(dt_rep_w$app_tate_1993) * w / N - 1/6, d=2)
+
 
 freq_raw
 freq_imp
-mean(freq_raw)
-mean(freq_imp)
+
+mean(freq_raw_dev)
+mean(freq_imp_dev)
 
 
 ## Electoral sys ---------------------------------------------------------------
