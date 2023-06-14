@@ -247,19 +247,84 @@ ggsave(here::here("fig", "pretest03-statistics-id-party.pdf"),
 
 # Compute weights
 
-data_w <- imprr(data = dt_id,
+dt_id_w <- imprr(data = dt_id,
                 rank_q = c("party", "job", "religion", "gender", 
                             "family_role", "race", "American"),
-                main = "app_identity",
+                main_q = "app_identity",
                 anchor = "anc_identity",
                 anc_correct = "anc_correct",
                 J = 7)
-head(data_w$weight)
+
+head(dt_id_w)
+
+head(dt_id_w$weight)
+table(dt_id_w$weight)
 
 # [1] 0.01063827 0.01063827 0.01063827 0.01063827 0.01063827
 # [6] 0.01063827
 # --> This seems shady. Needs more checks
 
 
+## Tate 1993 (representation) --------------------------------------------------
+dt_rep <-  main %>% 
+   filter(!grepl("9", app_tate_1993)) %>% 
+   mutate(anc_correct = ifelse(anc_tate_1993 == "123", 1, 0)) %>%
+   select(app_tate_1993_1:app_tate_1993_3, 
+          app_tate_1993, anc_tate_1993, anc_correct) %>%
+   rename(policy = app_tate_1993_1,
+          pork =  app_tate_1993_2,
+          service = app_tate_1993_3)
+
+
+dt_rep_w <- imprr(data = dt_rep,
+                rank_q = c("policy", "pork", "service"),
+                main_q = "app_tate_1993",
+                anchor = "anc_tate_1993",
+                anc_correct = "anc_correct",
+                J = 3)
+
+head(dt_rep_w) # --> Looks good!
+table(dt_rep_w$weight, 
+      dt_rep_w$app_tate_1993)
+
+
+## Electoral sys ---------------------------------------------------------------
+dt_es <-  main %>% 
+   filter(!grepl("9", app_e_systems)) %>% 
+   mutate(anc_correct = ifelse(anc_e_systems == "1234567", 1, 0)) %>%
+   select(app_e_systems_1:app_e_systems_7, 
+          app_e_systems, anc_e_systems, anc_correct) %>%
+   rename(account_pol = app_e_systems_1,
+          account_gov =  app_e_systems_2,
+          stable = app_e_systems_3,
+          prop =  app_e_systems_4,
+          women = app_e_systems_5,
+          minority = app_e_systems_6,
+          median =  app_e_systems_7)
+
+dt_es_w <- imprr(data = dt_es,
+                rank_q = c("account_pol", "account_gov", "stable",
+                           "prop", "women", "minority", "median"),
+                main_q = "app_e_systems",
+                anchor = "anc_e_systems",
+                anc_correct = "anc_correct",
+                J = 7)
+
+head(dt_es_w) # --> Looks NOT good
+table(dt_es_w$weight)
+
+
+# Proportion of non-random answers
+# Representation (J=3)
+# 0.4244898
+mean(dt_rep_w$p_non_random)
+
+# Identity (J=7)
+# 0.2753664
+mean(dt_id_w$p_non_random)
+
+# Electoral systems (J=8)
+# 0.1921474
+mean(dt_es_w$p_non_random)
 
 

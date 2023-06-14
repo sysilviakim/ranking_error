@@ -1010,32 +1010,38 @@ ggpubr::ggarrange(p_ave, p_pair, p_topk, p_marginal)
 
 }
 
-data <- dt_id
 
 
 imprr <- function(data,        # all data
                   rank_q,      # string for ranking names
-                  main,
+                  main_q,
                   anchor,      # string for anchor names
                   anc_correct, # string for correctness indicator
                   J            # number of items
                   ){
 
 # # Do not run
+  
 # data <- dt_id
-# rank_q <- c("party", "job", "religion", "gender", 
+# rank_q <- c("party", "job", "religion", "gender",
 #             "family_role", "race", "American")
-# main <- "app_identity"
+# main_q <- "app_identity"
 # anchor <- "anc_identity"
 # anc_correct <- "anc_correct"
-# J <- 7  
+# J <- 7
 
-    
+# data = dt_rep
+# rank_q = c("policy", "pork", "service")
+# main_q = "app_tate_1993"
+# anchor = "anc_tate_1993"
+# anc_correct = "anc_correct"
+# J = 3    
+  
   N <- dim(data)[1]
 
 # Equation (8) -- proportion of random answers  
-  C <- data[anc_correct] %>% pull()
-  adjust <- mean(C) - 1/factorial(J)
+  Corr <- data[anc_correct] %>% pull()
+  adjust <- mean(Corr) - 1/factorial(J)
   normalizer <- (1 - 1/factorial(J))
   p_non_random <- adjust/normalizer
   
@@ -1044,7 +1050,7 @@ imprr <- function(data,        # all data
  # Generate PMF of anchor rankings
   temp <- table(data[anchor])
   length(temp) # 60 unique ranking out of 5040
-  perm_j <- combinat::permn(1:7) 
+  perm_j <- combinat::permn(1:J) 
   perm_j <- do.call(rbind.data.frame, perm_j) 
   colnames(perm_j) <- c(paste0("position_", 1:J)) 
   perm_j <- perm_j %>% unite(col = "match", sep="")
@@ -1060,51 +1066,47 @@ imprr <- function(data,        # all data
   f_anc_true <- data.frame(perm_j, 0)
   f_anc_true[1,"X0"] <- 1 # True density for anchor -- 1234567  
   
- A <- f_anchor$Freq
- B <- p_non_random
- C <- f_anc_true$X0
+ A <- f_anchor$Freq / N  # -- empirical pmf of rankings in anchor
+ B <- p_non_random       # -- estimated proportion of non-random
+ C <- f_anc_true$X0      # -- true pmf of rankings in anchor
 
  f_random <-  (A - (B * C) )/(1 - B)
- f_random <- f_random / N # Normalize to be probability
 
  sum(f_random) # This must be 1 
 
- # Alternatively, asymptotics gives us 
- f_random <- rep(1/factorial(J), factorial(J))
- sum(f_random) # This must be 1 
+ # # Alternatively, asymptotics gives us 
+ # f_random <- rep(1/factorial(J), factorial(J))
+ # sum(f_random) # This must be 1 
   
  
 # Equation (10) -- distribution of error-free rankings
- obs_main_freq <- table(data[main]) %>%
+ obs_main_freq <- table(data[main_q]) %>%
    data.frame()
   colnames(obs_main_freq) <- c("match", "Freq") 
  
   f_main <- perm_j %>%
    left_join(obs_main_freq) %>%
-    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0s
+    mutate(Freq = ifelse(is.na(Freq), 0.0001, Freq)) # Impute 0.0001
  
-D <- f_main$Freq  
-E <- f_random
+D <- f_main$Freq / N # -- empirical pmf of ranking in the main question  
+E <- f_random        # -- estimated pmf of errors in the anchor
  
  f_true <- (D - ((1 - B) * E) ) / B
- f_true <- f_true / N
-
-  sum(f_true) # This must be 1
+ 
+ sum(f_true) # This must be 1
   
 # Equation 4
  w <- f_true / D  # weight vector
- w[which(!is.finite(w))] <- 0
- w <- w/sum(w)
- sum(w) # This must be 1
- 
- 
+# w[which(!is.finite(w))] <- 0
+
  w_frame <- data.frame(
    main = perm_j$match,
    weight = w)
- colnames(w_frame) <- c(main, "weight")
+ colnames(w_frame) <- c(main_q, "weight")
   
 data_w <- data %>%
-  left_join(w_frame)
+  left_join(w_frame) %>%
+  mutate(p_non_random = p_non_random)
 
  
 }
