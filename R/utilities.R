@@ -1022,13 +1022,13 @@ imprr <- function(data,        # all data
 
 # # Do not run
   
-# data <- dt_id
-# rank_q <- c("party", "job", "religion", "gender",
-#             "family_role", "race", "American")
-# main_q <- "app_identity"
-# anchor <- "anc_identity"
-# anc_correct <- "anc_correct"
-# J <- 7
+data <- dt_id
+rank_q <- c("party", "job", "religion", "gender",
+            "family_role", "race", "American")
+main_q <- "app_identity"
+anchor <- "anc_identity"
+anc_correct <- "anc_correct"
+J <- 7
 
 # data = dt_rep
 # rank_q = c("policy", "pork", "service")
