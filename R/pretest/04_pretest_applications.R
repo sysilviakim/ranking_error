@@ -288,6 +288,23 @@ table(dt_rep_w$weight,
       dt_rep_w$app_tate_1993)
 
 
+# Unit check -- bias pulls the PMF to uniform distribution
+
+N <- dim(dt_rep_w)[1]
+w <- unique(dt_rep_w$weight)
+
+# Raw frequency
+freq_raw <- round(table(dt_rep_w$app_tate_1993) / N - 1/6, d=2)
+
+# Improved frequency
+freq_imp <- round(table(dt_rep_w$app_tate_1993) * w / N - 1/6, d=2)
+
+freq_raw
+freq_imp
+mean(freq_raw)
+mean(freq_imp)
+
+
 ## Electoral sys ---------------------------------------------------------------
 dt_es <-  main %>% 
    filter(!grepl("9", app_e_systems)) %>% 

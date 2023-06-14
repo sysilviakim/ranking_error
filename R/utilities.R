@@ -1022,13 +1022,13 @@ imprr <- function(data,        # all data
 
 # # Do not run
   
-data <- dt_id
-rank_q <- c("party", "job", "religion", "gender",
-            "family_role", "race", "American")
-main_q <- "app_identity"
-anchor <- "anc_identity"
-anc_correct <- "anc_correct"
-J <- 7
+# data <- dt_id
+# rank_q <- c("party", "job", "religion", "gender",
+#             "family_role", "race", "American")
+# main_q <- "app_identity"
+# anchor <- "anc_identity"
+# anc_correct <- "anc_correct"
+# J <- 7
 
 # data = dt_rep
 # rank_q = c("policy", "pork", "service")
@@ -1086,7 +1086,7 @@ J <- 7
  
   f_main <- perm_j %>%
    left_join(obs_main_freq) %>%
-    mutate(Freq = ifelse(is.na(Freq), 0.0001, Freq)) # Impute 0.0001
+    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0.0001
  
 D <- f_main$Freq / N # -- empirical pmf of ranking in the main question  
 E <- f_random        # -- estimated pmf of errors in the anchor
