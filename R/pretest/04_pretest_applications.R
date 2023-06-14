@@ -25,14 +25,14 @@ prep_list <- root_var %>%
     ~ {
       ## For each application, delete partial rankings for both
       ## main and anchor variable. Need respondent to answer both fully.
-      
+
       dat <- main %>%
         filter(
           !grepl("9", !!as.name(paste0("anc_", .y))) &
             !grepl("9", !!as.name(paste0("app_", .y)))
         )
       N <- nrow(dat)
-      
+
       ## Indices
       set.seed(123)
       indices <- seq(bootstrap_n) %>%
@@ -46,10 +46,10 @@ prep_list <- root_var %>%
         ) %>%
         bind_cols()
       assert_that(!identical(sort(indices$x1), sort(indices$x2)))
-      
+
       ## Correct answers to the anchor question
       correct <- ifelse(dat[[paste0("anc_", .y)]] == .x, 1, 0)
-      
+
       ## Recover the "observed" ranking
       ## based on randomized order presentation
       dat[[paste0("anc_", .y, "_obs")]] <- dat %>%
@@ -59,7 +59,7 @@ prep_list <- root_var %>%
         ) %>%
         recov_ref_ranking(rank_var = paste0("anc_", .y)) %>%
         .$ref
-      
+
       dat[[paste0("app_", .y, "_obs")]] <- dat %>%
         separate(
           !!as.name(paste0("app_", .y, "_do")),
@@ -67,7 +67,7 @@ prep_list <- root_var %>%
         ) %>%
         recov_ref_ranking(rank_var = paste0("app_", .y)) %>%
         .$ref
-      
+
       return(
         list(
           dat = dat, N = N, indices = indices, correct = correct, answer = .x
@@ -87,24 +87,24 @@ uniform_list <- prep_list %>%
       ### Create frequency tables
       tab_main <- table(.x$dat[[paste0("app_", .y, "_obs")]])
       tab_anch <- table(.x$dat[[paste0("anc_", .y, "_obs")]])
-      
+
       ### Chi-square test and power test
       message(paste0("Chi-square test result for main question, ", .y))
       chisq_power(tab_main)
-      
+
       message(paste0("Chi-square test result for anchor question, ", .y))
       chisq_power(tab_anch)
-      
+
       temp <- table_to_tibble(tab_main)
       suppressMessages(({
         p_main <- plot_nolegend(pdf_default(plot_dist_ranking(temp)))
       }))
-      
+
       temp <- table_to_tibble(tab_anch)
       suppressMessages(({
         p_anch <- plot_nolegend(pdf_default(plot_dist_ranking(temp)))
       }))
-      
+
       return(list(main = p_main, anch = p_anch))
     }
   )
@@ -219,41 +219,52 @@ avg_rank(
 # Descriptive Statistics========================================================
 ## Tate 1993 (representation) --------------------------------------------------
 
-dt_id <-  main %>% 
-   filter(!grepl("9", app_identity)) %>% 
-   mutate(anc_correct = ifelse(anc_identity == "1234567", 1, 0)) %>%
-   select(app_identity_1:app_identity_7, 
-          app_identity, anc_identity, anc_correct) %>%
-   rename(party = app_identity_1,
-          job =  app_identity_2,
-          religion = app_identity_3,
-          gender =  app_identity_4,
-          family_role = app_identity_5,
-          race = app_identity_6,
-          American =  app_identity_7)
+dt_id <- main %>%
+  filter(!grepl("9", app_identity)) %>%
+  mutate(anc_correct = ifelse(anc_identity == "1234567", 1, 0)) %>%
+  select(
+    app_identity_1:app_identity_7,
+    app_identity, anc_identity, anc_correct
+  ) %>%
+  rename(
+    party = app_identity_1,
+    job = app_identity_2,
+    religion = app_identity_3,
+    gender = app_identity_4,
+    family_role = app_identity_5,
+    race = app_identity_6,
+    American = app_identity_7
+  )
 
-others <- c("job", "religion", "gender", 
-            "family_role", "race", "American")
+others <- c(
+  "job", "religion", "gender",
+  "family_role", "race", "American"
+)
 
 vis_r(
- data = dt_id,
- target_item = "party", # Political party
- other_items = others
- )
+  data = dt_id,
+  target_item = "party", # Political party
+  other_items = others
+)
 
-ggsave(here::here("fig", "pretest03-statistics-id-party.pdf"), 
-       width = 6, height = 4.5)
+ggsave(here::here("fig", "pretest03-statistics-id-party.pdf"),
+  width = 6, height = 4.5
+)
 
 
 # Compute weights
 
-dt_id_w <- imprr(data = dt_id,
-                rank_q = c("party", "job", "religion", "gender", 
-                            "family_role", "race", "American"),
-                main_q = "app_identity",
-                anchor = "anc_identity",
-                anc_correct = "anc_correct",
-                J = 7)
+dt_id_w <- imprr(
+  data = dt_id,
+  rank_q = c(
+    "party", "job", "religion", "gender",
+    "family_role", "race", "American"
+  ),
+  main_q = "app_identity",
+  anchor = "anc_identity",
+  anc_correct = "anc_correct",
+  J = 7
+)
 
 head(dt_id_w)
 
@@ -266,42 +277,48 @@ table(dt_id_w$weight)
 
 
 ## Tate 1993 (representation) --------------------------------------------------
-dt_rep <-  main %>% 
-   filter(!grepl("9", app_tate_1993)) %>% 
-   mutate(anc_correct = ifelse(anc_tate_1993 == "123", 1, 0)) %>%
-   select(app_tate_1993_1:app_tate_1993_3, 
-          app_tate_1993, anc_tate_1993, anc_correct) %>%
-   rename(policy = app_tate_1993_1,
-          pork =  app_tate_1993_2,
-          service = app_tate_1993_3)
+dt_rep <- main %>%
+  filter(!grepl("9", app_tate_1993)) %>%
+  mutate(anc_correct = ifelse(anc_tate_1993 == "123", 1, 0)) %>%
+  select(
+    app_tate_1993_1:app_tate_1993_3,
+    app_tate_1993, anc_tate_1993, anc_correct
+  ) %>%
+  rename(
+    policy = app_tate_1993_1,
+    pork = app_tate_1993_2,
+    service = app_tate_1993_3
+  )
 
-
-dt_rep_w <- imprr(data = dt_rep,
-                rank_q = c("policy", "pork", "service"),
-                main_q = "app_tate_1993",
-                anchor = "anc_tate_1993",
-                anc_correct = "anc_correct",
-                J = 3)
+dt_rep_w <- imprr(
+  data = dt_rep,
+  rank_q = c("policy", "pork", "service"),
+  main_q = "app_tate_1993",
+  anchor = "anc_tate_1993",
+  anc_correct = "anc_correct",
+  J = 3
+)
 
 head(dt_rep_w) # --> Looks good!
-table(dt_rep_w$weight, 
-      dt_rep_w$app_tate_1993)
-
+table(
+  dt_rep_w$weight,
+  dt_rep_w$app_tate_1993
+)
 
 # Unit check -- bias pulls the PMF to uniform distribution
 
 N <- dim(dt_rep_w)[1]
 w <- unique(dt_rep_w$weight)
 
-freq_raw <- round(table(dt_rep_w$app_tate_1993) / N, d=2)
-freq_imp <- round(table(dt_rep_w$app_tate_1993) * w / N, d=2)
+freq_raw <- round(table(dt_rep_w$app_tate_1993) / N, d = 2)
+freq_imp <- round(table(dt_rep_w$app_tate_1993) * w / N, d = 2)
 
 
 # Raw frequency
-freq_raw_dev <- round(table(dt_rep_w$app_tate_1993) / N - 1/6, d=2)
+freq_raw_dev <- round(table(dt_rep_w$app_tate_1993) / N - 1 / 6, d = 2)
 
 # Improved frequency
-freq_imp_dev <- round(table(dt_rep_w$app_tate_1993) * w / N - 1/6, d=2)
+freq_imp_dev <- round(table(dt_rep_w$app_tate_1993) * w / N - 1 / 6, d = 2)
 
 
 freq_raw
@@ -312,30 +329,37 @@ mean(freq_imp_dev)
 
 
 ## Electoral sys ---------------------------------------------------------------
-dt_es <-  main %>% 
-   filter(!grepl("9", app_e_systems)) %>% 
-   mutate(anc_correct = ifelse(anc_e_systems == "1234567", 1, 0)) %>%
-   select(app_e_systems_1:app_e_systems_7, 
-          app_e_systems, anc_e_systems, anc_correct) %>%
-   rename(account_pol = app_e_systems_1,
-          account_gov =  app_e_systems_2,
-          stable = app_e_systems_3,
-          prop =  app_e_systems_4,
-          women = app_e_systems_5,
-          minority = app_e_systems_6,
-          median =  app_e_systems_7)
+dt_es <- main %>%
+  filter(!grepl("9", app_e_systems)) %>%
+  mutate(anc_correct = ifelse(anc_e_systems == "1234567", 1, 0)) %>%
+  select(
+    app_e_systems_1:app_e_systems_7,
+    app_e_systems, anc_e_systems, anc_correct
+  ) %>%
+  rename(
+    account_pol = app_e_systems_1,
+    account_gov = app_e_systems_2,
+    stable = app_e_systems_3,
+    prop = app_e_systems_4,
+    women = app_e_systems_5,
+    minority = app_e_systems_6,
+    median = app_e_systems_7
+  )
 
-dt_es_w <- imprr(data = dt_es,
-                rank_q = c("account_pol", "account_gov", "stable",
-                           "prop", "women", "minority", "median"),
-                main_q = "app_e_systems",
-                anchor = "anc_e_systems",
-                anc_correct = "anc_correct",
-                J = 7)
+dt_es_w <- imprr(
+  data = dt_es,
+  rank_q = c(
+    "account_pol", "account_gov", "stable",
+    "prop", "women", "minority", "median"
+  ),
+  main_q = "app_e_systems",
+  anchor = "anc_e_systems",
+  anc_correct = "anc_correct",
+  J = 7
+)
 
 head(dt_es_w) # --> Looks NOT good
 table(dt_es_w$weight)
-
 
 # Proportion of non-random answers
 # Representation (J=3)
@@ -349,5 +373,3 @@ mean(dt_id_w$p_non_random)
 # Electoral systems (J=8)
 # 0.1921474
 mean(dt_es_w$p_non_random)
-
-

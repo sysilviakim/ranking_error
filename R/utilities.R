@@ -676,10 +676,6 @@ vis_r <- function(data,
     Y_marginal[[i]] <- ifelse(tgt == i, 1, 0)
   }
 
-
-
-
-
   # Collect estimated means: without treatment
   if (is.null(treat)) {
     # Estimate baseline outcome values via OLS
@@ -735,7 +731,6 @@ vis_r <- function(data,
     gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
       mutate(outcome = paste0("Ranked", " ", 1:J))
 
-
     gg_topk <- rbind(
       m_top1, m_top2, m_top3, m_top4,
       m_top5, m_top6, m_top7
@@ -773,7 +768,6 @@ vis_r <- function(data,
         text = element_text(size = 10),
         plot.title = element_text(size = 10)
       )
-
 
     p_pair <- ggplot(
       gg_pairwise,
@@ -818,7 +812,6 @@ vis_r <- function(data,
         text = element_text(size = 10),
         plot.title = element_text(size = 10)
       )
-
 
     p_marginal <- ggplot(
       gg_marginal,
@@ -883,7 +876,6 @@ vis_r <- function(data,
       c("#b0015a")
     )
 
-
     # Estimate ATEs with Difference-in-means via OLS
     m_rank_target <- lm_robust(Y_rank_target ~ D) %>% tidy()
 
@@ -932,12 +924,15 @@ vis_r <- function(data,
       ))
 
     # Visualize all effects
-    gg_averagerank$col <- ifelse(gg_averagerank$conf.low > 0, "Positive", "Not_significant")
-    gg_averagerank$col <- ifelse(gg_averagerank$conf.high < 0, "Negative", gg_averagerank$col)
+    gg_averagerank$col <- ifelse(
+      gg_averagerank$conf.low > 0, "Positive", "Not_significant"
+    )
+    gg_averagerank$col <- ifelse(
+      gg_averagerank$conf.high < 0, "Negative", gg_averagerank$col
+    )
     names(av_scena_col) <- av_scenario
     pattern <- unique(gg_averagerank$col) # Observed pattern
     use_col <- av_scena_col[pattern] # Use this color pallet
-
 
     p_ave <- ggplot(
       gg_averagerank,
@@ -946,7 +941,8 @@ vis_r <- function(data,
       )
     ) +
       geom_point(aes(color = col), size = 2) +
-      geom_linerange(aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
+      geom_linerange(
+        aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
       ) +
       scale_colour_manual(values = use_col) +
@@ -965,8 +961,12 @@ vis_r <- function(data,
         plot.title = element_text(size = 10)
       )
 
-    gg_pairwise$col <- ifelse(gg_pairwise$conf.low > 0, "Positive", "Not_significant")
-    gg_pairwise$col <- ifelse(gg_pairwise$conf.high < 0, "Negative", gg_pairwise$col)
+    gg_pairwise$col <- ifelse(
+      gg_pairwise$conf.low > 0, "Positive", "Not_significant"
+    )
+    gg_pairwise$col <- ifelse(
+      gg_pairwise$conf.high < 0, "Negative", gg_pairwise$col
+    )
     names(scena_col) <- scenario
     pattern <- unique(gg_pairwise$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
@@ -979,7 +979,8 @@ vis_r <- function(data,
       )
     ) +
       geom_point(aes(color = col), size = 2) +
-      geom_linerange(aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
+      geom_linerange(
+        aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
       ) +
       scale_colour_manual(values = use_col) +
@@ -1009,7 +1010,8 @@ vis_r <- function(data,
       aes(x = outcome, y = estimate)
     ) +
       geom_point(aes(color = col), size = 2) +
-      geom_linerange(aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
+      geom_linerange(
+        aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
       ) +
       scale_colour_manual(values = use_col) +
@@ -1027,19 +1029,23 @@ vis_r <- function(data,
         plot.title = element_text(size = 10)
       )
 
-    gg_marginal$col <- ifelse(gg_marginal$conf.low > 0, "Positive", "Not_significant")
-    gg_marginal$col <- ifelse(gg_marginal$conf.high < 0, "Negative", gg_marginal$col)
+    gg_marginal$col <- ifelse(
+      gg_marginal$conf.low > 0, "Positive", "Not_significant"
+    )
+    gg_marginal$col <- ifelse(
+      gg_marginal$conf.high < 0, "Negative", gg_marginal$col
+    )
     names(scena_col) <- scenario
     pattern <- unique(gg_marginal$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
-
 
     p_marginal <- ggplot(
       gg_marginal,
       aes(x = outcome, y = estimate)
     ) +
       geom_point(aes(color = col), size = 2) +
-      geom_linerange(aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
+      geom_linerange(
+        aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
       ) +
       scale_colour_manual(values = use_col) +
