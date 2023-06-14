@@ -40,9 +40,9 @@ ggsave(here("fig", "pretest03-nocontext-4opt.pdf"), width = 7.5, height = 2.8)
 
 ## Is it attention? ------------------------------------------------------------
 temp <- main %>%
-  group_by(ternovsky_fail) %>%
+  group_by(ternovski_fail) %>%
   group_split() %>%
-  `names<-`({.} %>% map(~ .x$ternovsky_fail[1]) %>% unlist()) %>%
+  `names<-`({.} %>% map(~ .x$ternovski_fail[1]) %>% unlist()) %>%
   map(
     ~ round(
       permn_augment(prop.table(table(.x$no_context_3_options)), J = 3) * 100,

@@ -1,5 +1,5 @@
 source(here::here("R", "utilities.R"))
-df_list <- qualtrics_import("pretest-03.csv")
+df_list <- qualtrics_import("pretest-03-straightlining-test.csv")
 main <- df_list$main
 
 # Wrangle data before splitting ================================================
@@ -59,7 +59,7 @@ prep_list <- root_var %>%
   )
 
 ## Sanity check
-assert_that(nchar(prep_list$tate_1993$answer) == 3)
+assert_that(nchar(prep_list$tate$answer) == 3)
 
 # Uniform distribution test ====================================================
 ## Table prep ------------------------------------------------------------------
@@ -93,25 +93,25 @@ uniform_list <- prep_list %>%
 
 ## Visualization ---------------------------------------------------------------
 ## For other Qs, not much point in visualizing
-print(uniform_list$tate_1993$main)
-ggsave(here("fig", "pretest03-tate_1993-main.pdf"), width = 4.5, height = 2.8)
+print(uniform_list$tate$main)
+ggsave(here("fig", "pretest03-tate-main.pdf"), width = 4.5, height = 2.8)
 
-print(uniform_list$tate_1993$anch)
-ggsave(here("fig", "pretest03-tate_1993-anchor.pdf"), width = 4.5, height = 2.8)
+print(uniform_list$tate$anch)
+ggsave(here("fig", "pretest03-tate-anchor.pdf"), width = 4.5, height = 2.8)
 
 # Average rankings =============================================================
 ## Tate 1993 (representation) --------------------------------------------------
 
 ### All responses
-avg_rank(main %>% filter(!grepl("9", app_tate_1993)), "app_tate_1993")
+avg_rank(main %>% filter(!grepl("9", app_tate)), "app_tate")
 # (1) Working in Congress on bills concerning national issues ---> 1.84
 # (2) Making sure the state/district gets its fair share of government money and projects ---> 1.91
 # (3) Helping people in the district who have personal problems with government ---> 2.26
 
 ### Non-geometric
 avg_rank(
-  main %>% filter(!grepl("9", app_tate_1993)) %>% filter(ns_tate == 0),
-  "app_tate_1993"
+  main %>% filter(!grepl("9", app_tate)) %>% filter(ns_tate == 0),
+  "app_tate"
 )
 
 # (1) Working in Congress on bills concerning national issues ---> 1.63
@@ -132,7 +132,7 @@ avg_rank(main %>% filter(!grepl("9", app_e_systems)), "app_e_systems")
 
 ### Non-geometric
 avg_rank(
-  main %>% filter(!grepl("9", app_e_systems)) %>% filter(ns_esystem == 0),
+  main %>% filter(!grepl("9", app_e_systems)) %>% filter(ns_e_systems == 0),
   "app_e_systems"
 )
 
@@ -260,23 +260,23 @@ table(dt_id_w$weight)
 
 ## Tate 1993 (representation) --------------------------------------------------
 dt_rep <- main %>%
-  filter(!grepl("9", app_tate_1993)) %>%
-  mutate(anc_correct = ifelse(anc_tate_1993 == "123", 1, 0)) %>%
+  filter(!grepl("9", app_tate)) %>%
+  mutate(anc_correct = ifelse(anc_tate == "123", 1, 0)) %>%
   select(
-    app_tate_1993_1:app_tate_1993_3,
-    app_tate_1993, anc_tate_1993, anc_correct
+    app_tate_1:app_tate_3,
+    app_tate, anc_tate, anc_correct
   ) %>%
   rename(
-    policy = app_tate_1993_1,
-    pork = app_tate_1993_2,
-    service = app_tate_1993_3
+    policy = app_tate_1,
+    pork = app_tate_2,
+    service = app_tate_3
   )
 
 dt_rep_w <- imprr(
   data = dt_rep,
   rank_q = c("policy", "pork", "service"),
-  main_q = "app_tate_1993",
-  anchor = "anc_tate_1993",
+  main_q = "app_tate",
+  anchor = "anc_tate",
   anc_correct = "anc_correct",
   J = 3
 )
@@ -284,7 +284,7 @@ dt_rep_w <- imprr(
 head(dt_rep_w) # --> Looks good!
 table(
   dt_rep_w$weight,
-  dt_rep_w$app_tate_1993
+  dt_rep_w$app_tate
 )
 
 # Unit check -- bias pulls the PMF to uniform distribution
@@ -292,14 +292,14 @@ table(
 N <- dim(dt_rep_w)[1]
 w <- unique(dt_rep_w$weight)
 
-freq_raw <- round(table(dt_rep_w$app_tate_1993) / N, d = 2)
-freq_imp <- round(table(dt_rep_w$app_tate_1993) * w / N, d = 2)
+freq_raw <- round(table(dt_rep_w$app_tate) / N, d = 2)
+freq_imp <- round(table(dt_rep_w$app_tate) * w / N, d = 2)
 
 # Raw frequency
-freq_raw_dev <- round(table(dt_rep_w$app_tate_1993) / N - 1 / 6, d = 2)
+freq_raw_dev <- round(table(dt_rep_w$app_tate) / N - 1 / 6, d = 2)
 
 # Improved frequency
-freq_imp_dev <- round(table(dt_rep_w$app_tate_1993) * w / N - 1 / 6, d = 2)
+freq_imp_dev <- round(table(dt_rep_w$app_tate) * w / N - 1 / 6, d = 2)
 
 freq_raw
 freq_imp

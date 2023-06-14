@@ -28,7 +28,7 @@ qualtrics_meta <- c(
 )
 bootstrap_n <- 1000
 root_var <- c(
-  tate_1993 = "123",
+  tate = "123",
   e_systems = "1234567",
   identity = "1234567",
   polar = "12345678"
@@ -133,7 +133,12 @@ qualtrics_import <- function(fname) {
 
   ## Status needs to be "IP Address" which is 0.
   temp <- df_raw %>%
-    filter(status == "0")
+    filter(status == "0") %>%
+    ## Make consistent with root_var
+    rename_with(~ gsub("polarization", "polar", .x)) %>%
+    rename_with(~ gsub("affective_polar", "polar", .x)) %>%
+    rename_with(~ gsub("_1993", "", .x)) %>%
+    rename_with(~ gsub("ternovsky", "ternovski", .x))
 
   ## If IP addresses overlap, that's a major red flag so stop
   ## assert_that(!any(duplicated(main$ip_address)))
@@ -198,17 +203,19 @@ qualtrics_import <- function(fname) {
     ## If it is 1-2-3-4-6-5-7 or something that's different, doesn't work
 
     unite_ranking() %>%
-    rename_with(~ gsub("polarization", "polar", .x)) %>%
-    rename_with(~ gsub("affective_polar", "polar", .x)) %>%
     ## Recovered observed rankings
-    recover_observed_ranking("no_context_3_options_do", "no_context_3_options", .) %>%
-    recover_observed_ranking("no_context_4_options_do", "no_context_4_options", .) %>%
-    recover_observed_ranking("app_tate_1993_do", "app_tate_1993", .) %>%
+    recover_observed_ranking(
+      "no_context_3_options_do", "no_context_3_options", .
+    ) %>%
+    recover_observed_ranking(
+      "no_context_4_options_do", "no_context_4_options", .
+    ) %>%
+    recover_observed_ranking("app_tate_do", "app_tate", .) %>%
     recover_observed_ranking("app_e_systems_do", "app_e_systems", .) %>%
     recover_observed_ranking("app_identity_do", "app_identity", .) %>%
     recover_observed_ranking("app_polar_do", "app_polar", .) %>%
     ## For anchor questions, too
-    recover_observed_ranking("anc_tate_1993_do", "anc_tate_1993", .) %>%
+    recover_observed_ranking("anc_tate_do", "anc_tate", .) %>%
     recover_observed_ranking("anc_e_systems_do", "anc_e_systems", .) %>%
     recover_observed_ranking("anc_identity_do", "anc_identity", .) %>%
     recover_observed_ranking("anc_polar_do", "anc_polar", .)
@@ -217,20 +224,25 @@ qualtrics_import <- function(fname) {
   main <- main %>%
     ## Geometric patterns + attention check fails + repeat task fails
     mutate(
-      ternovski_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
+      ternovski_fail = case_when(ternovski_screener2 != "1,2" ~ 1, TRUE ~ 0),
       berinsky_fail = case_when(berinsky_screener != "4,12" ~ 1, TRUE ~ 0),
       ## Geometric patterns: applications (ns is for old term "non-sincere")
-      ns_tate = case_when(anc_tate_1993 != "123" ~ 1, TRUE ~ 0),
-      ns_esystem = case_when(anc_e_systems != "1234567" ~ 1, TRUE ~ 0),
+      ns_tate = case_when(anc_tate != "123" ~ 1, TRUE ~ 0),
+      ns_e_systems = case_when(anc_e_systems != "1234567" ~ 1, TRUE ~ 0),
       ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
       ns_polar = case_when(anc_polar != "12345678" ~ 1, TRUE ~ 0),
+      ## Perfectly collinear variables, just renamed/recoded for easy access
+      anc_correct_tate = case_when(anc_tate == "123" ~ 1, TRUE ~ 0),
+      anc_correct_e_systems = case_when(anc_e_systems == "1234567" ~ 1, TRUE ~ 0),
+      anc_correct_identity = case_when(anc_identity == "1234567" ~ 1, TRUE ~ 0),
+      anc_correct_polar = case_when(anc_polar == "12345678" ~ 1, TRUE ~ 0),
       ## Repeat coherence: applications
       ## 1 means incoherent!
       repeat_tate = case_when(
-        app_tate_1993 == app_tate_repeat ~ 0,
-        app_tate_1993 != app_tate_repeat ~ 1
+        app_tate == app_tate_repeat ~ 0,
+        app_tate != app_tate_repeat ~ 1
       ),
-      repeat_esystem = case_when(
+      repeat_e_systems = case_when(
         app_e_systems == app_e_systems_repeat ~ 0,
         app_e_systems != app_e_systems_repeat ~ 1
       ),
@@ -245,32 +257,32 @@ qualtrics_import <- function(fname) {
     ) %>%
     rowwise() %>%
     mutate(
-      app_tate_trunc1 = str_sub(app_tate_1993, 1, 1),
+      app_tate_trunc1 = str_sub(app_tate, 1, 1),
       app_tate_trunc1_repeat = str_sub(app_tate_repeat, 1, 1),
-      app_esystem_trunc1 = str_sub(app_e_systems, 1, 1),
-      app_esystem_trunc1_repeat = str_sub(app_e_systems_repeat, 1, 1),
+      app_e_systems_trunc1 = str_sub(app_e_systems, 1, 1),
+      app_e_systems_trunc1_repeat = str_sub(app_e_systems_repeat, 1, 1),
       app_identity_trunc1 = str_sub(app_identity, 1, 1),
       app_identity_trunc1_repeat = str_sub(app_identity_repeat, 1, 1),
       app_polar_trunc1 = str_sub(app_polar, 1, 1),
       app_polar_trunc1_repeat = str_sub(app_pol_repeat, 1, 1),
-      app_esystem_trunc2 = str_sub(app_e_systems, 1, 2),
-      app_esystem_trunc2_repeat = str_sub(app_e_systems_repeat, 1, 2),
+      app_e_systems_trunc2 = str_sub(app_e_systems, 1, 2),
+      app_e_systems_trunc2_repeat = str_sub(app_e_systems_repeat, 1, 2),
       app_identity_trunc2 = str_sub(app_identity, 1, 2),
       app_identity_trunc2_repeat = str_sub(app_identity_repeat, 1, 2),
       app_polar_trunc2 = str_sub(app_polar, 1, 2),
       app_polar_trunc2_repeat = str_sub(app_pol_repeat, 1, 2),
-      app_tate_trunc3 = str_sub(app_tate_1993, 1, 3),
+      app_tate_trunc3 = str_sub(app_tate, 1, 3),
       app_tate_trunc3_repeat = str_sub(app_tate_repeat, 1, 3),
-      app_esystem_trunc3 = str_sub(app_e_systems, 1, 3),
-      app_esystem_trunc3_repeat = str_sub(app_e_systems_repeat, 1, 3),
+      app_e_systems_trunc3 = str_sub(app_e_systems, 1, 3),
+      app_e_systems_trunc3_repeat = str_sub(app_e_systems_repeat, 1, 3),
       app_identity_trunc3 = str_sub(app_identity, 1, 3),
       app_identity_trunc3_repeat = str_sub(app_identity_repeat, 1, 3),
       app_polar_trunc3 = str_sub(app_polar, 1, 3),
       app_polar_trunc3_repeat = str_sub(app_pol_repeat, 1, 3),
 
-      # repeat_trunc_esystem = case_when(
-      #   app_esystem_trunc == app_esystem_trunc_repeat ~ 0,
-      #   app_esystem_trunc != app_esystem_trunc_repeat ~ 1
+      # repeat_trunc_e_systems = case_when(
+      #   app_e_systems_trunc == app_e_systems_trunc_repeat ~ 0,
+      #   app_e_systems_trunc != app_e_systems_trunc_repeat ~ 1
       # ),
       # repeat_trunc_identity = case_when(
       #   app_identity_trunc == app_identity_trunc_repeat ~ 0,
@@ -284,10 +296,10 @@ qualtrics_import <- function(fname) {
     ungroup() %>%
     ## Partial rankers
     mutate(
-      partial_tate_main = case_when(grepl("9", app_tate_1993) ~ 1, TRUE ~ 0),
-      partial_tate_anc = case_when(grepl("9", anc_tate_1993) ~ 1, TRUE ~ 0),
-      partial_esystem_main = case_when(grepl("9", app_e_systems) ~ 1, TRUE ~ 0),
-      partial_esystem_anc = case_when(grepl("9", anc_e_systems) ~ 1, TRUE ~ 0),
+      partial_tate_main = case_when(grepl("9", app_tate) ~ 1, TRUE ~ 0),
+      partial_tate_anc = case_when(grepl("9", anc_tate) ~ 1, TRUE ~ 0),
+      partial_e_systems_main = case_when(grepl("9", app_e_systems) ~ 1, TRUE ~ 0),
+      partial_e_systems_anc = case_when(grepl("9", anc_e_systems) ~ 1, TRUE ~ 0),
       partial_identity_main = case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
       partial_identity_anc = case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
       partial_polar_main = case_when(grepl("9", app_polar) ~ 1, TRUE ~ 0),
@@ -1082,8 +1094,8 @@ imprr <- function(data, # all data
 
   # data = dt_rep
   # rank_q = c("policy", "pork", "service")
-  # main_q = "app_tate_1993"
-  # anchor = "anc_tate_1993"
+  # main_q = "app_tate"
+  # anchor = "anc_tate"
   # anc_correct = "anc_correct"
   # J = 3
 

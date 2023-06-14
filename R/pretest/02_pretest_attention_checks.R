@@ -35,15 +35,15 @@ cor_and_condprob(main, "berinsky_fail", "ns_tate")
 # Cond. on berinsky_fail == 1, Pr(ns_tate == 1) is 83.3%
 
 ## Electoral systems -----------------------------------------------------------
-cor_and_condprob(main, "ternovski_fail", "ns_esystem")
+cor_and_condprob(main, "ternovski_fail", "ns_e_systems")
 # [1] 0.2487798
-# Cond. on ns_esystem == 1, Pr(ternovski_fail == 1) is 30.1%
-# Cond. on ternovski_fail == 1, Pr(ns_esystem == 1) is 100.0%
+# Cond. on ns_e_systems == 1, Pr(ternovski_fail == 1) is 30.1%
+# Cond. on ternovski_fail == 1, Pr(ns_e_systems == 1) is 100.0%
 
-cor_and_condprob(main, "berinsky_fail", "ns_esystem")
+cor_and_condprob(main, "berinsky_fail", "ns_e_systems")
 # [1] 0.2208731
-# Cond. on ns_esystem == 1, Pr(berinsky_fail == 1) is 34.9%
-# Cond. on berinsky_fail == 1, Pr(ns_esystem == 1) is 96.7%
+# Cond. on ns_e_systems == 1, Pr(berinsky_fail == 1) is 34.9%
+# Cond. on berinsky_fail == 1, Pr(ns_e_systems == 1) is 96.7%
 
 ## Identity --------------------------------------------------------------------
 cor_and_condprob(main, "ternovski_fail", "ns_identity")
@@ -68,11 +68,11 @@ cor_and_condprob(main, "berinsky_fail", "ns_polar")
 # Cond. on berinsky_fail == 1, Pr(ns_polar == 1) is 76.7%
 
 # Between geometric responses? =================================================
-## Tate x ESystems
-cor_and_condprob(main, "ns_tate", "ns_esystem")
+## Tate x e_systemss
+cor_and_condprob(main, "ns_tate", "ns_e_systems")
 # [1] 0.294645
-# Cond. on ns_esystem == 1, Pr(ns_tate == 1) is 54.2%
-# Cond. on ns_tate == 1, Pr(ns_esystem == 1) is 95.7%
+# Cond. on ns_e_systems == 1, Pr(ns_tate == 1) is 54.2%
+# Cond. on ns_tate == 1, Pr(ns_e_systems == 1) is 95.7%
 
 ## Tate x Identity
 cor_and_condprob(main, "ns_tate", "ns_identity")
@@ -86,17 +86,17 @@ cor_and_condprob(main, "ns_tate", "ns_polar")
 # Cond. on ns_polar == 1, Pr(ns_tate == 1) is 73.3%
 # Cond. on ns_tate == 1, Pr(ns_polar == 1) is 70.2%
 
-## ESystems x Identity
-cor_and_condprob(main, "ns_esystem", "ns_identity")
+## e_systemss x Identity
+cor_and_condprob(main, "ns_e_systems", "ns_identity")
 # [1] 0.4356316
-# Cond. on ns_identity == 1, Pr(ns_esystem == 1) is 94.4%
-# Cond. on ns_esystem == 1, Pr(ns_identity == 1) is 80.7%
+# Cond. on ns_identity == 1, Pr(ns_e_systems == 1) is 94.4%
+# Cond. on ns_e_systems == 1, Pr(ns_identity == 1) is 80.7%
 
-## ESystems x Polarization
-cor_and_condprob(main, "ns_esystem", "ns_polar")
+## e_systemss x Polarization
+cor_and_condprob(main, "ns_e_systems", "ns_polar")
 # [1] 0.3348474
-# Cond. on ns_polar == 1, Pr(ns_esystem == 1) is 97.8%
-# Cond. on ns_esystem == 1, Pr(ns_polar == 1) is 53%
+# Cond. on ns_polar == 1, Pr(ns_e_systems == 1) is 97.8%
+# Cond. on ns_e_systems == 1, Pr(ns_polar == 1) is 53%
 
 ## Identity x Polarization
 cor_and_condprob(main, "ns_identity", "ns_polar")
@@ -112,42 +112,42 @@ repeat_coherent(main, "app_identity", "app_identity_repeat") # 26.5%
 repeat_coherent(main, "app_polar", "app_pol_repeat") # 16.3%
 
 ## If truncated 1-3? -----------------------------------------------------------
-repeat_coherent(main, "app_esystem_trunc3", "app_esystem_trunc3_repeat") # 17.0%
+repeat_coherent(main, "app_e_systems_trunc3", "app_e_systems_trunc3_repeat") # 17.0%
 repeat_coherent(main, "app_identity_trunc3", "app_identity_trunc3_repeat") # 32.7%
 repeat_coherent(main, "app_polar_trunc3", "app_polar_trunc3_repeat") # 27.9%
 
-repeat_coherent(main, "app_esystem_trunc2", "app_esystem_trunc2_repeat") # 19.1%
+repeat_coherent(main, "app_e_systems_trunc2", "app_e_systems_trunc2_repeat") # 19.1%
 repeat_coherent(main, "app_identity_trunc2", "app_identity_trunc2_repeat") # 40.8%
 repeat_coherent(main, "app_polar_trunc2", "app_polar_trunc2_repeat") # 34.9%
 
 repeat_coherent(main, "app_tate_trunc1", "app_tate_trunc1_repeat") # 64.9%
-repeat_coherent(main, "app_esystem_trunc1", "app_esystem_trunc1_repeat") # 23.4%
+repeat_coherent(main, "app_e_systems_trunc1", "app_e_systems_trunc1_repeat") # 23.4%
 repeat_coherent(main, "app_identity_trunc1", "app_identity_trunc1_repeat") # 44.9%
 repeat_coherent(main, "app_polar_trunc1", "app_polar_trunc1_repeat") # 41.9%
 
 ## Mm... if non-geometric and/or truncated? ---------------------------------------
 ## 44.4%
 repeat_coherent(
-  main %>% filter(ns_esystem == 0),
+  main %>% filter(ns_e_systems == 0),
   "app_e_systems", "app_e_systems_repeat"
 )
 
 ## 44.4%
 repeat_coherent(
-  main %>% filter(ns_esystem == 0),
-  "app_esystem_trunc3", "app_esystem_trunc3_repeat"
+  main %>% filter(ns_e_systems == 0),
+  "app_e_systems_trunc3", "app_e_systems_trunc3_repeat"
 )
 
 ## 44.4%
 repeat_coherent(
-  main %>% filter(ns_esystem == 0),
-  "app_esystem_trunc2", "app_esystem_trunc2_repeat"
+  main %>% filter(ns_e_systems == 0),
+  "app_e_systems_trunc2", "app_e_systems_trunc2_repeat"
 )
 
 ## 44.4%
 repeat_coherent(
-  main %>% filter(ns_esystem == 0),
-  "app_esystem_trunc1", "app_esystem_trunc1_repeat"
+  main %>% filter(ns_e_systems == 0),
+  "app_e_systems_trunc1", "app_e_systems_trunc1_repeat"
 )
 
 ## 46.2%
@@ -209,15 +209,15 @@ cor_and_condprob(main, "repeat_tate", "berinsky_fail")
 # Cond. on berinsky_fail == 1, Pr(repeat_tate == 1) is 26.7%
 # Cond. on repeat_tate == 1, Pr(berinsky_fail == 1) is 29.6%
 
-cor_and_condprob(main, "repeat_esystem", "ternovski_fail")
+cor_and_condprob(main, "repeat_e_systems", "ternovski_fail")
 # [1] 0.2491671
-# Cond. on ternovski_fail == 1, Pr(repeat_esystem == 1) is 56%
-# Cond. on repeat_esystem == 1, Pr(ternovski_fail == 1) is 34.1%
+# Cond. on ternovski_fail == 1, Pr(repeat_e_systems == 1) is 56%
+# Cond. on repeat_e_systems == 1, Pr(ternovski_fail == 1) is 34.1%
 
-cor_and_condprob(main, "repeat_esystem", "berinsky_fail")
+cor_and_condprob(main, "repeat_e_systems", "berinsky_fail")
 # [1] 0.155278
-# Cond. on berinsky_fail == 1, Pr(repeat_esystem == 1) is 53.3%
-# Cond. on repeat_esystem == 1, Pr(berinsky_fail == 1) is 39%
+# Cond. on berinsky_fail == 1, Pr(repeat_e_systems == 1) is 53.3%
+# Cond. on repeat_e_systems == 1, Pr(berinsky_fail == 1) is 39%
 
 cor_and_condprob(main, "repeat_identity", "ternovski_fail")
 # [1] 0.3042903
@@ -245,10 +245,10 @@ cor_and_condprob(main, "repeat_tate", "ns_tate")
 # Cond. on ns_tate == 1, Pr(repeat_tate == 1) is 34%
 # Cond. on repeat_tate == 1, Pr(ns_tate == 1) is 59.3%
 
-cor_and_condprob(main, "repeat_esystem", "ns_esystem")
+cor_and_condprob(main, "repeat_e_systems", "ns_e_systems")
 # [1] 0.4619811
-# Cond. on ns_esystem == 1, Pr(repeat_esystem == 1) is 43.4%
-# Cond. on repeat_esystem == 1, Pr(ns_esystem == 1) is 87.8%
+# Cond. on ns_e_systems == 1, Pr(repeat_e_systems == 1) is 43.4%
+# Cond. on repeat_e_systems == 1, Pr(ns_e_systems == 1) is 87.8%
 
 cor_and_condprob(main, "repeat_identity", "ns_identity")
 # [1] 0.267094
@@ -264,8 +264,8 @@ cor_and_condprob(main, "repeat_polar", "ns_polar")
 venn_diagram_fill(main, "ternovski_fail", "repeat_tate", "ns_tate")
 venn_diagram_fill(main, "berinsky_fail", "repeat_tate", "ns_tate")
 
-venn_diagram_fill(main, "ternovski_fail", "repeat_esystem", "ns_esystem")
-venn_diagram_fill(main, "berinsky_fail", "repeat_esystem", "ns_esystem")
+venn_diagram_fill(main, "ternovski_fail", "repeat_e_systems", "ns_e_systems")
+venn_diagram_fill(main, "berinsky_fail", "repeat_e_systems", "ns_e_systems")
 
 venn_diagram_fill(main, "ternovski_fail", "repeat_identity", "ns_tate")
 venn_diagram_fill(main, "berinsky_fail", "repeat_identity", "ns_tate")

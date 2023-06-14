@@ -64,12 +64,12 @@ pdf(here::here("fig", "pretest03-check_duration.pdf"), width = 6, height = 6)
 par(mfrow = (c(2, 2)))
 
 plot(
-  density(time$time_anc_tate_1993_page_submit),
+  density(time$time_anc_tate_page_submit),
   type = "n", main = "Representation (J=3)\n48% geometric",
   xlab = "Completion time in seconds (N=101)", xlim = c(0, 200)
 )
-lines(density(time$time_app_tate_1993_page_submit), col = col[1])
-lines(density(time$time_anc_tate_1993_page_submit), col = col[1], lty = 2)
+lines(density(time$time_app_tate_page_submit), col = col[1])
+lines(density(time$time_anc_tate_page_submit), col = col[1], lty = 2)
 legend(
   x = 100, y = 0.018, legend = c("Main", "Anchor"),
   col = col[1], lty = 1:2, cex = 1, box.lty = 0
