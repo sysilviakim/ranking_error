@@ -198,27 +198,23 @@ qualtrics_import <- function(fname) {
     ## If it is 1-2-3-4-6-5-7 or something that's different, doesn't work
 
     unite_ranking() %>%
+    rename_with(~ gsub("polarization", "polar", .x)) %>%
+    rename_with(~ gsub("affective_polar", "polar", .x)) %>%
     ## Recovered observed rankings
     recover_observed_ranking("no_context_3_options_do", "no_context_3_options", .) %>%
     recover_observed_ranking("no_context_4_options_do", "no_context_4_options", .) %>%
     recover_observed_ranking("app_tate_1993_do", "app_tate_1993", .) %>%
     recover_observed_ranking("app_e_systems_do", "app_e_systems", .) %>%
     recover_observed_ranking("app_identity_do", "app_identity", .) %>%
-    recover_observed_ranking("app_affective_polar_do", "app_affective_polar", .) %>%
+    recover_observed_ranking("app_polar_do", "app_polar", .) %>%
     ## For anchor questions, too
     recover_observed_ranking("anc_tate_1993_do", "anc_tate_1993", .) %>%
     recover_observed_ranking("anc_e_systems_do", "anc_e_systems", .) %>%
     recover_observed_ranking("anc_identity_do", "anc_identity", .) %>%
-    recover_observed_ranking("anc_polarization_do", "anc_polarization", .)
+    recover_observed_ranking("anc_polar_do", "anc_polar", .)
 
   ## Create binary indicators for partial rankers + attention check fails
   main <- main %>%
-    rename(
-      app_polar = app_affective_polar,
-      anc_polar = anc_polarization,
-      anc_polar_do = anc_polarization_do,
-      app_polar_do = app_affective_polar_do
-    ) %>%
     ## Geometric patterns + attention check fails + repeat task fails
     mutate(
       ternovski_fail = case_when(ternovsky_screener2 != "1,2" ~ 1, TRUE ~ 0),
