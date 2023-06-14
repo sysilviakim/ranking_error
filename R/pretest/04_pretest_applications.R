@@ -67,8 +67,8 @@ uniform_list <- prep_list %>%
   imap(
     ~ {
       ### Create frequency tables
-      tab_main <- table(.x$dat[[paste0("app_", .y, "_obs")]])
-      tab_anch <- table(.x$dat[[paste0("anc_", .y, "_obs")]])
+      tab_main <- table(.x$dat[[paste0("app_", .y, "_observed")]])
+      tab_anch <- table(.x$dat[[paste0("anc_", .y, "_observed")]])
 
       ### Chi-square test and power test
       message(paste0("Chi-square test result for main question, ", .y))
@@ -103,7 +103,7 @@ ggsave(here("fig", "pretest03-tate_1993-anchor.pdf"), width = 4.5, height = 2.8)
 ## Tate 1993 (representation) --------------------------------------------------
 
 ### All responses
-avg_rank(main %>% filter(!grepl("9", app_tate_1993)), "app_tate_1993_recovered")
+avg_rank(main %>% filter(!grepl("9", app_tate_1993)), "app_tate_1993")
 # (1) Working in Congress on bills concerning national issues ---> 1.84
 # (2) Making sure the state/district gets its fair share of government money and projects ---> 1.91
 # (3) Helping people in the district who have personal problems with government ---> 2.26
@@ -229,7 +229,8 @@ vis_r(
   other_items = others
 )
 
-ggsave(here::here("fig", "pretest03-statistics-id-party.pdf"),
+ggsave(
+  here::here("fig", "pretest03-statistics-id-party.pdf"),
   width = 6, height = 4.5
 )
 
@@ -256,7 +257,6 @@ table(dt_id_w$weight)
 # [1] 0.01063827 0.01063827 0.01063827 0.01063827 0.01063827
 # [6] 0.01063827
 # --> This seems shady. Needs more checks
-
 
 ## Tate 1993 (representation) --------------------------------------------------
 dt_rep <- main %>%
@@ -295,13 +295,11 @@ w <- unique(dt_rep_w$weight)
 freq_raw <- round(table(dt_rep_w$app_tate_1993) / N, d = 2)
 freq_imp <- round(table(dt_rep_w$app_tate_1993) * w / N, d = 2)
 
-
 # Raw frequency
 freq_raw_dev <- round(table(dt_rep_w$app_tate_1993) / N - 1 / 6, d = 2)
 
 # Improved frequency
 freq_imp_dev <- round(table(dt_rep_w$app_tate_1993) * w / N - 1 / 6, d = 2)
-
 
 freq_raw
 freq_imp
