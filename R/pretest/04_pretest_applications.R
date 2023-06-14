@@ -50,24 +50,6 @@ prep_list <- root_var %>%
       ## Correct answers to the anchor question
       correct <- ifelse(dat[[paste0("anc_", .y)]] == .x, 1, 0)
 
-      ## Recover the "observed" ranking
-      ## based on randomized order presentation
-      dat[[paste0("anc_", .y, "_obs")]] <- dat %>%
-        separate(
-          !!as.name(paste0("anc_", .y, "_do")),
-          sep = seq(nchar(.x) - 1), into = paste0("V", seq(nchar(.x)))
-        ) %>%
-        recov_ref_ranking(rank_var = paste0("anc_", .y)) %>%
-        .$ref
-
-      dat[[paste0("app_", .y, "_obs")]] <- dat %>%
-        separate(
-          !!as.name(paste0("app_", .y, "_do")),
-          sep = seq(nchar(.x) - 1), into = paste0("V", seq(nchar(.x)))
-        ) %>%
-        recov_ref_ranking(rank_var = paste0("app_", .y)) %>%
-        .$ref
-
       return(
         list(
           dat = dat, N = N, indices = indices, correct = correct, answer = .x
