@@ -1,23 +1,39 @@
-#' @description  \code{est_r} visualizes all ATEs in a typical effect set
+#' Visualize ATEs in Ranking Data
+#' 
+#' @description \code{vis_ranking} visualizes all ATEs 
+#' in a typical ranking dataset.
 #'
-#' @param data A dataset
-#' @param target_item A string for the target item
-#' @param other_items A set of strings for other items of interest
+#' @importFrom estimatr lm_robust
 #'
-#' @return A ggplot that visualizes all treatment effects
+#' @param dat The input dataset with ranking data.
+#' @param target_item A string for the target item's variable name
+#' @param other_items A set of strings for variable names corresponding to
+#' other items that were available as ranking options
+#' @param treat The treatment indicator variable. 
+#' Defaults to NULL.
+#' @param single_plot If TRUE, returns a single plot. 
+#' If FALSE, returns a list of plots that will compose the combined plot.
+#' Defaults to TRUE.
+#' @param color_palette The color palette to be used.
+#'
+#' @return A ggplot that visualizes all treatment effects.
+#' If single_plot is TRUE, it will return a single ggplot.
+#' If FALSE, it will return four ggplot objects in a list.
+#' 
 #' @examples
-#' dt <- read_csv("ex_police.csv")
+#' dat <- read_csv("ex_police.csv")
 #' my_target_item <- "victim"
-#' my_other_items <- c("officers", "PDchief", "mayor", "DA", "governor", "senators")
+#' my_other_items <- 
+#'   c("officers", "PDchief", "mayor", "DA", "governor", "senators")
 #' vis_ranking(
-#'   data = dt,
+#'   dat = dat,
 #'   treat = my_treat,
 #'   target_item = my_target_item,
 #'   other_items = my_other_items
 #' )
 #' @export
 
-vis_ranking <- function(data,
+vis_ranking <- function(dat,
                         target_item,
                         other_items,
                         treat = NULL,
@@ -28,32 +44,52 @@ vis_ranking <- function(data,
                           "#128ba0",
                           "gray"
                         )) {
+  # Avoiding overwriting utils::data and stats::dt
+  # Avoiding reliance on tidyverse as much as possible
+  
+  # Check the validity of the input arguments.
+  if (!(target_item %in% names(dat))) {
+    stop("The target item is not a valid column name in the given datset.")
+  }
+  if (!all(other_items %in% names(dat))) {
+    stop(
+      paste0(
+        "One or more of other items is not a valid column name", 
+        " in the given dataset."
+      )
+    )
+  }
+  
+  # Highlight and benchmark color for average rankings and such
   use_col <- c(color_palette[2], color_palette[1])
+  
+  # Create a label for items: if there are underbars, turn to spaces
+  # Capitalize the first letters
   label <- simple_cap(gsub("_", " ", simple_cap(target_item)))
 
-  # Size
-  N <- dim(data)[1]
-
-  # Treatment indicator
-  if (!is.null(treat)) {
-    D <- data[treat] %>% pull()
-  }
-
-  # Process raw ranking data
+  # Size of the dataset
+  N <- nrow(dat)
   J_1 <- length(other_items) # J - 1
   J <- J_1 + 1
+  
+  # Treatment indicator
+  if (!is.null(treat)) {
+    D <- unlist(dat[treat])
+  }
 
-  dt <- data
+  # Process the raw ranking data, but store the original dataset in a 
+  # separate object
+  dat_raw <- dat
 
-  Y_rank_target <- dt[target_item] %>% pull() # Average ranks
+  Y_rank_target <- unlist(dat[target_item]) # Average ranks
   Y_rank_others <- list()
   for (i in 1:J_1) {
-    Y_rank_others[[i]] <- dt[other_items[i]] %>% pull()
+    Y_rank_others[[i]] <- unlist(dat[other_items[i]])
   }
 
   Y_pairwise <- list() # Pairwise ranking P
   for (i in 1:J_1) {
-    compar <- dt[other_items[i]] %>% pull() # Comparison item
+    compar <- unlist(dat[other_items[i]]) # Comparison item
     Y_pairwise[[i]] <- ifelse(Y_rank_target < compar, 1, 0)
   }
 
@@ -66,7 +102,7 @@ vis_ranking <- function(data,
   Y_top7 <- ifelse(Y_rank_target <= 7, 1, 0) # Top-7 ranking P
 
   Y_marginal <- list()
-  tgt <- dt[target_item] %>% pull()
+  tgt <- unlist(dat[target_item])
   for (i in 1:J) {
     Y_marginal[[i]] <- ifelse(tgt == i, 1, 0)
   }
@@ -97,7 +133,7 @@ vis_ranking <- function(data,
     for (i in 1:J) {
       m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ 1) %>% tidy()
     }
-    m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
+    m_rank_catch <- do.call(rbind.dat.frame, m_rank_others) %>%
       mutate(
         outcome = paste0(other_items),
         target = "B"
@@ -108,7 +144,7 @@ vis_ranking <- function(data,
         target = "A"
       )
 
-    m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
+    m_rank_catch <- do.call(rbind.dat.frame, m_rank_others) %>%
       mutate(
         outcome = paste0(other_items),
         target = "B"
@@ -120,10 +156,10 @@ vis_ranking <- function(data,
       )
     gg_averagerank <- rbind(m_rank, m_rank_catch)
 
-    gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
+    gg_pairwise <- do.call(rbind.dat.frame, m_pairwise) %>%
       mutate(outcome = paste0("v.", " ", other_items))
 
-    gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
+    gg_marginal <- do.call(rbind.dat.frame, m_marginal) %>%
       mutate(outcome = paste0("Ranked", " ", 1:J))
 
     gg_topk <- rbind(
@@ -317,11 +353,11 @@ vis_ranking <- function(data,
       )
     gg_averagerank <- rbind(m_rank)
 
-    gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
+    gg_pairwise <- do.call(rbind.dat.frame, m_pairwise) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("v.", " ", other_items))
 
-    gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
+    gg_marginal <- do.call(rbind.dat.frame, m_marginal) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("Ranked", " ", 1:J))
 
@@ -486,4 +522,12 @@ vis_ranking <- function(data,
       )
     }
   }
+}
+
+simple_cap <- function (x) {
+  s <- strsplit(x, " ")[[1]]
+  output <- paste(
+    toupper(substring(s, 1, 1)), substring(s, 2), 
+    sep = "", collapse = " ")
+  return(output)
 }
