@@ -177,6 +177,14 @@ vis_ranking(
   other_items = setdiff(prep_list$tate$labels, "pork")
 )
 
+### Test
+vis_ranking(
+  dat = prep_list$tate$dat,
+  target_item = "pork",
+  other_items = setdiff(prep_list$tate$labels, "pork"),
+  treat = "anc_correct_tate"
+)
+
 ### Compare substantial understanding
 p1 <- vis_ranking(
   dat = prep_list$tate$dat,
