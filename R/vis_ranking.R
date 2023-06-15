@@ -31,17 +31,7 @@
 #' If FALSE, it will return four ggplot objects in a list:
 #' average ranks, pairwise ranks, top-k ranks, and marginal ranks.
 #'
-#' @examples
-#' dat <- read_csv("ex_police.csv")
-#' my_target_item <- "victim"
-#' my_other_items <-
-#'   c("officers", "PDchief", "mayor", "DA", "governor", "senators")
-#' vis_ranking(
-#'   dat = dat,
-#'   treat = my_treat,
-#'   target_item = my_target_item,
-#'   other_items = my_other_items
-#' )
+#' @examples [PLACEHOLDER]
 #' @export
 
 vis_ranking <- function(dat,
