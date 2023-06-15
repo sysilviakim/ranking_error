@@ -116,6 +116,19 @@ vis_ranking <- function(dat,
   # Is the item's rank exactly k?
   Y_marg <- seq(J) %>%
     map(~ ifelse(Y_rank_target == .x, 1, 0))
+  
+  label_capitalize <- function(x) {
+    x %>%
+      rowwise() %>%
+      mutate(outcome = simple_cap(gsub("_", " ", outcome))) %>%
+      ungroup()
+  }
+  
+  rev_outcome <- function(x) {
+    x %>%
+      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
+      arrange(outcome)
+  }
 
   # Collect estimated means: without treatment
   if (is.null(treat)) {
@@ -151,26 +164,19 @@ vis_ranking <- function(dat,
       )
 
     gg_avg <- rbind(m_rank, m_rank_catch) %>%
-      rowwise() %>%
-      mutate(outcome = simple_cap(gsub("_", " ", outcome))) %>%
-      ungroup()
+      label_capitalize()
 
     gg_pair <- do.call(rbind.data.frame, m_pair) %>%
-      rowwise() %>%
-      mutate(outcome = paste("vs.", simple_cap(gsub("_", " ", outcome)))) %>%
-      ungroup()
+      label_capitalize()
 
     gg_marg <- do.call(rbind.data.frame, m_marg) %>%
       mutate(outcome = paste("Ranked", seq(J))) %>%
-      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
-      arrange(outcome)
+      rev_outcome()
 
     gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       mutate(outcome = paste0("Top-", seq(J))) %>%
-      select(outcome, everything()) %>%
       .[seq(J - 1), ] %>%
-      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
-      arrange(outcome)
+      rev_outcome()
 
     # Visualize all effects
     p_avg <- ggplot(
@@ -274,27 +280,21 @@ vis_ranking <- function(dat,
       )
 
     gg_avg <- m_rank %>%
-      rowwise() %>%
-      mutate(outcome = simple_cap(gsub("_", " ", outcome))) %>%
-      ungroup()
+      label_capitalize()
 
     gg_pair <- do.call(rbind.data.frame, m_pair) %>%
-      rowwise() %>%
-      mutate(outcome = paste("vs.", simple_cap(gsub("_", " ", outcome)))) %>%
-      ungroup()
+      label_capitalize()
 
     gg_marg <- do.call(rbind.data.frame, m_marg) %>%
       filter(term == "D") %>%
       mutate(outcome = paste("Ranked", seq(J))) %>%
-      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
-      arrange(outcome)
+      rev_outcome()
 
     gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("Top-", seq(J))) %>%
       .[seq(J - 1), ] %>%
-      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
-      arrange(outcome)
+      rev_outcome()
 
     # Visualize all effects
     gg_avg$col <- ifelse(gg_avg$conf.low > 0, "Positive", "Not_significant")
