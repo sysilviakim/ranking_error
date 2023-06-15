@@ -252,12 +252,12 @@ mean(freq_raw_dev)
 mean(freq_imp_dev)
 
 ## Electoral systems -----------------------------------------------------------
-dt_e_systems_w <- imprr(
+dt_e_systems_w <- weight_patterns(
   dat = prep_list$e_systems$dat,
-  rank_q = prep_list$e_systems$labels,
   main_q = "app_e_systems",
-  anchor = "anc_e_systems",
+  anchor_q = "anc_e_systems",
   anc_correct = "anc_correct_e_systems",
+  main_labels = prep_list$e_systems$labels,
   J = 7
 )
 
