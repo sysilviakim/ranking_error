@@ -7,7 +7,8 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr `%>%`
 #' @importFrom purrr map
-#' 
+#' @importFrom rlang set_names
+#'
 #' @importFrom estimatr lm_robust
 #' @importFrom ggpubr ggarrange
 #' @import ggplot
@@ -66,6 +67,14 @@ vis_ranking <- function(dat,
       )
     )
   }
+  if (!is.null(treat)) {
+    if (!(treat %in% names(dat))) {
+      stop("Treatment variable is not present in the given dataset.")
+    }
+  }
+
+  # Set names to subject to purrr::map
+  other_items <- set_names(other_items, nm = other_items)
 
   # To-do list: allow target items to be either 1 or 0?
   # Can it be more than 1?
@@ -89,77 +98,62 @@ vis_ranking <- function(dat,
   # Process the raw ranking data +  store the original data in a separate object
   dat_raw <- dat
 
-  # Prepare a vector and a list to extract quantities of interest
+  # Prepare a vector and a list to extract quantities of interest in lists
   Y_rank_target <- dat[[target_item]]
-  Y_rank_others <- vector("list", length = J - 1)
-  for (i in seq(J - 1)) {
-    Y_rank_others[[i]] <- dat[[other_items[i]]]
-  }
+  Y_rank_others <- other_items %>% map(~ dat[[.x]])
 
-  # Pairwise ranking probability
-  Y_pairwise <- vector("list", length = J - 1)
-  for (i in seq(J - 1)) {
-    compar <- dat[[other_items[i]]] # Comparison item
-    Y_pairwise[[i]] <- ifelse(Y_rank_target < compar, 1, 0)
-  }
+  # Pairwise ranking probability compared to others?
+  Y_pairwise <- other_items %>%
+    map(~ ifelse(Y_rank_target < Y_rank_others[[.x]], 1, 0))
 
+  # Is the item in top-k?
   Y_topk <- seq(J) %>%
     map(~ ifelse(Y_rank_target <= .x, 1, 0))
 
-  Y_marginal <- vector("list", length = J)
-  tgt <- dat[[target_item]]
-  for (i in seq(J)) {
-    Y_marginal[[i]] <- ifelse(tgt == i, 1, 0)
-  }
+  # Is the item's rank exactly k?
+  Y_marginal <- seq(J) %>%
+    map(~ ifelse(Y_rank_target == .x, 1, 0))
 
   # Collect estimated means: without treatment
   if (is.null(treat)) {
     # Estimate baseline outcome values via OLS
     m_rank_target <- lm_robust(Y_rank_target ~ 1) %>% tidy()
-    m_rank_others <- vector("list", length = J - 1)
-    for (i in seq(J - 1)) {
-      m_rank_others[[i]] <- lm_robust(Y_rank_others[[i]] ~ 1) %>% tidy()
-    }
+
+    m_rank_others <- other_items %>%
+      map(~ lm_robust(Y_rank_others[[.x]] ~ 1) %>% tidy())
 
     m_topk <- seq(J) %>%
       map(~ lm_robust(Y_topk[[.x]] ~ 1) %>% tidy())
 
-    m_pairwise <- vector("list", length = J - 1)
-    for (i in seq(J - 1)) {
-      m_pairwise[[i]] <- lm_robust(Y_pairwise[[i]] ~ 1) %>% tidy()
-    }
+    m_pairwise <- other_items %>%
+      map(~ lm_robust(Y_pairwise[[.x]] ~ 1) %>% tidy())
 
-    m_marginal <- vector("list", length = J)
-    for (i in seq(J)) {
-      m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ 1) %>% tidy()
-    }
-    m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
-      mutate(
-        outcome = paste0(other_items),
-        target = "B"
-      )
-    m_rank <- m_rank_target %>%
-      mutate(
-        outcome = paste0(target_item),
-        target = "A"
-      )
+    m_marginal <- seq(J) %>%
+      map(~ lm_robust(Y_marginal[[.x]] ~ 1) %>% tidy())
 
     m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
       mutate(
         outcome = paste0(other_items),
         target = "B"
       )
+
     m_rank <- m_rank_target %>%
       mutate(
         outcome = paste0(target_item),
         target = "A"
       )
-    gg_averagerank <- rbind(m_rank, m_rank_catch)
+
+    gg_averagerank <- rbind(m_rank, m_rank_catch) %>%
+      rowwise() %>%
+      mutate(outcome = simple_cap(gsub("_", " ", outcome))) %>%
+      ungroup()
 
     gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
-      mutate(outcome = paste("vs.", other_items))
-      ## mutate(outcome = paste("vs.", simple_cap(gsub("_", " ", other_items))))
-
+      rowwise() %>%
+      mutate(
+        outcome = paste("vs.", simple_cap(gsub("_", " ", outcome)))
+      ) %>%
+      ungroup()
     gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
       mutate(outcome = paste("Ranked", seq(J)))
 
@@ -179,7 +173,7 @@ vis_ranking <- function(dat,
         linewidth = 1
       )
     p_avg <- vis_helper(p_avg, "avg", J, use_col, label)
-    
+
     p_pair <- ggplot(
       gg_pairwise,
       aes(fct_reorder(outcome, desc(estimate)), y = estimate)
@@ -188,8 +182,7 @@ vis_ranking <- function(dat,
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
         linewidth = 1
-      ) +
-      ylim(0, 1)
+      )
     p_pair <- vis_helper(p_pair, "pair", J, use_col, label)
 
     p_topk <- ggplot(
@@ -200,8 +193,7 @@ vis_ranking <- function(dat,
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
         linewidth = 1
-      ) +
-      ylim(0, 1)
+      )
     p_topk <- vis_helper(p_topk, "topk", J, use_col, label)
 
     p_marginal <- ggplot(
@@ -212,8 +204,7 @@ vis_ranking <- function(dat,
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
         linewidth = 1
-      ) +
-      ylim(0, 1)
+      )
     p_marginal <- vis_helper(p_marginal, "marginal", J, use_col, label)
 
     if (single_plot == TRUE) {
@@ -265,16 +256,12 @@ vis_ranking <- function(dat,
 
     m_topk <- seq(J) %>%
       map(~ lm_robust(Y_topk[[.x]] ~ D) %>% tidy())
-    
-    m_pairwise <- vector("list", length = J - 1)
-    for (i in seq(J - 1)) {
-      m_pairwise[[i]] <- lm_robust(Y_pairwise[[i]] ~ D) %>% tidy()
-    }
 
-    m_marginal <- vector("list", length = J)
-    for (i in seq(J)) {
-      m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ D) %>% tidy()
-    }
+    m_pairwise <- seq(J - 1) %>%
+      map(~ lm_robust(Y_pairwise[[.x]] ~ D) %>% tidy())
+
+    m_marginal <- seq(J) %>%
+      map(~ lm_robust(Y_marginal[[.x]] ~ D) %>% tidy())
 
     m_rank <- m_rank_target %>%
       filter(term == "D") %>%
@@ -282,13 +269,20 @@ vis_ranking <- function(dat,
         outcome = paste0(target_item),
         target = "A"
       )
-    gg_averagerank <- rbind(m_rank)
+    
+    gg_averagerank <- do.call(rbind.data.frame, m_rank) %>%
+      rowwise() %>%
+      mutate(outcome = simple_cap(gsub("_", " ", outcome))) %>%
+      ungroup()
 
     gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
       filter(term == "D") %>%
-      mutate(outcome = paste("vs.", other_items))
-      ## mutate(outcome = paste("vs.", simple_cap(gsub("_", " ", other_items))))
-    
+      rowwise() %>%
+      mutate(
+        outcome = paste("vs.", simple_cap(gsub("_", " ", outcome)))
+      ) %>%
+      ungroup()
+
     gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
       filter(term == "D") %>%
       mutate(outcome = paste("Ranked", seq(J)))
@@ -320,7 +314,7 @@ vis_ranking <- function(dat,
         linewidth = 1
       )
     p_avg <- vis_helper(p_avg, "avg", J, use_col, label)
-    
+
     gg_pairwise$col <- ifelse(
       gg_pairwise$conf.low > 0, "Positive", "Not_significant"
     )
@@ -425,19 +419,21 @@ vis_helper <- function(p, type, J, use_col, label) {
       ## geom_hline(yintercept = 0, linetype = "dashed") +
       ggtitle(
         paste0("B. Pairwise Ranking of", " ", label, " ", "Over Other Items")
-      )
+      ) +
+      ylim(0, 1)
   } else if (tolower(type) == "topk") {
     p <- p +
       scale_colour_manual(values = use_col) +
       ## geom_hline(yintercept = 0, linetype = "dashed") +
-      ggtitle(paste0("C. Top-k Ranking of", " ", label))
+      ggtitle(paste0("C. Top-k Ranking of", " ", label)) +
+      ylim(0, 1)
   } else if (tolower(type) == "marginal") {
     p <- p +
       scale_colour_manual(values = use_col) +
       ## geom_hline(yintercept = 0, linetype = "dashed") +
-      ggtitle(paste0("D. Marginal Ranking of", " ", label))
+      ggtitle(paste0("D. Marginal Ranking of", " ", label)) +
+      ylim(0, 1)
   }
-  
+
   return(p)
 }
-
