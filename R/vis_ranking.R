@@ -227,6 +227,7 @@ vis_ranking <- function(dat,
   } else {
     # Visualization when there is a treatment
     # Prep for visualization
+    # SK: I need to be walked through what's happening here with av_scenario
     av_scenario <- scenario <- list(
       c("Not_significant", "Negative", "Positive"),
       c("Not_significant", "Negative"),
@@ -255,6 +256,12 @@ vis_ranking <- function(dat,
       c(color_palette[3]),
       c(color_palette[2])
     )
+    
+    color_significance <- function(x) {
+      x$col <- ifelse(x$conf.low > 0, "Positive", "Not_significant")
+      x$col <- ifelse(x$conf.high < 0, "Negative", x$col)
+      return(x)
+    }
 
     # Estimate ATEs with Difference-in-means via OLS
     m_rank_target <- lm_robust(Y_rank_target ~ D) %>% tidy()
@@ -280,25 +287,27 @@ vis_ranking <- function(dat,
       )
 
     gg_avg <- m_rank %>%
-      label_capitalize()
+      label_capitalize() %>%
+      color_significance()
 
     gg_pair <- do.call(rbind.data.frame, m_pair) %>%
-      label_capitalize()
+      label_capitalize() %>%
+      color_significance()
 
     gg_marg <- do.call(rbind.data.frame, m_marg) %>%
       filter(term == "D") %>%
       mutate(outcome = paste("Ranked", seq(J))) %>%
-      rev_outcome()
+      rev_outcome() %>%
+      color_significance()
 
     gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("Top-", seq(J))) %>%
       .[seq(J - 1), ] %>%
-      rev_outcome()
+      rev_outcome() %>%
+      color_significance()
 
     # Visualize all effects
-    gg_avg$col <- ifelse(gg_avg$conf.low > 0, "Positive", "Not_significant")
-    gg_avg$col <- ifelse(gg_avg$conf.high < 0, "Negative", gg_avg$col)
     names(av_scena_col) <- av_scenario
     pattern <- unique(gg_avg$col) # Observed pattern
     use_col <- av_scena_col[pattern] # Use this color palette
@@ -314,8 +323,6 @@ vis_ranking <- function(dat,
       )
     p_avg <- vis_helper(p_avg, "avg", J, use_col, label, treat)
 
-    gg_pair$col <- ifelse(gg_pair$conf.low > 0, "Positive", "Not_significant")
-    gg_pair$col <- ifelse(gg_pair$conf.high < 0, "Negative", gg_pair$col)
     names(scena_col) <- scenario
     pattern <- unique(gg_pair$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color palette
@@ -331,8 +338,6 @@ vis_ranking <- function(dat,
       )
     p_pair <- vis_helper(p_pair, "pair", J, use_col, label, treat)
 
-    gg_topk$col <- ifelse(gg_topk$conf.low > 0, "Positive", "Not_significant")
-    gg_topk$col <- ifelse(gg_topk$conf.high < 0, "Negative", gg_topk$col)
     names(scena_col) <- scenario
     pattern <- unique(gg_topk$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
@@ -345,8 +350,6 @@ vis_ranking <- function(dat,
       )
     p_topk <- vis_helper(p_topk, "topk", J, use_col, label, treat)
 
-    gg_marg$col <- ifelse(gg_marg$conf.low > 0, "Positive", "Not_significant")
-    gg_marg$col <- ifelse(gg_marg$conf.high < 0, "Negative", gg_marg$col)
     names(scena_col) <- scenario
     pattern <- unique(gg_marg$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
