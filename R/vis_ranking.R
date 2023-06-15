@@ -1,17 +1,20 @@
 #' Visualize ATEs in Ranking Data
-#' 
-#' @description \code{vis_ranking} visualizes all ATEs 
+#'
+#' @description \code{vis_ranking} visualizes all ATEs
 #' in a typical ranking dataset.
 #'
+#' @importFrom generics tidy
 #' @importFrom estimatr lm_robust
+#' @importFrom ggpubr ggarrange
+#' @import ggplot
 #'
 #' @param dat The input dataset with ranking data.
 #' @param target_item A string for the target item's variable name
 #' @param other_items A set of strings for variable names corresponding to
 #' other items that were available as ranking options
-#' @param treat The treatment indicator variable. 
+#' @param treat The treatment indicator variable.
 #' Defaults to NULL.
-#' @param single_plot If TRUE, returns a single plot. 
+#' @param single_plot If TRUE, returns a single plot.
 #' If FALSE, returns a list of plots that will compose the combined plot.
 #' Defaults to TRUE.
 #' @param color_palette The color palette to be used.
@@ -19,11 +22,11 @@
 #' @return A ggplot that visualizes all treatment effects.
 #' If single_plot is TRUE, it will return a single ggplot.
 #' If FALSE, it will return four ggplot objects in a list.
-#' 
+#'
 #' @examples
 #' dat <- read_csv("ex_police.csv")
 #' my_target_item <- "victim"
-#' my_other_items <- 
+#' my_other_items <-
 #'   c("officers", "PDchief", "mayor", "DA", "governor", "senators")
 #' vis_ranking(
 #'   dat = dat,
@@ -46,7 +49,7 @@ vis_ranking <- function(dat,
                         )) {
   # Avoiding overwriting utils::data and stats::dt
   # Avoiding reliance on tidyverse as much as possible
-  
+
   # Check the validity of the input arguments.
   if (!(target_item %in% names(dat))) {
     stop("The target item is not a valid column name in the given datset.")
@@ -54,41 +57,45 @@ vis_ranking <- function(dat,
   if (!all(other_items %in% names(dat))) {
     stop(
       paste0(
-        "One or more of other items is not a valid column name", 
+        "One or more of other items is not a valid column name",
         " in the given dataset."
       )
     )
   }
-  
+
+  # To-do list: allow target items to be either 1 or 0?
+  # Can it be more than 1?
+
   # Highlight and benchmark color for average rankings and such
   use_col <- c(color_palette[2], color_palette[1])
-  
+
   # Create a label for items: if there are underbars, turn to spaces
   # Capitalize the first letters
   label <- simple_cap(gsub("_", " ", simple_cap(target_item)))
 
   # Size of the dataset
   N <- nrow(dat)
-  J_1 <- length(other_items) # J - 1
-  J <- J_1 + 1
-  
+  J <- length(other_items) + 1
+
   # Treatment indicator
   if (!is.null(treat)) {
     D <- unlist(dat[treat])
   }
 
-  # Process the raw ranking data, but store the original dataset in a 
+  # Process the raw ranking data, but store the original dataset in a
   # separate object
   dat_raw <- dat
 
-  Y_rank_target <- unlist(dat[target_item]) # Average ranks
-  Y_rank_others <- list()
-  for (i in 1:J_1) {
+  # Prepare a vector and a list to extract quantities of interest
+  Y_rank_target <- unlist(dat[target_item])
+  Y_rank_others <- vector("list", length = J - 1)
+  for (i in seq(J - 1)) {
     Y_rank_others[[i]] <- unlist(dat[other_items[i]])
   }
 
-  Y_pairwise <- list() # Pairwise ranking P
-  for (i in 1:J_1) {
+  # Pairwise ranking probability
+  Y_pairwise <- vector("list", length = J - 1)
+  for (i in seq(J - 1)) {
     compar <- unlist(dat[other_items[i]]) # Comparison item
     Y_pairwise[[i]] <- ifelse(Y_rank_target < compar, 1, 0)
   }
@@ -101,9 +108,9 @@ vis_ranking <- function(dat,
   Y_top6 <- ifelse(Y_rank_target <= 6, 1, 0) # Top-6 ranking P
   Y_top7 <- ifelse(Y_rank_target <= 7, 1, 0) # Top-7 ranking P
 
-  Y_marginal <- list()
+  Y_marginal <- vector("list", length = J)
   tgt <- unlist(dat[target_item])
-  for (i in 1:J) {
+  for (i in seq(J)) {
     Y_marginal[[i]] <- ifelse(tgt == i, 1, 0)
   }
 
@@ -111,8 +118,8 @@ vis_ranking <- function(dat,
   if (is.null(treat)) {
     # Estimate baseline outcome values via OLS
     m_rank_target <- lm_robust(Y_rank_target ~ 1) %>% tidy()
-    m_rank_others <- list()
-    for (i in 1:J_1) {
+    m_rank_others <- vector("list", length = J - 1)
+    for (i in seq(J - 1)) {
       m_rank_others[[i]] <- lm_robust(Y_rank_others[[i]] ~ 1) %>% tidy()
     }
 
@@ -124,13 +131,13 @@ vis_ranking <- function(dat,
     m_top6 <- lm_robust(Y_top6 ~ 1) %>% tidy()
     m_top7 <- lm_robust(Y_top7 ~ 1) %>% tidy()
 
-    m_pairwise <- list()
-    for (i in 1:J_1) {
+    m_pairwise <- vector("list", length = J - 1)
+    for (i in seq(J - 1)) {
       m_pairwise[[i]] <- lm_robust(Y_pairwise[[i]] ~ 1) %>% tidy()
     }
 
-    m_marginal <- list()
-    for (i in 1:J) {
+    m_marginal <- vector("list", length = J)
+    for (i in seq(J)) {
       m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ 1) %>% tidy()
     }
     m_rank_catch <- do.call(rbind.dat.frame, m_rank_others) %>%
@@ -160,7 +167,7 @@ vis_ranking <- function(dat,
       mutate(outcome = paste0("v.", " ", other_items))
 
     gg_marginal <- do.call(rbind.dat.frame, m_marginal) %>%
-      mutate(outcome = paste0("Ranked", " ", 1:J))
+      mutate(outcome = paste0("Ranked", " ", seq(J)))
 
     gg_topk <- rbind(
       m_top1, m_top2, m_top3, m_top4,
@@ -174,7 +181,7 @@ vis_ranking <- function(dat,
       ) %>%
       select(outcome, everything()) %>%
       ## Limit to less than 7 if J<7
-      .[1:(J - 1), ]
+      .[seq(J - 1), ]
 
     # Visualize all effects
     p_avg <- ggplot(
@@ -194,7 +201,7 @@ vis_ranking <- function(dat,
       scale_colour_manual(values = use_col) +
       ylab("") +
       xlab("") +
-      ylim(1, (1 + J_1)) +
+      ylim(1, J) +
       coord_flip() +
       theme_bw() +
       ggtitle(paste0("A. Average Ranks")) +
@@ -207,12 +214,11 @@ vis_ranking <- function(dat,
 
     p_pair <- ggplot(
       gg_pairwise,
-      aes(fct_reorder(outcome, desc(estimate)),
-        y = estimate
-      )
+      aes(fct_reorder(outcome, desc(estimate)), y = estimate)
     ) +
       geom_point(aes(), size = 2) +
-      geom_linerange(aes(x = outcome, ymin = conf.low, ymax = conf.high),
+      geom_linerange(
+        aes(x = outcome, ymin = conf.low, ymax = conf.high),
         lwd = 1
       ) +
       ylab("") +
@@ -235,7 +241,8 @@ vis_ranking <- function(dat,
       aes(x = outcome, y = estimate)
     ) +
       geom_point(aes(), size = 2) +
-      geom_linerange(aes(x = outcome, ymin = conf.low, ymax = conf.high),
+      geom_linerange(
+        aes(x = outcome, ymin = conf.low, ymax = conf.high),
         lwd = 1
       ) +
       ylab("") +
@@ -256,7 +263,8 @@ vis_ranking <- function(dat,
       aes(x = outcome, y = estimate)
     ) +
       geom_point(aes(), size = 2) +
-      geom_linerange(aes(x = outcome, ymin = conf.low, ymax = conf.high),
+      geom_linerange(
+        aes(x = outcome, ymin = conf.low, ymax = conf.high),
         lwd = 1
       ) +
       ylab("") +
@@ -273,7 +281,7 @@ vis_ranking <- function(dat,
       )
 
     if (single_plot == TRUE) {
-      ggpubr::ggarrange(p_avg, p_pair, p_topk, p_marginal)
+      ggarrange(p_avg, p_pair, p_topk, p_marginal)
     } else {
       return(
         list(
@@ -335,13 +343,13 @@ vis_ranking <- function(dat,
     m_top6 <- lm_robust(Y_top6 ~ D) %>% tidy()
     m_top7 <- lm_robust(Y_top7 ~ D) %>% tidy()
 
-    m_pairwise <- list()
-    for (i in 1:J_1) {
+    m_pairwise <- vector("list", length = J - 1)
+    for (i in seq(J - 1)) {
       m_pairwise[[i]] <- lm_robust(Y_pairwise[[i]] ~ D) %>% tidy()
     }
 
-    m_marginal <- list()
-    for (i in 1:J) {
+    m_marginal <- vector("list", length = J)
+    for (i in seq(J)) {
       m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ D) %>% tidy()
     }
 
@@ -359,7 +367,7 @@ vis_ranking <- function(dat,
 
     gg_marginal <- do.call(rbind.dat.frame, m_marginal) %>%
       filter(term == "D") %>%
-      mutate(outcome = paste0("Ranked", " ", 1:J))
+      mutate(outcome = paste0("Ranked", " ", seq(J)))
 
     gg_topk <- rbind(
       m_top1, m_top2, m_top3, m_top4,
@@ -398,7 +406,6 @@ vis_ranking <- function(dat,
       scale_colour_manual(values = use_col) +
       ylab("") +
       xlab("") +
-      #  ylim(1,(1+J_1)) +
       coord_flip() +
       theme_bw() +
       ggtitle(paste0("A. Average Ranks")) +
@@ -510,7 +517,7 @@ vis_ranking <- function(dat,
       )
 
     if (single_plot == TRUE) {
-      ggpubr::ggarrange(p_avg, p_pair, p_topk, p_marginal)
+      ggarrange(p_avg, p_pair, p_topk, p_marginal)
     } else {
       return(
         list(
@@ -524,10 +531,11 @@ vis_ranking <- function(dat,
   }
 }
 
-simple_cap <- function (x) {
+simple_cap <- function(x) {
   s <- strsplit(x, " ")[[1]]
   output <- paste(
-    toupper(substring(s, 1, 1)), substring(s, 2), 
-    sep = "", collapse = " ")
+    toupper(substring(s, 1, 1)), substring(s, 2),
+    sep = "", collapse = " "
+  )
   return(output)
 }
