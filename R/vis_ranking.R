@@ -126,7 +126,11 @@ vis_ranking <- function(dat,
       map(~ lm_robust(Y_topk[[.x]] ~ 1) %>% tidy())
 
     m_pairwise <- other_items %>%
-      map(~ lm_robust(Y_pairwise[[.x]] ~ 1) %>% tidy())
+      imap(
+        ~ lm_robust(Y_pairwise[[.x]] ~ 1) %>% 
+          tidy() %>% 
+          mutate(outcome = .y)
+      )
 
     m_marginal <- seq(J) %>%
       map(~ lm_robust(Y_marginal[[.x]] ~ 1) %>% tidy())
@@ -257,9 +261,13 @@ vis_ranking <- function(dat,
     m_topk <- seq(J) %>%
       map(~ lm_robust(Y_topk[[.x]] ~ D) %>% tidy())
 
-    m_pairwise <- seq(J - 1) %>%
-      map(~ lm_robust(Y_pairwise[[.x]] ~ D) %>% tidy())
-
+    m_pairwise <- other_items %>%
+      imap(
+        ~ lm_robust(Y_pairwise[[.x]] ~ 1) %>% 
+          tidy() %>% 
+          mutate(outcome = .y)
+      )
+    
     m_marginal <- seq(J) %>%
       map(~ lm_robust(Y_marginal[[.x]] ~ D) %>% tidy())
 
@@ -416,7 +424,7 @@ vis_helper <- function(p, type, J, use_col, label) {
   } else if (tolower(type) == "pair") {
     p <- p +
       scale_colour_manual(values = use_col) +
-      ## geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_hline(yintercept = 0.5, linetype = "dashed") +
       ggtitle(
         paste0("B. Pairwise Ranking of", " ", label, " ", "Over Other Items")
       ) +
@@ -424,13 +432,13 @@ vis_helper <- function(p, type, J, use_col, label) {
   } else if (tolower(type) == "topk") {
     p <- p +
       scale_colour_manual(values = use_col) +
-      ## geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_hline(yintercept = 0.5, linetype = "dashed") +
       ggtitle(paste0("C. Top-k Ranking of", " ", label)) +
       ylim(0, 1)
   } else if (tolower(type) == "marginal") {
     p <- p +
       scale_colour_manual(values = use_col) +
-      ## geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_hline(yintercept = seq(1/J, 1 - 1/J, by = 1/J), linetype = "dashed") +
       ggtitle(paste0("D. Marginal Ranking of", " ", label)) +
       ylim(0, 1)
   }
