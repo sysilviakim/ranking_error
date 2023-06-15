@@ -83,23 +83,23 @@ vis_ranking <- function(dat,
 
   # Treatment indicator
   if (!is.null(treat)) {
-    D <- unlist(dat[treat])
+    D <- dat[[treat]]
   }
 
   # Process the raw ranking data +  store the original data in a separate object
   dat_raw <- dat
 
   # Prepare a vector and a list to extract quantities of interest
-  Y_rank_target <- unlist(dat[target_item])
+  Y_rank_target <- dat[[target_item]]
   Y_rank_others <- vector("list", length = J - 1)
   for (i in seq(J - 1)) {
-    Y_rank_others[[i]] <- unlist(dat[other_items[i]])
+    Y_rank_others[[i]] <- dat[[other_items[i]]]
   }
 
   # Pairwise ranking probability
   Y_pairwise <- vector("list", length = J - 1)
   for (i in seq(J - 1)) {
-    compar <- unlist(dat[other_items[i]]) # Comparison item
+    compar <- dat[[other_items[i]]] # Comparison item
     Y_pairwise[[i]] <- ifelse(Y_rank_target < compar, 1, 0)
   }
 
@@ -107,7 +107,7 @@ vis_ranking <- function(dat,
     map(~ ifelse(Y_rank_target <= .x, 1, 0))
 
   Y_marginal <- vector("list", length = J)
-  tgt <- unlist(dat[target_item])
+  tgt <- dat[[target_item]]
   for (i in seq(J)) {
     Y_marginal[[i]] <- ifelse(tgt == i, 1, 0)
   }
