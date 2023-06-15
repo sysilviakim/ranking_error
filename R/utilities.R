@@ -14,6 +14,7 @@ library(assertthat)
 library(pwr)
 library(xtable)
 library(estimatr)
+library(ggpubr)
 
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))

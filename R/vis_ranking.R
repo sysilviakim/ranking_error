@@ -140,7 +140,7 @@ vis_ranking <- function(dat,
     for (i in seq(J)) {
       m_marginal[[i]] <- lm_robust(Y_marginal[[i]] ~ 1) %>% tidy()
     }
-    m_rank_catch <- do.call(rbind.dat.frame, m_rank_others) %>%
+    m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
       mutate(
         outcome = paste0(other_items),
         target = "B"
@@ -151,7 +151,7 @@ vis_ranking <- function(dat,
         target = "A"
       )
 
-    m_rank_catch <- do.call(rbind.dat.frame, m_rank_others) %>%
+    m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
       mutate(
         outcome = paste0(other_items),
         target = "B"
@@ -163,78 +163,41 @@ vis_ranking <- function(dat,
       )
     gg_averagerank <- rbind(m_rank, m_rank_catch)
 
-    gg_pairwise <- do.call(rbind.dat.frame, m_pairwise) %>%
+    gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
       mutate(outcome = paste0("v.", " ", other_items))
 
-    gg_marginal <- do.call(rbind.dat.frame, m_marginal) %>%
+    gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
       mutate(outcome = paste0("Ranked", " ", seq(J)))
 
-    gg_topk <- rbind(
-      m_top1, m_top2, m_top3, m_top4,
-      m_top5, m_top6, m_top7
-    ) %>%
-      mutate(
-        outcome = c(
-          "Top-1", "Top-2", "Top-3", "Top-4",
-          "Top-5", "Top-6", "Top-7"
-        )
-      ) %>%
+    gg_topk <- rbind(m_top1, m_top2, m_top3, m_top4, m_top5, m_top6, m_top7) %>%
+      mutate(outcome = paste("Top-", seq(7))) %>%
       select(outcome, everything()) %>%
-      ## Limit to less than 7 if J<7
+      ## Limit to less than 7 if J < 7
       .[seq(J - 1), ]
 
     # Visualize all effects
     p_avg <- ggplot(
       gg_averagerank,
-      aes(fct_reorder(outcome, desc(estimate)),
-        y = estimate
-      )
+      aes(fct_reorder(outcome, desc(estimate)), y = estimate)
     ) +
       geom_point(aes(color = target), size = 2) +
       geom_linerange(
-        aes(
-          x = outcome, ymin = conf.low, ymax = conf.high,
-          color = target
-        ),
+        aes(x = outcome, ymin = conf.low, ymax = conf.high, color = target),
         lwd = 1
-      ) +
-      scale_colour_manual(values = use_col) +
-      ylab("") +
-      xlab("") +
-      ylim(1, J) +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(paste0("A. Average Ranks")) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
       )
-
+    p_avg <- vis_helper(p_avg, "avg", J, use_col, label)
+    
     p_pair <- ggplot(
       gg_pairwise,
       aes(fct_reorder(outcome, desc(estimate)), y = estimate)
     ) +
-      geom_point(aes(), size = 2) +
+      geom_point(size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
         lwd = 1
       ) +
-      ylab("") +
-      xlab("") +
-      ylim(0, 1) +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(
-        paste0("B. Pairwise Ranking of", " ", label, " ", "Over Other Options")
-      ) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
-      )
+      ylim(0, 1)
+    p_pair <- vis_helper(p_pair, "pair", J, use_col, label)
 
     p_topk <- ggplot(
       gg_topk,
@@ -245,18 +208,8 @@ vis_ranking <- function(dat,
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
         lwd = 1
       ) +
-      ylab("") +
-      xlab("") +
-      ylim(0, 1) +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(paste0("C. Top-k Ranking of", " ", label)) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
-      )
+      ylim(0, 1)
+    p_topk <- vis_helper(p_topk, "topk", J, use_col, label)
 
     p_marginal <- ggplot(
       gg_marginal,
@@ -267,18 +220,8 @@ vis_ranking <- function(dat,
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
         lwd = 1
       ) +
-      ylab("") +
-      xlab("") +
-      ylim(0, 1) +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(paste0("D. Marginal Ranking of", " ", label)) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
-      )
+      ylim(0, 1)
+    p_marginal <- vis_helper(p_marginal, "marginal", J, use_col, label)
 
     if (single_plot == TRUE) {
       ggarrange(p_avg, p_pair, p_topk, p_marginal)
@@ -293,8 +236,9 @@ vis_ranking <- function(dat,
       )
     }
   } else {
+    # Visualization when there is a treatment
     # Prep for visualization
-    scenario <- list(
+    av_scenario <- scenario <- list(
       c("Not_significant", "Negative", "Positive"),
       c("Not_significant", "Negative"),
       c("Not_significant", "Positive"),
@@ -313,15 +257,6 @@ vis_ranking <- function(dat,
       c(color_palette[3])
     )
 
-    av_scenario <- list(
-      c("Not_significant", "Negative", "Positive"),
-      c("Not_significant", "Negative"),
-      c("Not_significant", "Positive"),
-      c("Negative", "Positive"),
-      c("Not_significant"),
-      c("Negative"),
-      c("Positive")
-    )
     av_scena_col <- list(
       c(color_palette[4], color_palette[3], color_palette[2]),
       c(color_palette[4], color_palette[3]),
@@ -361,23 +296,17 @@ vis_ranking <- function(dat,
       )
     gg_averagerank <- rbind(m_rank)
 
-    gg_pairwise <- do.call(rbind.dat.frame, m_pairwise) %>%
+    gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("v.", " ", other_items))
 
-    gg_marginal <- do.call(rbind.dat.frame, m_marginal) %>%
+    gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("Ranked", " ", seq(J)))
 
-    gg_topk <- rbind(
-      m_top1, m_top2, m_top3, m_top4,
-      m_top5, m_top6, m_top7
-    ) %>%
+    gg_topk <- rbind(m_top1, m_top2, m_top3, m_top4, m_top5, m_top6, m_top7) %>%
       filter(term == "D") %>%
-      mutate(outcome = c(
-        "Top-1", "Top-2", "Top-3", "Top-4",
-        "Top-5", "Top-6", "Top-7"
-      ))
+      mutate(outcome = paste("Top-", seq(7)))
 
     # Visualize all effects
     gg_averagerank$col <- ifelse(
@@ -388,7 +317,7 @@ vis_ranking <- function(dat,
     )
     names(av_scena_col) <- av_scenario
     pattern <- unique(gg_averagerank$col) # Observed pattern
-    use_col <- av_scena_col[pattern] # Use this color pallet
+    use_col <- av_scena_col[pattern] # Use this color palette
 
     p_avg <- ggplot(
       gg_averagerank,
@@ -400,22 +329,9 @@ vis_ranking <- function(dat,
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
-      ) +
-      scale_colour_manual(values = use_col) +
-      geom_hline(yintercept = 0, linetype = "dashed") +
-      scale_colour_manual(values = use_col) +
-      ylab("") +
-      xlab("") +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(paste0("A. Average Ranks")) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
       )
-
+    p_avg <- vis_helper(p_avg, "avg", J, use_col, label)
+    
     gg_pairwise$col <- ifelse(
       gg_pairwise$conf.low > 0, "Positive", "Not_significant"
     )
@@ -424,33 +340,18 @@ vis_ranking <- function(dat,
     )
     names(scena_col) <- scenario
     pattern <- unique(gg_pairwise$col) # Observed pattern
-    use_col <- scena_col[pattern] # Use this color pallet
+    use_col <- scena_col[pattern] # Use this color palette
 
     p_pair <- ggplot(
       gg_pairwise,
-      aes(fct_reorder(outcome, desc(estimate)),
-        y = estimate
-      )
+      aes(fct_reorder(outcome, desc(estimate)), y = estimate)
     ) +
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
-      ) +
-      scale_colour_manual(values = use_col) +
-      geom_hline(yintercept = 0, linetype = "dashed") +
-      ylab("") +
-      xlab("") +
-      #  ylim(0,1) +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(paste0("B. Pairwise Ranking of", " ", target_item, " ", "Over")) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
       )
+    p_pair <- vis_helper(p_pair, "pair", J, use_col, label)
 
     gg_topk$col <- ifelse(gg_topk$conf.low > 0, "Positive", "Not_significant")
     gg_topk$col <- ifelse(gg_topk$conf.high < 0, "Negative", gg_topk$col)
@@ -458,29 +359,13 @@ vis_ranking <- function(dat,
     pattern <- unique(gg_topk$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
 
-    p_topk <- ggplot(
-      gg_topk,
-      aes(x = outcome, y = estimate)
-    ) +
+    p_topk <- ggplot(gg_topk, aes(x = outcome, y = estimate)) +
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
-      ) +
-      scale_colour_manual(values = use_col) +
-      geom_hline(yintercept = 0, linetype = "dashed") +
-      ylab("") +
-      xlab("") +
-      #  ylim(0,1) +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(paste0("C. Top-k Ranking of", " ", target_item)) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
       )
+    p_topk <- vis_helper(p_topk, "topk", J, use_col, label)
 
     gg_marginal$col <- ifelse(
       gg_marginal$conf.low > 0, "Positive", "Not_significant"
@@ -500,21 +385,8 @@ vis_ranking <- function(dat,
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
         lwd = 1
-      ) +
-      scale_colour_manual(values = use_col) +
-      geom_hline(yintercept = 0, linetype = "dashed") +
-      ylab("") +
-      xlab("") +
-      #  ylim(0,1) +
-      coord_flip() +
-      theme_bw() +
-      ggtitle(paste0("D. Marginal Ranking of", " ", target_item)) +
-      theme(
-        legend.position = "none",
-        plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
-        text = element_text(size = 10),
-        plot.title = element_text(size = 10)
       )
+    p_marginal <- vis_helper(p_marginal, "marginal", J, use_col, label)
 
     if (single_plot == TRUE) {
       ggarrange(p_avg, p_pair, p_topk, p_marginal)
@@ -539,3 +411,44 @@ simple_cap <- function(x) {
   )
   return(output)
 }
+
+vis_helper <- function(p, type, J, use_col, label) {
+  p <- p +
+    ylab("") +
+    xlab("") +
+    coord_flip() +
+    theme_bw() +
+    theme(
+      legend.position = "none",
+      plot.margin = margin(0.2, 0.2, 0.2, -0.2, "cm"),
+      text = element_text(size = 10),
+      plot.title = element_text(size = 10)
+    )
+  if (tolower(type) == "avg") {
+    p <- p +
+      scale_colour_manual(values = use_col) +
+      ylim(1, J) +
+      geom_hline(yintercept = (J + 1) / 2, linetype = "dashed") +
+      ggtitle(paste0("A. Average Ranks"))
+  } else if (tolower(type) == "pair") {
+    p <- p +
+      scale_colour_manual(values = use_col) +
+      ## geom_hline(yintercept = 0, linetype = "dashed") +
+      ggtitle(
+        paste0("B. Pairwise Ranking of", " ", label, " ", "Over Other Items")
+      )
+  } else if (tolower(type) == "topk") {
+    p <- p +
+      scale_colour_manual(values = use_col) +
+      ## geom_hline(yintercept = 0, linetype = "dashed") +
+      ggtitle(paste0("C. Top-k Ranking of", " ", label))
+  } else if (tolower(type) == "marginal") {
+    p <- p +
+      scale_colour_manual(values = use_col) +
+      ## geom_hline(yintercept = 0, linetype = "dashed") +
+      ggtitle(paste0("D. Marginal Ranking of", " ", label))
+  }
+  
+  return(p)
+}
+
