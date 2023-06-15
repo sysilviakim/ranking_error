@@ -159,14 +159,18 @@ vis_ranking <- function(dat,
       rowwise() %>%
       mutate(outcome = paste("vs.", simple_cap(gsub("_", " ", outcome)))) %>%
       ungroup()
-    
+
     gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
-      mutate(outcome = paste("Ranked", seq(J)))
+      mutate(outcome = paste("Ranked", seq(J))) %>%
+      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
+      arrange(outcome)
 
     gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       mutate(outcome = paste0("Top-", seq(J))) %>%
       select(outcome, everything()) %>%
-      .[seq(J - 1), ]
+      .[seq(J - 1), ] %>%
+      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
+      arrange(outcome)
 
     # Visualize all effects
     p_avg <- ggplot(
@@ -191,22 +195,16 @@ vis_ranking <- function(dat,
       )
     p_pairwise <- vis_helper(p_pairwise, "pair", J, use_col, label, treat)
 
-    p_topk <- ggplot(
-      gg_topk,
-      aes(x = outcome, y = estimate)
-    ) +
-      geom_point(aes(), size = 2) +
+    p_topk <- ggplot(gg_topk, aes(x = outcome, y = estimate)) +
+      geom_point(size = 2) +
       geom_linerange(
-        aes(x = outcome, ymin = conf.low, ymax = conf.high),
+        aes(ymin = conf.low, ymax = conf.high),
         linewidth = 1
       )
     p_topk <- vis_helper(p_topk, "topk", J, use_col, label, treat)
 
-    p_marginal <- ggplot(
-      gg_marginal,
-      aes(x = outcome, y = estimate)
-    ) +
-      geom_point(aes(), size = 2) +
+    p_marginal <- ggplot(gg_marginal, aes(x = outcome, y = estimate)) +
+      geom_point(size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
         linewidth = 1
@@ -292,12 +290,16 @@ vis_ranking <- function(dat,
 
     gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
       filter(term == "D") %>%
-      mutate(outcome = paste("Ranked", seq(J)))
+      mutate(outcome = paste("Ranked", seq(J))) %>%
+      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
+      arrange(outcome)
 
     gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("Top-", seq(J))) %>%
-      .[seq(J - 1), ]
+      .[seq(J - 1), ] %>%
+      mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
+      arrange(outcome)
 
     # Visualize all effects
     gg_avg$col <- ifelse(
@@ -312,9 +314,7 @@ vis_ranking <- function(dat,
 
     p_avg <- ggplot(
       gg_avg,
-      aes(fct_reorder(outcome, desc(estimate)),
-        y = estimate
-      )
+      aes(fct_reorder(outcome, desc(estimate)), y = estimate)
     ) +
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
@@ -368,10 +368,7 @@ vis_ranking <- function(dat,
     pattern <- unique(gg_marginal$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
 
-    p_marginal <- ggplot(
-      gg_marginal,
-      aes(x = outcome, y = estimate)
-    ) +
+    p_marginal <- ggplot(gg_marginal, aes(x = outcome, y = estimate)) +
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
@@ -420,7 +417,7 @@ vis_helper <- function(p, type, J, use_col, label, treat) {
       scale_colour_manual(values = use_col) +
       ggtitle(paste0("A. Average Ranks"))
     if (is.null(treat)) {
-      p <- p + 
+      p <- p +
         ylim(1, J) +
         geom_hline(yintercept = (J + 1) / 2, linetype = "dashed")
     }
@@ -440,7 +437,7 @@ vis_helper <- function(p, type, J, use_col, label, treat) {
       scale_colour_manual(values = use_col) +
       ggtitle(paste0("C. Top-k Ranking of", " ", label))
     if (is.null(treat)) {
-      p <- p + 
+      p <- p +
         ylim(0, 1) +
         geom_hline(yintercept = 0.5, linetype = "dashed")
     }
