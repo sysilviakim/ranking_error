@@ -171,31 +171,31 @@ avg_rank(
 ## Tate 1993 (representation) --------------------------------------------------
 
 ### Full visualization
-vis_r(
-  data = prep_list$tate$dat,
+vis_ranking(
+  dat = prep_list$tate$dat,
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork")
 )
 
 ### Compare substantial understanding
-p1 <- vis_r(
-  data = prep_list$tate$dat,
+p1 <- vis_ranking(
+  dat = prep_list$tate$dat,
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork"),
   single_plot = FALSE
 ) %>% 
   .$p_avg
 
-p2 <- vis_r(
-  data = prep_list$tate$dat %>% filter(anc_correct_tate == 1),
+p2 <- vis_ranking(
+  dat = prep_list$tate$dat %>% filter(anc_correct_tate == 1),
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork"),
   single_plot = FALSE
 ) %>% 
   .$p_avg
 
-p3 <- vis_r(
-  data = prep_list$tate$dat %>% filter(anc_correct_tate == 0),
+p3 <- vis_ranking(
+  dat = prep_list$tate$dat %>% filter(anc_correct_tate == 0),
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork"),
   single_plot = FALSE
@@ -211,7 +211,7 @@ ggsave(here("fig", "tate_anchor_failed.pdf"), width = 3, height = 2.2)
 
 ### Weight
 dt_tate_w <- imprr(
-  data = prep_list$tate$dat,
+  dat = prep_list$tate$dat,
   rank_q = prep_list$tate$labels,
   main_q = "app_tate",
   anchor = "anc_tate",
@@ -245,7 +245,7 @@ mean(freq_imp_dev)
 
 ## Electoral systems -----------------------------------------------------------
 dt_e_systems_w <- imprr(
-  data = prep_list$e_systems$dat,
+  dat = prep_list$e_systems$dat,
   rank_q = prep_list$e_systems$labels,
   main_q = "app_e_systems",
   anchor = "anc_e_systems",
@@ -257,8 +257,8 @@ head(dt_e_systems_w)
 table(dt_e_systems_w$weight)
 
 ## Identity --------------------------------------------------------------------
-vis_r(
-  data = prep_list$identity$dat,
+vis_ranking(
+  dat = prep_list$identity$dat,
   target_item = "party",
   other_items = setdiff(prep_list$identity$labels, "party")
 )
@@ -270,7 +270,7 @@ ggsave(
 
 # Compute weights
 dt_identity_w <- imprr(
-  data = prep_list$identity$dat,
+  dat = prep_list$identity$dat,
   rank_q = prep_list$identity$labels,
   main_q = "app_identity",
   anchor = "anc_identity",
@@ -283,15 +283,15 @@ head(dt_identity_w$weight)
 table(dt_identity_w$weight)
 
 ## Polarization ----------------------------------------------------------------
-vis_r(
-  data = prep_list$polar$dat,
+vis_ranking(
+  dat = prep_list$polar$dat,
   target_item = "media",
   other_items = setdiff(prep_list$polar$labels, "media")
 )
 
 # Compute weights
 dt_polar_w <- imprr(
-  data = prep_list$polar$dat,
+  dat = prep_list$polar$dat,
   rank_q = prep_list$polar$labels,
   main_q = "app_polar",
   anchor = "anc_polar",

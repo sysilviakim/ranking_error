@@ -4,6 +4,10 @@
 #' in a typical ranking dataset.
 #'
 #' @importFrom generics tidy
+#' @importFrom dplyr mutate
+#' @importFrom dplyr `%>%`
+#' @importFrom purrr map
+#' 
 #' @importFrom estimatr lm_robust
 #' @importFrom ggpubr ggarrange
 #' @import ggplot
@@ -71,7 +75,7 @@ vis_ranking <- function(dat,
 
   # Create a label for items: if there are underbars, turn to spaces
   # Capitalize the first letters
-  label <- simple_cap(gsub("_", " ", simple_cap(target_item)))
+  label <- simple_cap(gsub("_", " ", target_item))
 
   # Size of the dataset
   N <- nrow(dat)
@@ -82,8 +86,7 @@ vis_ranking <- function(dat,
     D <- unlist(dat[treat])
   }
 
-  # Process the raw ranking data, but store the original dataset in a
-  # separate object
+  # Process the raw ranking data +  store the original data in a separate object
   dat_raw <- dat
 
   # Prepare a vector and a list to extract quantities of interest
@@ -100,13 +103,8 @@ vis_ranking <- function(dat,
     Y_pairwise[[i]] <- ifelse(Y_rank_target < compar, 1, 0)
   }
 
-  Y_top1 <- ifelse(Y_rank_target <= 1, 1, 0) # Top-1 ranking Probability (P)
-  Y_top2 <- ifelse(Y_rank_target <= 2, 1, 0) # Top-2 ranking P
-  Y_top3 <- ifelse(Y_rank_target <= 3, 1, 0) # Top-3 ranking P
-  Y_top4 <- ifelse(Y_rank_target <= 4, 1, 0) # Top-4 ranking P
-  Y_top5 <- ifelse(Y_rank_target <= 5, 1, 0) # Top-5 ranking P
-  Y_top6 <- ifelse(Y_rank_target <= 6, 1, 0) # Top-6 ranking P
-  Y_top7 <- ifelse(Y_rank_target <= 7, 1, 0) # Top-7 ranking P
+  Y_topk <- seq(J) %>%
+    map(~ ifelse(Y_rank_target <= .x, 1, 0))
 
   Y_marginal <- vector("list", length = J)
   tgt <- unlist(dat[target_item])
@@ -123,13 +121,8 @@ vis_ranking <- function(dat,
       m_rank_others[[i]] <- lm_robust(Y_rank_others[[i]] ~ 1) %>% tidy()
     }
 
-    m_top1 <- lm_robust(Y_top1 ~ 1) %>% tidy()
-    m_top2 <- lm_robust(Y_top2 ~ 1) %>% tidy()
-    m_top3 <- lm_robust(Y_top3 ~ 1) %>% tidy()
-    m_top4 <- lm_robust(Y_top4 ~ 1) %>% tidy()
-    m_top5 <- lm_robust(Y_top5 ~ 1) %>% tidy()
-    m_top6 <- lm_robust(Y_top6 ~ 1) %>% tidy()
-    m_top7 <- lm_robust(Y_top7 ~ 1) %>% tidy()
+    m_topk <- seq(J) %>%
+      map(~ lm_robust(Y_topk[[.x]] ~ 1) %>% tidy())
 
     m_pairwise <- vector("list", length = J - 1)
     for (i in seq(J - 1)) {
@@ -164,15 +157,15 @@ vis_ranking <- function(dat,
     gg_averagerank <- rbind(m_rank, m_rank_catch)
 
     gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
-      mutate(outcome = paste0("v.", " ", other_items))
+      mutate(outcome = paste("vs.", other_items))
+      ## mutate(outcome = paste("vs.", simple_cap(gsub("_", " ", other_items))))
 
     gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
-      mutate(outcome = paste0("Ranked", " ", seq(J)))
+      mutate(outcome = paste("Ranked", seq(J)))
 
-    gg_topk <- rbind(m_top1, m_top2, m_top3, m_top4, m_top5, m_top6, m_top7) %>%
-      mutate(outcome = paste("Top-", seq(7))) %>%
+    gg_topk <- do.call(rbind.data.frame, m_topk) %>%
+      mutate(outcome = paste0("Top-", seq(J))) %>%
       select(outcome, everything()) %>%
-      ## Limit to less than 7 if J < 7
       .[seq(J - 1), ]
 
     # Visualize all effects
@@ -183,7 +176,7 @@ vis_ranking <- function(dat,
       geom_point(aes(color = target), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = target),
-        lwd = 1
+        linewidth = 1
       )
     p_avg <- vis_helper(p_avg, "avg", J, use_col, label)
     
@@ -194,7 +187,7 @@ vis_ranking <- function(dat,
       geom_point(size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
-        lwd = 1
+        linewidth = 1
       ) +
       ylim(0, 1)
     p_pair <- vis_helper(p_pair, "pair", J, use_col, label)
@@ -206,7 +199,7 @@ vis_ranking <- function(dat,
       geom_point(aes(), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
-        lwd = 1
+        linewidth = 1
       ) +
       ylim(0, 1)
     p_topk <- vis_helper(p_topk, "topk", J, use_col, label)
@@ -218,7 +211,7 @@ vis_ranking <- function(dat,
       geom_point(aes(), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
-        lwd = 1
+        linewidth = 1
       ) +
       ylim(0, 1)
     p_marginal <- vis_helper(p_marginal, "marginal", J, use_col, label)
@@ -270,14 +263,9 @@ vis_ranking <- function(dat,
     # Estimate ATEs with Difference-in-means via OLS
     m_rank_target <- lm_robust(Y_rank_target ~ D) %>% tidy()
 
-    m_top1 <- lm_robust(Y_top1 ~ D) %>% tidy()
-    m_top2 <- lm_robust(Y_top2 ~ D) %>% tidy()
-    m_top3 <- lm_robust(Y_top3 ~ D) %>% tidy()
-    m_top4 <- lm_robust(Y_top4 ~ D) %>% tidy()
-    m_top5 <- lm_robust(Y_top5 ~ D) %>% tidy()
-    m_top6 <- lm_robust(Y_top6 ~ D) %>% tidy()
-    m_top7 <- lm_robust(Y_top7 ~ D) %>% tidy()
-
+    m_topk <- seq(J) %>%
+      map(~ lm_robust(Y_topk[[.x]] ~ D) %>% tidy())
+    
     m_pairwise <- vector("list", length = J - 1)
     for (i in seq(J - 1)) {
       m_pairwise[[i]] <- lm_robust(Y_pairwise[[i]] ~ D) %>% tidy()
@@ -298,15 +286,16 @@ vis_ranking <- function(dat,
 
     gg_pairwise <- do.call(rbind.data.frame, m_pairwise) %>%
       filter(term == "D") %>%
-      mutate(outcome = paste0("v.", " ", other_items))
-
+      mutate(outcome = paste("vs.", other_items))
+      ## mutate(outcome = paste("vs.", simple_cap(gsub("_", " ", other_items))))
+    
     gg_marginal <- do.call(rbind.data.frame, m_marginal) %>%
       filter(term == "D") %>%
-      mutate(outcome = paste0("Ranked", " ", seq(J)))
+      mutate(outcome = paste("Ranked", seq(J)))
 
-    gg_topk <- rbind(m_top1, m_top2, m_top3, m_top4, m_top5, m_top6, m_top7) %>%
+    gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       filter(term == "D") %>%
-      mutate(outcome = paste("Top-", seq(7)))
+      mutate(outcome = paste0("Top-", seq(J)))
 
     # Visualize all effects
     gg_averagerank$col <- ifelse(
@@ -328,7 +317,7 @@ vis_ranking <- function(dat,
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
-        lwd = 1
+        linewidth = 1
       )
     p_avg <- vis_helper(p_avg, "avg", J, use_col, label)
     
@@ -349,7 +338,7 @@ vis_ranking <- function(dat,
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
-        lwd = 1
+        linewidth = 1
       )
     p_pair <- vis_helper(p_pair, "pair", J, use_col, label)
 
@@ -363,7 +352,7 @@ vis_ranking <- function(dat,
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
-        lwd = 1
+        linewidth = 1
       )
     p_topk <- vis_helper(p_topk, "topk", J, use_col, label)
 
@@ -384,7 +373,7 @@ vis_ranking <- function(dat,
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
-        lwd = 1
+        linewidth = 1
       )
     p_marginal <- vis_helper(p_marginal, "marginal", J, use_col, label)
 
