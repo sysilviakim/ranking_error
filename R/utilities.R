@@ -367,8 +367,12 @@ qualtrics_import <- function(fname) {
         TRUE ~ "Ind"
       ),
       white = case_when(
-        race == "1" ~ "White",
-        TRUE ~ "Non-white"
+        race == "1" ~ 1,
+        TRUE ~ 0
+      ),
+      uni_or_higher = case_when(
+        education %in% c("1", "2", "3") ~ 0,
+        TRUE ~ 1
       )
     )
 

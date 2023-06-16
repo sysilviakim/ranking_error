@@ -324,7 +324,7 @@ ggsave(
   width = 6, height = 3
 )
 
-# Pattern comparisons by duration ==============================================
+# Pattern comparisons by duration of completion ================================
 temp <- left_join(
   main, 
   df_list$timing %>%
@@ -353,6 +353,33 @@ ggsave(
   width = 6, height = 3
 )
 
-# Demographic correlations? ====================================================
+# Pattern comparisons by demographics ==========================================
+tate_education_plots <- pattern_compare_pass_fail(
+  main, "uni_or_higher", label = c("BA or Higher", "Less Than BA Diploma")
+)
 
-# Duration of completion? ======================================================
+print(
+  ggarrange(
+    plotlist = tate_education_plots$tate %>%
+      map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
+  )
+)
+ggsave(
+  here("fig", "pretest", "pretest03-tate_education_short_obs_tate.pdf"),
+  width = 6, height = 3
+)
+
+tate_white_plots <- pattern_compare_pass_fail(
+  main, "white", label = c("White", "Non-white")
+)
+
+print(
+  ggarrange(
+    plotlist = tate_white_plots$tate %>%
+      map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
+  )
+)
+ggsave(
+  here("fig", "pretest", "pretest03-tate_white_short_obs_tate.pdf"),
+  width = 6, height = 3
+)
