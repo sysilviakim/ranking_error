@@ -15,7 +15,7 @@ prep_list <- root_var %>%
         ) %>%
         select(
           contains(paste0("app_", .y)),
-          matches(paste0("anc_", .y, "$")),
+          matches(paste0("anc_", .y)), # Keep original anchor items
           matches(paste0("anc_correct_", .y, "$")),
           matches(paste0("anc_", .y, "_observed"))
         ) %>%
@@ -209,109 +209,145 @@ ggsave(here("fig", "tate_anchor_passed.pdf"), width = 3, height = 2.2)
 plot_nolegend(pdf_default(p3)) + ggtitle("")
 ggsave(here("fig", "tate_anchor_failed.pdf"), width = 3, height = 2.2)
 
-### Weight
-dt_tate_w <- imprr(
+### Improved Average Ranks
+imp_tate <- imprr(
   data = prep_list$tate$dat,
   rank_q = prep_list$tate$labels,
-  main_q = "app_tate",
-  anchor = "anc_tate",
-  anc_correct = "anc_correct_tate",
-  J = 3
+  target = "policy",
+  anc_correct = "anc_correct_tate"
 )
 
-head(dt_tate_w)
-head(dt_tate_w$weight)
-table(dt_tate_w$weight, dt_tate_w$app_tate)
+imp_tate
 
-# Unit check -- bias pulls the PMF to uniform distribution
 
-N <- dim(dt_tate_w)[1]
-w <- unique(dt_tate_w$weight)
-
-freq_raw <- round(table(dt_tate_w$app_tate) / N, d = 2)
-freq_imp <- round(table(dt_tate_w$app_tate) * w / N, d = 2)
-
-# Raw frequency
-freq_raw_dev <- round(table(dt_tate_w$app_tate) / N - 1 / 6, d = 2)
-
-# Improved frequency
-freq_imp_dev <- round(table(dt_tate_w$app_tate) * w / N - 1 / 6, d = 2)
-
-freq_raw
-freq_imp
-
-mean(freq_raw_dev)
-mean(freq_imp_dev)
-
-## Electoral systems -----------------------------------------------------------
-dt_e_systems_w <- imprr(
-  data = prep_list$e_systems$dat,
-  rank_q = prep_list$e_systems$labels,
-  main_q = "app_e_systems",
-  anchor = "anc_e_systems",
-  anc_correct = "anc_correct_e_systems",
-  J = 7
-)
-
-head(dt_e_systems_w)
-table(dt_e_systems_w$weight)
-
-## Identity --------------------------------------------------------------------
-vis_r(
-  data = prep_list$identity$dat,
-  target_item = "party",
-  other_items = setdiff(prep_list$identity$labels, "party")
-)
-
-ggsave(
-  here("fig", "pretest03-statistics-id-party.pdf"),
-  width = 6, height = 4.5
-)
-
-# Compute weights
-dt_identity_w <- imprr(
+imp_id <- imprr(
   data = prep_list$identity$dat,
   rank_q = prep_list$identity$labels,
-  main_q = "app_identity",
-  anchor = "anc_identity",
-  anc_correct = "anc_correct_identity",
-  J = 7
+  target = "party",
+  anc_correct = "anc_correct_identity"
 )
 
-head(dt_identity_w)
-head(dt_identity_w$weight)
-table(dt_identity_w$weight)
+imp_id
 
-## Polarization ----------------------------------------------------------------
-vis_r(
-  data = prep_list$polar$dat,
-  target_item = "media",
-  other_items = setdiff(prep_list$polar$labels, "media")
+
+imp_es <- imprr(
+  data = prep_list$e_systems$dat,
+  rank_q = prep_list$e_systems$labels,
+  target = "minority",
+  anc_correct = "anc_correct_e_systems"
 )
 
-# Compute weights
-dt_polar_w <- imprr(
+imp_es
+
+
+imp_af <- imprr(
   data = prep_list$polar$dat,
   rank_q = prep_list$polar$labels,
-  main_q = "app_polar",
-  anchor = "anc_polar",
-  anc_correct = "anc_correct_polar",
-  J = 8
+  target = "media",
+  anc_correct = "anc_correct_polar"
 )
 
-head(dt_polar_w)
-head(dt_polar_w$weight)
-table(dt_polar_w$weight)
+imp_af
 
-# Proportion of non-random answers =============================================
-# Representation (J=3): 41.2%
-mean(dt_tate_w$p_non_random)
 
-# Electoral systems (J=7): 21.1%
-mean(dt_e_systems_w$p_non_random)
 
-# Identity (J=7): 27.0%
-mean(dt_identity_w$p_non_random)
+imp_tate$Prop_non_random
+imp_id$Prop_non_random
+imp_es$Prop_non_random
+imp_af$Prop_non_random
 
-# Polarization (J=8): 65.4%
-mean(dt_polar_w$p_non_random)
+
+
+# 
+# # Unit check -- bias pulls the PMF to uniform distribution
+# 
+# N <- dim(dt_tate_w)[1]
+# w <- unique(dt_tate_w$weight)
+# 
+# freq_raw <- round(table(dt_tate_w$app_tate) / N, d = 2)
+# freq_imp <- round(table(dt_tate_w$app_tate) * w / N, d = 2)
+# 
+# # Raw frequency
+# freq_raw_dev <- round(table(dt_tate_w$app_tate) / N - 1 / 6, d = 2)
+# 
+# # Improved frequency
+# freq_imp_dev <- round(table(dt_tate_w$app_tate) * w / N - 1 / 6, d = 2)
+# 
+# freq_raw
+# freq_imp
+# 
+# mean(freq_raw_dev)
+# mean(freq_imp_dev)
+# 
+# ## Electoral systems -----------------------------------------------------------
+# dt_e_systems_w <- imprr(
+#   data = prep_list$e_systems$dat,
+#   rank_q = prep_list$e_systems$labels,
+#   main_q = "app_e_systems",
+#   anchor = "anc_e_systems",
+#   anc_correct = "anc_correct_e_systems",
+#   J = 7
+# )
+# 
+# head(dt_e_systems_w)
+# table(dt_e_systems_w$weight)
+# 
+# ## Identity --------------------------------------------------------------------
+# vis_r(
+#   data = prep_list$identity$dat,
+#   target_item = "party",
+#   other_items = setdiff(prep_list$identity$labels, "party")
+# )
+# 
+# ggsave(
+#   here("fig", "pretest03-statistics-id-party.pdf"),
+#   width = 6, height = 4.5
+# )
+# 
+# # Compute weights
+# dt_identity_w <- imprr(
+#   data = prep_list$identity$dat,
+#   rank_q = prep_list$identity$labels,
+#   main_q = "app_identity",
+#   anchor = "anc_identity",
+#   anc_correct = "anc_correct_identity",
+#   J = 7
+# )
+# 
+# head(dt_identity_w)
+# head(dt_identity_w$weight)
+# table(dt_identity_w$weight)
+# 
+# ## Polarization ----------------------------------------------------------------
+# vis_r(
+#   data = prep_list$polar$dat,
+#   target_item = "media",
+#   other_items = setdiff(prep_list$polar$labels, "media")
+# )
+# 
+# # Compute weights
+# dt_polar_w <- imprr(
+#   data = prep_list$polar$dat,
+#   rank_q = prep_list$polar$labels,
+#   main_q = "app_polar",
+#   anchor = "anc_polar",
+#   anc_correct = "anc_correct_polar",
+#   J = 8
+# )
+# 
+# head(dt_polar_w)
+# head(dt_polar_w$weight)
+# table(dt_polar_w$weight)
+# 
+# # Proportion of non-random answers =============================================
+# # Representation (J=3): 41.2%
+# mean(dt_tate_w$p_non_random)
+# 
+# # Electoral systems (J=7): 21.1%
+# mean(dt_e_systems_w$p_non_random)
+# 
+# # Identity (J=7): 27.0%
+# mean(dt_identity_w$p_non_random)
+# 
+# # Polarization (J=8): 65.4%
+# mean(dt_polar_w$p_non_random)

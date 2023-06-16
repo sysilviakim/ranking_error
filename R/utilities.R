@@ -1148,10 +1148,8 @@ vis_r <- function(data,
 
 imprr <- function(data, # all data
                   rank_q, # string for ranking names
-                  main_q,
-                  anchor, # string for anchor names
-                  anc_correct, # string for correctness indicator
-                  J # number of items
+                  target,
+                  anc_correct # string for correctness indicator
 ) {
   # # Do not run
 
@@ -1163,82 +1161,71 @@ imprr <- function(data, # all data
   # anc_correct <- "anc_correct"
   # J <- 7
 
-  # data = dt_rep
+  # data = prep_list$tate$dat
   # rank_q = c("policy", "pork", "service")
-  # main_q = "app_tate"
-  # anchor = "anc_tate"
-  # anc_correct = "anc_correct"
-  # J = 3
+  # target <- "policy"
+  # anc_correct = "anc_correct_tate"
 
-  N <- dim(data)[1]
+  # Prepare
+  N <- dim(data)[1] # Number of obs
+  J <- length(rank_q)
+  target_nmb <- which(rank_q %in% target) # -th position
 
-  # Equation (8) -- proportion of random answers
+  # Anchor ranking only
+  loc_anc <-  data %>% select(contains(paste0("anc_")) & 
+                           matches("[[:digit:]]"))
+  
+  # Main ranking only
+  loc_app <-  data %>% select(all_of(rank_q))
+  
+  
+# Equation (8) -- proportion of random answers
   Corr <- data[anc_correct] %>% pull()
   adjust <- mean(Corr) - 1 / factorial(J)
   normalizer <- (1 - 1 / factorial(J))
   p_non_random <- adjust / normalizer
 
-  # Equation (9) -- distribution of random answers
 
-  # Generate PMF of anchor rankings
-  temp <- table(data[anchor])
-  length(temp) # 60 unique ranking out of 5040
-  perm_j <- combinat::permn(1:J)
-  perm_j <- do.call(rbind.data.frame, perm_j)
-  colnames(perm_j) <- c(paste0("position_", 1:J))
-  perm_j <- perm_j %>% unite(col = "match", sep = "")
+# Equation (9) -- distribution of random answers
 
-  obs_anchor_freq <- table(data[anchor]) %>%
-    data.frame()
-  colnames(obs_anchor_freq) <- c("match", "Freq")
+  # Directly apply bias correction to our QOIs
 
-  f_anchor <- perm_j %>%
-    left_join(obs_anchor_freq) %>%
-    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0s
+  A_avg <-  loc_anc %>%
+    summarise(across(everything(), ~ mean(as.numeric(.x))))      
 
-  f_anc_true <- data.frame(perm_j, 0)
-  f_anc_true[1, "X0"] <- 1 # True density for anchor -- 1234567
-
-  A <- f_anchor$Freq / N # -- empirical pmf of rankings in anchor
+  #A <- f_anchor$Freq / N # -- empirical pmf of rankings in anchor
   B <- p_non_random # -- estimated proportion of non-random
-  C <- f_anc_true$X0 # -- true pmf of rankings in anchor
+  C <- data.frame(t(1:J)) # -- true pmf of rankings in anchor
 
-  f_random <- (A - (B * C)) / (1 - B)
+  f_random_avg <- (A_avg - (B * C)) / (1 - B)
 
-  sum(f_random) # This must be 1
+         
+        # Note: Alternatively, asymptotics gives us
+        # f_random <- rep(1/factorial(J), factorial(J))
+        # sum(f_random) # This must be 1
 
-  # # Alternatively, asymptotics gives us
-  # f_random <- rep(1/factorial(J), factorial(J))
-  # sum(f_random) # This must be 1
 
+# Equation (10) -- distribution of error-free rankings
 
-  # Equation (10) -- distribution of error-free rankings
-  obs_main_freq <- table(data[main_q]) %>%
-    data.frame()
-  colnames(obs_main_freq) <- c("match", "Freq")
+  D_avg <- loc_app %>%
+    summarise(across(everything(), ~ mean(as.numeric(.x))))      
+  
+  E <- f_random_avg # -- estimated pmf of errors in the anchor
 
-  f_main <- perm_j %>%
-    left_join(obs_main_freq) %>%
-    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0.0001
+  imp_avg <- (D_avg - ((1 - B) * E)) / B
 
-  D <- f_main$Freq / N # -- empirical pmf of ranking in the main question
-  E <- f_random # -- estimated pmf of errors in the anchor
+  imp_avg$est <- "improved"
+  D_avg$est <- "raw"
 
-  f_true <- (D - ((1 - B) * E)) / B
-
-  sum(f_true) # This must be 1
-
-  # Equation 4
-  w <- f_true / D # weight vector
-  # w[which(!is.finite(w))] <- 0
-
-  w_frame <- data.frame(
-    main = perm_j$match,
-    weight = w
+  out <- list(
+    p_non_random,
+    rbind(imp_avg, D_avg)
+    
   )
-  colnames(w_frame) <- c(main_q, "weight")
-
-  data_w <- data %>%
-    left_join(w_frame) %>%
-    mutate(p_non_random = p_non_random)
+  
+  names(out) <- c("Prop_non_random",
+                  "Average ranks")
+  
+  
+ return(out) # return the list
 }
