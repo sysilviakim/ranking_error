@@ -51,22 +51,24 @@ table(main$pid3, main$political_party)
 ## We want anchors to have similar durations to main questions.
 
 time <- df_list$timing %>%
-  dplyr::select(contains(c("identity", "polar", "tate", "systems"))) %>%
-  dplyr::select(contains(c("submit"))) %>%
-  dplyr::select(order(colnames(.))) %>%
-  mutate_if(is.character, as.numeric)
+  ## Filtered for reasonable captcha scores
+  filter(response_id %in% main$response_id) %>%
+  select(contains(c("identity", "polar", "tate", "systems"))) %>%
+  select(contains(c("submit"))) %>%
+  select(order(colnames(.))) %>%
+  mutate(across(where(is.character), as.numeric))
 
 col <- c("#b0015a", "#128ba0", "#a5900d", "gray")
 
 ## Visualize and save
 
-pdf(here::here("fig", "pretest03-check_duration.pdf"), width = 6, height = 6)
+pdf(here("fig", "pretest03-check_duration.pdf"), width = 6, height = 6)
 par(mfrow = (c(2, 2)))
 
 plot(
   density(time$time_anc_tate_page_submit),
-  type = "n", main = "Representation (J=3)\n48% geometric",
-  xlab = "Completion time in seconds (N=101)", xlim = c(0, 200)
+  type = "n", main = "Representation (J = 3)\n48% Geometric",
+  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
 )
 lines(density(time$time_app_tate_page_submit), col = col[1])
 lines(density(time$time_anc_tate_page_submit), col = col[1], lty = 2)
@@ -77,23 +79,23 @@ legend(
 
 plot(
   density(time$timing_app_e_systems_page_submit),
-  type = "n", main = "Electoral Systems (J=7)\n84.7% geometric",
-  xlab = "Completion time in seconds (N=101)", xlim = c(0, 200)
+  type = "n", main = "Electoral Systems (J = 7)\n84.7% Geometric",
+  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
 )
 lines(density(time$time_anc_e_systems_page_submit), col = col[2])
 lines(density(time$timing_app_e_systems_page_submit), col = col[2], lty = 2)
 
 plot(
   density(time$time_app_identity_page_submit),
-  type = "n", main = "Identity (J=7)\n72.4% geometric",
-  xlab = "Completion time in seconds (N=101)", xlim = c(0, 200)
+  type = "n", main = "Identity (J = 7)\n72.4% Geometric",
+  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
 )
 lines(density(time$time_app_identity_page_submit), col = col[3])
 lines(density(time$time_anc_identity_page_submit), col = col[3], lty = 2)
 
 plot(density(time$time_app_aff_polar_page_submit),
-  type = "n", main = "Polarization (J=8)\n46.0% geometric",
-  xlab = "Completion time in seconds (N=101)", xlim = c(0, 200)
+  type = "n", main = "Polarization (J = 8)\n46.0% Geometric",
+  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
 )
 lines(density(time$time_app_aff_polar_page_submit), col = col[4])
 lines(density(time$time_anc_polar_page_submit), col = col[4], lty = 2)
