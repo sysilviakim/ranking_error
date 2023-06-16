@@ -46,8 +46,8 @@ table(main$pid3, main$political_party)
 # Freeform answer based filtering ==============================================
 ## Much better this time
 
-# Proof of concept for anchors==================================================
-## What is the duraion for each ranking question?
+# Compare duration between main and anchor =====================================
+## What is the duration for each ranking question?
 ## We want anchors to have similar durations to main questions.
 
 time <- df_list$timing %>%
@@ -58,9 +58,57 @@ time <- df_list$timing %>%
   select(order(colnames(.))) %>%
   mutate(across(where(is.character), as.numeric))
 
-col <- c("#b0015a", "#128ba0", "#a5900d", "gray")
-
 ## Visualize and save
+## ggplot version --------------------------------------------------------------
+duration_plot_list <- names(root_var) %>%
+  set_names(., .) %>%
+  map(
+    ~ list(
+      anc = paste0("time_anc_", .x, "_page_submit"),
+      app = paste0("time_app_", .x, "_page_submit"),
+      col = case_when(
+        .x == "tate" ~ "#b0015a",
+        .x == "e_systems" ~ "#128ba0",
+        .x == "identity" ~ "#a5900d",
+        TRUE ~ "gray"
+      ),
+      title = case_when(
+        .x == "tate" ~ "Representation (J = 3)\n48.0% Geometric",
+        .x == "e_systems" ~ "Electoral Systems (J = 7)\n84.7% Geometric",
+        .x == "identity" ~ "Identity (J = 7)\n72.4% Geometric",
+        TRUE ~ "Polarization (J = 8)\n46.0% Geometric"
+      )
+    )
+  ) %>%
+  imap(
+    ~ ggplot(time) +
+      geom_density(
+        aes(x = !!as.name(.x$app)), linetype = "solid", color = .x$col
+      ) +
+      geom_density(
+        aes(x = !!as.name(.x$anc)), linetype = "dashed", color = .x$col
+      ) + 
+      xlab(paste0("Completion time in seconds (N = ", nrow(main), ")")) + 
+      ylab("Density") + 
+      ggtitle(.x$title) + 
+      scale_x_continuous(limits = c(0, 60 * 5)) + 
+      scale_y_continuous(limits = c(0, 0.03))
+  ) %>%
+  imap(
+    ~ {
+      if (.y == "tate") {
+        return(plot_nolegend(pdf_default(.x)))
+      } else {
+        return(pdf_default(.x) + theme(legend.position = c(200, 0.025)))
+      }
+    }
+  )
+
+# Duration Between Main and Anchor Question,\nTruncated at 5 Minutes
+ggarrange(plotlist = duration_plot_list)
+
+## base R version (YA) ---------------------------------------------------------
+col <- c("#b0015a", "#128ba0", "#a5900d", "gray")
 
 pdf(here("fig", "pretest03-check_duration.pdf"), width = 6, height = 6)
 par(mfrow = (c(2, 2)))
@@ -68,7 +116,7 @@ par(mfrow = (c(2, 2)))
 plot(
   density(time$time_anc_tate_page_submit),
   type = "n", main = "Representation (J = 3)\n48% Geometric",
-  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
+  xlab = "Completion time in seconds (N = 98)", xlim = c(0, 200)
 )
 lines(density(time$time_app_tate_page_submit), col = col[1])
 lines(density(time$time_anc_tate_page_submit), col = col[1], lty = 2)
@@ -78,26 +126,26 @@ legend(
 )
 
 plot(
-  density(time$timing_app_e_systems_page_submit),
+  density(time$time_app_e_systems_page_submit),
   type = "n", main = "Electoral Systems (J = 7)\n84.7% Geometric",
-  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
+  xlab = "Completion time in seconds (N = 98)", xlim = c(0, 200)
 )
 lines(density(time$time_anc_e_systems_page_submit), col = col[2])
-lines(density(time$timing_app_e_systems_page_submit), col = col[2], lty = 2)
+lines(density(time$time_app_e_systems_page_submit), col = col[2], lty = 2)
 
 plot(
   density(time$time_app_identity_page_submit),
   type = "n", main = "Identity (J = 7)\n72.4% Geometric",
-  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
+  xlab = "Completion time in seconds (N = 98)", xlim = c(0, 200)
 )
 lines(density(time$time_app_identity_page_submit), col = col[3])
 lines(density(time$time_anc_identity_page_submit), col = col[3], lty = 2)
 
-plot(density(time$time_app_aff_polar_page_submit),
+plot(density(time$time_app_polar_page_submit),
   type = "n", main = "Polarization (J = 8)\n46.0% Geometric",
-  xlab = "Completion time in seconds (N = 101)", xlim = c(0, 200)
+  xlab = "Completion time in seconds (N = 98)", xlim = c(0, 200)
 )
-lines(density(time$time_app_aff_polar_page_submit), col = col[4])
+lines(density(time$time_app_polar_page_submit), col = col[4])
 lines(density(time$time_anc_polar_page_submit), col = col[4], lty = 2)
 
 dev.off()
