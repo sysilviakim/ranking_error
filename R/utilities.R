@@ -7,14 +7,15 @@ library(gtools) # For permute
 library(tidyverse)
 library(styler)
 library(PLMIX) # For switch_ord_rank()
-library(Kmisc)
 library(patchwork)
-library(janitor)
+library(janitor) # For clean_names
+library(scales) # For percent
 library(assertthat)
 library(pwr)
 library(xtable)
 library(estimatr)
 library(ggpubr)
+library(Kmisc) ## None-CRAN package. Will wean eventually
 
 # READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
 source(here("R", "rpluce.R"))
