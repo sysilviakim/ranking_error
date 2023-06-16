@@ -1245,3 +1245,27 @@ imprr <- function(data, # all data
     left_join(w_frame) %>%
     mutate(p_non_random = p_non_random)
 }
+
+pattern_compare_pass_fail <- function(main, v) {
+  out <- root_var %>%
+    imap(
+      function(x, y) {
+        list(
+          pass = list(v = 0, lab = "Passed"), 
+          fail = list(v = 1, lab = "Failed")
+        ) %>% 
+          map(
+            ~ main %>%
+              filter(!!as.name(v) == .x$v) %>%
+              .[[paste0("app_", y, "_observed")]] %>%
+              table() %>%
+              table_to_tibble() %>%
+              plot_dist_ranking(., ylim = .4) + 
+              ggtitle(.x$lab)
+          ) %>%
+          map(~ plot_nolegend(pdf_default(.x)))
+      }
+    )
+  return(out)
+}
+

@@ -1,6 +1,7 @@
 source(here::here("R", "utilities.R"))
 df_list <- qualtrics_import("pretest-03.csv")
 main <- df_list$main
+## Note that partial ranking is not allowed in a YouGov setting
 
 # Correlation between attention filters ========================================
 cor_and_condprob(main, "ternovski_fail", "berinsky_fail")
@@ -259,9 +260,21 @@ venn_diagram_fill(main, "berinsky_fail", "repeat_identity", "ns_tate")
 venn_diagram_fill(main, "ternovski_fail", "repeat_polar", "ns_polar")
 venn_diagram_fill(main, "berinsky_fail", "repeat_polar", "ns_polar")
 
-# Partial rankers? =============================================================
-## Who are the partial rankers?
-## Can inattention predict partial ranking?
+# Pattern comparison by attention checks =======================================
+berinsky_plots <- pattern_compare_pass_fail(main, "berinsky_fail")
+ternovski_plots <- pattern_compare_pass_fail(main, "ternovski_fail")
+
+print(ggarrange(plotlist = berinsky_plots$tate))
+ggsave(
+  here("fig", "berinsky_failers_observed_patterns_tate.pdf"),
+  width = 6.5, height = 4
+)
+
+# Pattern comparison by anchor Q pass ==========================================
+# In terms of permutation pattern distributions (observed),
+# how do they differ between those who pass or fail the anchor question?
+
+
 
 # Demographic correlations? ====================================================
 
