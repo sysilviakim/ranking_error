@@ -1248,13 +1248,16 @@ imprr <- function(data, # all data
 }
 
 ## Not perfectly do-not-repeat-yourself but will return later
-pattern_compare_pass_fail <- function(main, v, y_upper = .75) {
+pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL) {
+  if (is.null(label)) {
+    label <- c("Passed", "Failed")
+  }
   out <- root_var %>%
     imap(
       function(x, y) {
         list(
-          pass = list(v = 0, lab = "Passed"), 
-          fail = list(v = 1, lab = "Failed")
+          pass = list(v = 0, lab = label[1]), 
+          fail = list(v = 1, lab = label[2])
         ) %>% 
           map(
             ~ main %>%

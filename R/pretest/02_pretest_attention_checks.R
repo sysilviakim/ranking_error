@@ -324,6 +324,35 @@ ggsave(
   width = 6, height = 3
 )
 
+# Pattern comparisons by duration ==============================================
+temp <- left_join(
+  main, 
+  df_list$timing %>%
+    select(response_id, time_app_tate_page_submit, time_anc_tate_page_submit)
+) %>%
+  mutate(
+    tate_short = case_when(
+      time_app_tate_page_submit < 20 ~ 1,
+      TRUE ~ 0
+    )
+  )
+
+tate_duration_plots <- pattern_compare_pass_fail(
+  temp, "tate_short", label = c("More Than 20 Seconds", "Less Than 20 Seconds")
+)
+
+# Also rather unintuitive; discuss
+print(
+  ggarrange(
+    plotlist = tate_duration_plots$tate %>%
+      map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
+  )
+)
+ggsave(
+  here("fig", "pretest", "pretest03-tate_duration_short_obs_tate.pdf"),
+  width = 6, height = 3
+)
+
 # Demographic correlations? ====================================================
 
 # Duration of completion? ======================================================
