@@ -2,20 +2,6 @@ source(here::here("R", "utilities.R"))
 df_list <- qualtrics_import("pretest-03.csv")
 main <- df_list$main
 
-# Geometric patterning rates ===================================================
-main %>%
-  select(matches("^ns_")) %>%
-  map(~ sum(.x == 1) / nrow(main))
-
-## Tate 1993: 48.0%
-## Electoral systems: 84.7%
-## Identity: 72.4%
-## Polarization: 46.0%
-
-## Yikes.
-sort(table(main$anc_e_systems), decreasing = TRUE)
-sort(table(main$anc_identity), decreasing = TRUE)
-
 # Correlation between attention filters ========================================
 cor_and_condprob(main, "ternovski_fail", "berinsky_fail")
 # [1] 0.5763128

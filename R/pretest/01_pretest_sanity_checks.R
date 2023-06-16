@@ -46,6 +46,20 @@ table(main$pid3, main$political_party)
 # Freeform answer based filtering ==============================================
 ## Much better this time
 
+# Geometric patterning rates ===================================================
+main %>%
+  select(matches("^ns_")) %>%
+  map(~ round(sum(.x == 1) / nrow(main) * 100, digits = 1))
+
+## Tate 1993: 48.0%
+## Electoral systems: 84.7%
+## Identity: 72.4%
+## Polarization: 46.0%
+
+## Yikes.
+sort(table(main$anc_e_systems), decreasing = TRUE)
+sort(table(main$anc_identity), decreasing = TRUE)
+
 # Compare duration between main and anchor =====================================
 ## What is the duration for each ranking question?
 ## We want anchors to have similar durations to main questions.
@@ -59,7 +73,8 @@ time <- df_list$timing %>%
   mutate(across(where(is.character), as.numeric))
 
 ## Visualize and save
-## ggplot version --------------------------------------------------------------
+## ggplot version (SK) ---------------------------------------------------------
+## Fix legend + make title also automatic
 duration_plot_list <- names(root_var) %>%
   set_names(., .) %>%
   map(
@@ -76,7 +91,7 @@ duration_plot_list <- names(root_var) %>%
         .x == "tate" ~ "Representation (J = 3)\n48.0% Geometric",
         .x == "e_systems" ~ "Electoral Systems (J = 7)\n84.7% Geometric",
         .x == "identity" ~ "Identity (J = 7)\n72.4% Geometric",
-        TRUE ~ "Polarization (J = 8)\n46.0% Geometric"
+        TRUE ~ "Polarization (J = 8)\n45.9% Geometric"
       )
     )
   ) %>%
@@ -142,7 +157,7 @@ lines(density(time$time_app_identity_page_submit), col = col[3])
 lines(density(time$time_anc_identity_page_submit), col = col[3], lty = 2)
 
 plot(density(time$time_app_polar_page_submit),
-  type = "n", main = "Polarization (J = 8)\n46.0% Geometric",
+  type = "n", main = "Polarization (J = 8)\n45.9% Geometric",
   xlab = "Completion time in seconds (N = 98)", xlim = c(0, 200)
 )
 lines(density(time$time_app_polar_page_submit), col = col[4])
