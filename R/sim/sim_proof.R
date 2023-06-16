@@ -29,13 +29,13 @@ mean(z_main) # must be close to 0.5
 ## Generating *Observed* Ranking (\pi_i)
 obs_data_main <- bind_cols(obs_data_list$skewed_02, tibble(z_main = z_main)) %>%
   ## z is a random variable: 1 if sincere, 0 if non-sincere
-  mutate(obs = ifelse(z_main == 1, obs_rank, obs_nonsincere)) %>%
+  mutate(obs = ifelse(z_main == 1, obs_rank, obs_geometric)) %>%
   dplyr::select(obs, starts_with("V"), everything())
 head(obs_data_main)
 
 ## 2) The Anchor Question and its Observed Rankings ============================
 obs_data_A <- bind_cols(obs_data_list$anchor, tibble(z_anchor = z_anchor)) %>%
-  mutate(obs = ifelse(z_anchor == 1, obs_rank, obs_nonsincere)) %>%
+  mutate(obs = ifelse(z_anchor == 1, obs_rank, obs_geometric)) %>%
   dplyr::select(obs, starts_with("V"), everything())
 head(obs_data_A)
 
@@ -66,7 +66,7 @@ obs_data_A_aug <- obs_data_A %>%
   mutate(c = correct) %>%
   filter(c == 1)
 ## est_pi_epsilon <- table(obs_data_A_aug$obs) / sum(correct) <- ??
-est_pi_nonsincere <-
+est_pi_geometric <-
   (table(ref_data_A) / N - (est_p_z1) * c(1, 0, 0, 0, 0, 0)) / (1 - est_p_z1)
 
 ## Compare with ground truth
@@ -80,7 +80,7 @@ table(ref_data)
 
 ## Naive estimator 1: heroic assumption of zero non-sincere responses
 est_naive <- table(ref_data) / N
-est_pi <- (est_naive - (1 - est_p_z1) * est_pi_nonsincere) / est_p_z1
+est_pi <- (est_naive - (1 - est_p_z1) * est_pi_geometric) / est_p_z1
 
 ## Extract the true permn distribution, which was saved!
 pi <- obs_data_list$skewed_02$true_permn %>%
@@ -160,7 +160,7 @@ est_p_z1_bootstrap <- seq(bootstrap_n) %>%
       (1 - (1 / factorial(J)))
   )
 
-est_pi_nonsincere_bootstrap <- seq(bootstrap_n) %>%
+est_pi_geometric_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ (
       table(ref_data_A[unlist(indices[, .x]), ]) / N -
@@ -172,7 +172,7 @@ est_pi_bootstrap <- seq(bootstrap_n) %>%
   map(
     ~ (
       est_naive_bootstrap[[.x]] -
-        (1 - est_p_z1_bootstrap[[.x]]) * est_pi_nonsincere_bootstrap[[.x]]
+        (1 - est_p_z1_bootstrap[[.x]]) * est_pi_geometric_bootstrap[[.x]]
     ) /
       est_p_z1_bootstrap[[.x]]
   )

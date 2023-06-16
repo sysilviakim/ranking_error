@@ -9,10 +9,10 @@ set.seed(123)
 N <- 2000 # Number of units
 J <- 3 # Number of items
 p_z1 <- 0.5 # Proportion of sincere responses
-pi_nonsincere <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) 
+pi_geometric <- c(0.05, 0.3, 0.15, 0.15, 0.3, 0.05) 
 ## Non-sincere response pattern; prob dist. over rankings (hypothetical zig-zag)
 ## If we wanted uniform patterns
-## pi_nonsincere <- rep(1 / length(perm), length(perm))
+## pi_geometric <- rep(1 / length(perm), length(perm))
 
 ## Generate the population ranking distribution --------------------------------
 ## V1 = first choice, V2 = second choice, V3 = third choice, ...
@@ -37,7 +37,7 @@ prob_vec_list <- list(
 chisq_list <- rep(
   list(list(
     true_permn = NA, random_permn = NA,
-    obs_sincere = NA, obs_nonsincere = NA, obs_half = NA
+    obs_sincere = NA, obs_geometric = NA, obs_half = NA
   )),
   length = length(prob_vec_list)
 )
@@ -118,25 +118,25 @@ for (scenario in names(prob_vec_list)) {
     map_chr(~ paste(.x, collapse = "")) %>%
     sort()
 
-  obs_nonsincere <- 
-    sample(x = perm, size = N, replace = TRUE, prob = pi_nonsincere)
-  obs_nonsincere <- tibble(obs_rank = obs_nonsincere)
+  obs_geometric <- 
+    sample(x = perm, size = N, replace = TRUE, prob = pi_geometric)
+  obs_geometric <- tibble(obs_rank = obs_geometric)
 
-  head(obs_nonsincere)
-  prop_vector(obs_nonsincere)
-  chisq_list[[scenario]]$obs_nonsincere <- chisq.test(table(obs_nonsincere))
+  head(obs_geometric)
+  prop_vector(obs_geometric)
+  chisq_list[[scenario]]$obs_geometric <- chisq.test(table(obs_geometric))
   ## Proposition: this will never be uniform; p-val must be < 0.001
 
   ## (C) 50% sincere respondents (fixed order (a, b, c)) if p_z1 = 0.5
   fixed_half <- rbind(
     true_permn[1:floor(N * p_z1), ] %>% rename(obs_rank = order),
-    obs_nonsincere[(floor(N * p_z1) + 1):N, ]
+    obs_geometric[(floor(N * p_z1) + 1):N, ]
   )
 
   ### (F) 50% sincere respondents (item order randomization)
   obs_half <- rbind(
     obs_sincere[1:floor(N * p_z1), ],
-    obs_nonsincere[(floor(N * p_z1) + 1):N, ]
+    obs_geometric[(floor(N * p_z1) + 1):N, ]
   )
   prop_vector(obs_half)
   chisq_list[[scenario]]$obs_half <- chisq.test(table(obs_half))
@@ -144,7 +144,7 @@ for (scenario in names(prob_vec_list)) {
   ## Generating observed rank-order question
   obs_data <- bind_cols(
     obs_sincere, ## sincere responses
-    obs_nonsincere %>% rename(obs_nonsincere = obs_rank), ## non-sincere resp.
+    obs_geometric %>% rename(obs_geometric = obs_rank), ## non-sincere resp.
     random_choices, ## observed choice set
     true_rank,
     true_permn %>% rename(true_permn = order)
@@ -154,7 +154,7 @@ for (scenario in names(prob_vec_list)) {
 
   # Visualize: compare observed patterns ---------------------------------------
   pdf(
-    here("fig", paste0("obs_ranking_", scenario, ".pdf")),
+    here("fig", paste0("sim_obs_ranking_", scenario, ".pdf")),
     width = 7, height = 5
   )
   permn_list[[scenario]] <- list(
@@ -162,13 +162,13 @@ for (scenario in names(prob_vec_list)) {
     p1_fixed_100p = true_permn %>%
       rename(obs_rank = order),
     ## fixed_0p: if 0% sincere, always observe zigzag
-    p2_fixed_0p = obs_nonsincere,
+    p2_fixed_0p = obs_geometric,
     ## fixed_50p: mixture
     p3_fixed_50p = fixed_half,
     ## rand_100p: if 100% sincere, this is the observed pattern
     p4_rand_100p = obs_sincere,
     ## rand_0p: if 0% sincere, regardless of randomization, zigzag
-    p5_rand_0p = obs_nonsincere,
+    p5_rand_0p = obs_geometric,
     ## rand_50p: mixture
     p6_rand_50p = obs_half
   ) %>%
