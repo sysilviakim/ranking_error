@@ -281,7 +281,30 @@ ggsave(here("fig", "ternovski_fail_obs_nocontext_3.pdf"), width = 6, height = 3)
 # In terms of permutation pattern distributions (observed),
 # how do they differ between those who pass or fail the anchor question?
 
+# This is also slightly unintuitive
+# Anchor question helps, but not perfect? 
+tate_anchor_plots <- pattern_compare_pass_fail(main, "ns_tate")
+print(
+  ggarrange(
+    plotlist = tate_anchor_plots$tate %>% 
+      map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
+  )
+)
+ggsave(here("fig", "tate_anc_fail_obs_tate.pdf"), width = 6, height = 3)
 
+# Pattern comparisons by repeat Q pass =========================================
+
+# Oof. Okay. So stringent.
+tate_repeat_plots <- pattern_compare_pass_fail(
+  main %>% filter(!is.na(repeat_tate)), "repeat_tate"
+)
+print(
+  ggarrange(
+    plotlist = tate_repeat_plots$tate %>% 
+      map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
+  )
+)
+ggsave(here("fig", "tate_repeat_fail_obs_tate.pdf"), width = 6, height = 3)
 
 # Demographic correlations? ====================================================
 
