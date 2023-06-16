@@ -1246,7 +1246,8 @@ imprr <- function(data, # all data
     mutate(p_non_random = p_non_random)
 }
 
-pattern_compare_pass_fail <- function(main, v) {
+## Not perfectly do-not-repeat-yourself but will return later
+pattern_compare_pass_fail <- function(main, v, y_upper = .75) {
   out <- root_var %>%
     imap(
       function(x, y) {
@@ -1260,12 +1261,49 @@ pattern_compare_pass_fail <- function(main, v) {
               .[[paste0("app_", y, "_observed")]] %>%
               table() %>%
               table_to_tibble() %>%
-              plot_dist_ranking(., ylim = .4) + 
+              plot_dist_ranking(., ylim = y_upper) + 
               ggtitle(.x$lab)
           ) %>%
           map(~ plot_nolegend(pdf_default(.x)))
       }
     )
+  
+  ## Supplement by no-context questions
+  p3 <- list(
+    pass = list(v = 0, lab = "Passed"), 
+    fail = list(v = 1, lab = "Failed")
+  ) %>% 
+    map(
+      ~ main %>%
+        filter(!is.na(no_context_3_options_observed)) %>%
+        filter(!!as.name(v) == .x$v) %>%
+        .$no_context_3_options_observed %>%
+        table() %>%
+        table_to_tibble() %>%
+        plot_dist_ranking(., ylim = y_upper) + 
+        ggtitle(.x$lab)
+    ) %>%
+    map(~ plot_nolegend(pdf_default(.x)))
+  
+  p4 <- list(
+    pass = list(v = 0, lab = "Passed"), 
+    fail = list(v = 1, lab = "Failed")
+  ) %>% 
+    map(
+      ~ main %>%
+        filter(!is.na(no_context_4_options_observed)) %>%
+        filter(!!as.name(v) == .x$v) %>%
+        .$no_context_4_options_observed %>%
+        table() %>%
+        table_to_tibble() %>%
+        plot_dist_ranking(., ylim = y_upper) + 
+        ggtitle(.x$lab)
+    ) %>%
+    map(~ plot_nolegend(pdf_default(.x)))
+  
+  out$no_context_3 <- p3
+  out$no_context_4 <- p4
+  
   return(out)
 }
 

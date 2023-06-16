@@ -265,10 +265,17 @@ berinsky_plots <- pattern_compare_pass_fail(main, "berinsky_fail")
 ternovski_plots <- pattern_compare_pass_fail(main, "ternovski_fail")
 
 print(ggarrange(plotlist = berinsky_plots$tate))
-ggsave(
-  here("fig", "berinsky_failers_observed_patterns_tate.pdf"),
-  width = 6.5, height = 4
-)
+ggsave(here("fig", "berinsky_fail_obs_tate.pdf"), width = 6, height = 3)
+
+print(ggarrange(plotlist = ternovski_plots$tate))
+ggsave(here("fig", "ternovski_fail_obs_tate.pdf"), width = 6, height = 3)
+
+## Very counterintuitive results here; discuss with YA
+print(ggarrange(plotlist = berinsky_plots$no_context_3))
+ggsave(here("fig", "berinsky_fail_obs_nocontext_3.pdf"), width = 6, height = 3)
+
+print(ggarrange(plotlist = ternovski_plots$no_context_3))
+ggsave(here("fig", "ternovski_fail_obs_nocontext_3.pdf"), width = 6, height = 3)
 
 # Pattern comparison by anchor Q pass ==========================================
 # In terms of permutation pattern distributions (observed),
