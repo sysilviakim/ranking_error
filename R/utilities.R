@@ -170,6 +170,7 @@ qualtrics_import <- function(fname) {
     ## Make consistent with root_var
     rename_with(~ gsub("polarization", "polar", .x)) %>%
     rename_with(~ gsub("affective_polar", "polar", .x)) %>%
+    rename_with(~ gsub("aff_polar", "polar", .x)) %>%
     rename_with(~ gsub("_1993", "", .x)) %>%
     rename_with(~ gsub("ternovsky", "ternovski", .x))
 
@@ -187,7 +188,8 @@ qualtrics_import <- function(fname) {
       response_id,
       matches(qualtrics_meta %>% paste(collapse = "|")),
       contains("timing"), contains("time")
-    )
+    ) %>%
+    rename_with(~ gsub("timing_", "time_", .x))
 
   main <- temp %>%
     select(-contains("timing"), -contains("time")) %>%
