@@ -1154,101 +1154,139 @@ vis_r <- function(data,
   }
 }
 
+
 imprr <- function(data, # all data
                   rank_q, # string for ranking names
-                  main_q,
-                  anchor, # string for anchor names
+                  target,
                   anc_correct, # string for correctness indicator
-                  J # number of items
-) {
-  # # Do not run
+                  n_bootstrap = 250
+                  ) {
 
-  # data <- dt_id
-  # rank_q <- c("party", "job", "religion", "gender",
-  #             "family_role", "race", "American")
-  # main_q <- "app_identity"
-  # anchor <- "anc_identity"
-  # anc_correct <- "anc_correct"
-  # J <- 7
 
-  # data = dt_rep
-  # rank_q = c("policy", "pork", "service")
-  # main_q = "app_tate"
-  # anchor = "anc_tate"
-  # anc_correct = "anc_correct"
-  # J = 3
+  # Prepare
+  N <- dim(data)[1] # Number of obs
+  J <- length(rank_q)
+  target_nmb <- which(rank_q %in% target) # -th position
+  
+  # Storages for bootstrapping  
+  list_prop <- list()
+  list_avg <- list()
 
-  N <- dim(data)[1]
+  # Sampling with replacement  
+  
+  set.seed(123456)
 
-  # Equation (8) -- proportion of random answers
-  Corr <- data[anc_correct] %>% pull()
+  for(i in 1:n_bootstrap){
+    index <- sample(1:nrow(data), size=dim(data)[1], replace=TRUE)   # RESAMPLE WITH REPLACEMENT
+    bs.dat <- data[index,]                                        # BOOTSTRAPPED DATA
+
+  
+  # Anchor ranking only
+  loc_anc <-  bs.dat %>% select(contains(paste0("anc_")) & 
+                           matches("[[:digit:]]"))
+  
+  # Main ranking only
+  loc_app <-  bs.dat %>% select(all_of(rank_q))
+  
+  
+# Equation (8) -- proportion of random answers
+  Corr <- bs.dat[anc_correct] %>% pull()
   adjust <- mean(Corr) - 1 / factorial(J)
   normalizer <- (1 - 1 / factorial(J))
   p_non_random <- adjust / normalizer
 
-  # Equation (9) -- distribution of random answers
 
-  # Generate PMF of anchor rankings
-  temp <- table(data[anchor])
-  length(temp) # 60 unique ranking out of 5040
-  perm_j <- combinat::permn(1:J)
-  perm_j <- do.call(rbind.data.frame, perm_j)
-  colnames(perm_j) <- c(paste0("position_", 1:J))
-  perm_j <- perm_j %>% unite(col = "match", sep = "")
+# Equation (9) -- distribution of random answers
 
-  obs_anchor_freq <- table(data[anchor]) %>%
-    data.frame()
-  colnames(obs_anchor_freq) <- c("match", "Freq")
+  # Directly apply bias correction to our QOIs
 
-  f_anchor <- perm_j %>%
-    left_join(obs_anchor_freq) %>%
-    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0s
+  A_avg <-  loc_anc %>%
+    summarise(across(everything(), ~ mean(as.numeric(.x))))      
 
-  f_anc_true <- data.frame(perm_j, 0)
-  f_anc_true[1, "X0"] <- 1 # True density for anchor -- 1234567
-
-  A <- f_anchor$Freq / N # -- empirical pmf of rankings in anchor
+  #A <- f_anchor$Freq / N # -- empirical pmf of rankings in anchor
   B <- p_non_random # -- estimated proportion of non-random
-  C <- f_anc_true$X0 # -- true pmf of rankings in anchor
+  C <- data.frame(t(1:J)) # -- true pmf of rankings in anchor
 
-  f_random <- (A - (B * C)) / (1 - B)
+  f_random_avg <- (A_avg - (B * C)) / (1 - B)
 
-  sum(f_random) # This must be 1
+         
+        # Note: Alternatively, asymptotics gives us
+        # f_random <- rep(1/factorial(J), factorial(J))
+        # sum(f_random) # This must be 1
 
-  # # Alternatively, asymptotics gives us
-  # f_random <- rep(1/factorial(J), factorial(J))
-  # sum(f_random) # This must be 1
+
+# Equation (10) -- distribution of error-free rankings
+
+  D_avg <- loc_app %>%
+    summarise(across(everything(), ~ mean(as.numeric(.x))))      
+  
+  E <- f_random_avg # -- estimated pmf of errors in the anchor
+
+  imp_avg <- (D_avg - ((1 - B) * E)) / B
+  
+# This method produces outside-the-bound values
+# --> Yuki is correcting this temporarily
+  
+  bound <- function(x){ifelse(x<1, 1, ifelse(x>J,J,x))}
+  
+  imp_avg <- imp_avg %>%
+    mutate(across(everything(), ~ bound(.x)))
+  
+  list_prop[[i]] <- p_non_random
+  list_avg[[i]] <- imp_avg
+
+  }
+  
+
+  out_prop <- do.call(rbind.data.frame, list_prop)
+
+# Improved average ranks    
+  out_avg <- do.call(rbind.data.frame, list_avg) %>%
+    pivot_longer(everything()) %>%
+    group_by(name) %>%
+    summarise("est" = mean(value),
+              "low" = quantile(value, prob=0.025),
+              "up" = quantile(value, prob=0.975)) %>%
+    ungroup() %>%
+    mutate(imp = "improved")
+  
+  
+# Raw average ranks  
+  raw_avg <- data %>% select(all_of(rank_q)) %>%
+    pivot_longer(everything()) 
+  
+
+  raw_est <- list()
+  
+ for(j in 1:J){  
+  
+  dt_j <- raw_avg %>% 
+    filter(name == rank_q[j])
+   
+  raw_ols <- lm_robust(as.numeric(value) ~ 1, dt_j) %>% 
+    tidy() %>%
+    mutate(item = rank_q[j],
+           imp = "raw data") %>%
+    select(est = estimate,
+           low = conf.low,
+           up = conf.high,
+           name = item,
+           imp)
+  
+   raw_est[[j]] <- raw_ols 
+ } 
+  
+
+  raw_est <- do.call(rbind.data.frame, raw_est)
+  raw_est
+  
+  
+# Combine both estimates  
+  out <- rbind(out_avg, raw_est) %>%
+    arrange(name)
 
 
-  # Equation (10) -- distribution of error-free rankings
-  obs_main_freq <- table(data[main_q]) %>%
-    data.frame()
-  colnames(obs_main_freq) <- c("match", "Freq")
-
-  f_main <- perm_j %>%
-    left_join(obs_main_freq) %>%
-    mutate(Freq = ifelse(is.na(Freq), 0, Freq)) # Impute 0.0001
-
-  D <- f_main$Freq / N # -- empirical pmf of ranking in the main question
-  E <- f_random # -- estimated pmf of errors in the anchor
-
-  f_true <- (D - ((1 - B) * E)) / B
-
-  sum(f_true) # This must be 1
-
-  # Equation 4
-  w <- f_true / D # weight vector
-  # w[which(!is.finite(w))] <- 0
-
-  w_frame <- data.frame(
-    main = perm_j$match,
-    weight = w
-  )
-  colnames(w_frame) <- c(main_q, "weight")
-
-  data_w <- data %>%
-    left_join(w_frame) %>%
-    mutate(p_non_random = p_non_random)
+  return(out) # return the list
 }
 
 ## Not perfectly do-not-repeat-yourself but will return later
@@ -1315,3 +1353,28 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL) {
   return(out)
 }
 
+viz_avg <- function(data){
+
+  data %>% 
+    mutate(name = fct_reorder(name, est)) %>%  
+    ggplot(., aes(x = fct_rev(name), 
+                 y = est, color = imp)) +
+      geom_point(
+        aes(shape = imp),
+        size = 2, alpha = 0.75,
+        position = position_dodge(width = 0.6)
+      ) +
+      # Reorder by point estimate
+      geom_linerange(
+        aes(ymin = low, ymax = up), alpha = 0.75,
+        lwd = 1, position = position_dodge(width = 0.7)
+      ) +
+      scale_color_manual(values = c("#b0015a", "#999999")) +
+      theme_bw() +
+      coord_flip() +
+      xlab("") +
+      ylab("") +
+      theme(legend.position = "bottom",
+            legend.title = element_text(size=0),
+            plot.title = element_text(face="bold"))
+}
