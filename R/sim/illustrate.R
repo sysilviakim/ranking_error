@@ -3,12 +3,10 @@
 # Aim: illustrate weights in our de-contamination step
 
 library(scales)
-
 N <- 1000
 
-## Generate Data ####
-
-### Target PMF ####
+# Generate Data ================================================================
+## Target PMF ------------------------------------------------------------------
 pi_s <- c(
   rep(123, N * 0.4),
   rep(131, N * 0.3),
@@ -18,7 +16,7 @@ pi_s <- c(
   rep(321, N * 0.05)
 )
 
-### Noise PMF ####
+## Noise PMF -------------------------------------------------------------------
 pi_n <- c(
   rep(123, N * 0.167),
   rep(131, N * 0.167),
@@ -28,14 +26,14 @@ pi_n <- c(
   rep(321, N * 0.167)
 )
 
-### Raw data ####
+## Raw data --------------------------------------------------------------------
 raw <- c(pi_s, pi_n)
 
-## Weight
+## Weight ----------------------------------------------------------------------
 weight <- (table(pi_s) / length(pi_s)) /
   (table(raw) / length(raw))
 
-### Look at the information ####
+## Sanity check
 table(pi_s) / length(pi_s)
 table(pi_n) / length(pi_n)
 table(raw) / length(raw)
@@ -47,14 +45,12 @@ weight
 # --> 123 is "under-sampled", so we need to "bump it up"
 # --> 321 is "over-sampled", so we need to "squash it down"
 
-
-
-# Visualization ####
+# Visualization ================================================================
 p_raw <- as.data.frame(table(raw) / length(raw))
 p_true <- as.data.frame(table(pi_s) / length(pi_s))
 
-
-pdf(here::here("fig", "illustrate.pdf"),
+pdf(
+  here::here("fig", "illustrate.pdf"),
   width = 7, height = 5
 )
 
