@@ -265,32 +265,47 @@ berinsky_plots <- pattern_compare_pass_fail(main, "berinsky_fail")
 ternovski_plots <- pattern_compare_pass_fail(main, "ternovski_fail")
 
 print(ggarrange(plotlist = berinsky_plots$tate))
-ggsave(here("fig", "berinsky_fail_obs_tate.pdf"), width = 6, height = 3)
+ggsave(
+  here("fig", "pretest", "pretest03-berinsky_fail_obs_tate.pdf"),
+  width = 6, height = 3
+)
 
 print(ggarrange(plotlist = ternovski_plots$tate))
-ggsave(here("fig", "ternovski_fail_obs_tate.pdf"), width = 6, height = 3)
+ggsave(
+  here("fig", "pretest", "pretest03-ternovski_fail_obs_tate.pdf"),
+  width = 6, height = 3
+)
 
 ## Very counterintuitive results here; discuss with YA
 print(ggarrange(plotlist = berinsky_plots$no_context_3))
-ggsave(here("fig", "berinsky_fail_obs_nocontext_3.pdf"), width = 6, height = 3)
+ggsave(
+  here("fig", "pretest", "pretest03-berinsky_fail_obs_nocontext_3.pdf"),
+  width = 6, height = 3
+)
 
 print(ggarrange(plotlist = ternovski_plots$no_context_3))
-ggsave(here("fig", "ternovski_fail_obs_nocontext_3.pdf"), width = 6, height = 3)
+ggsave(
+  here("fig", "pretest", "pretest03-ternovski_fail_obs_nocontext_3.pdf"),
+  width = 6, height = 3
+)
 
 # Pattern comparison by anchor Q pass ==========================================
 # In terms of permutation pattern distributions (observed),
 # how do they differ between those who pass or fail the anchor question?
 
 # This is also slightly unintuitive
-# Anchor question helps, but not perfect? 
+# Anchor question helps, but not perfect?
 tate_anchor_plots <- pattern_compare_pass_fail(main, "ns_tate")
 print(
   ggarrange(
-    plotlist = tate_anchor_plots$tate %>% 
+    plotlist = tate_anchor_plots$tate %>%
       map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
   )
 )
-ggsave(here("fig", "tate_anc_fail_obs_tate.pdf"), width = 6, height = 3)
+ggsave(
+  here("fig", "pretest", "pretest03-tate_anc_fail_obs_tate.pdf"),
+  width = 6, height = 3
+)
 
 # Pattern comparisons by repeat Q pass =========================================
 
@@ -300,11 +315,14 @@ tate_repeat_plots <- pattern_compare_pass_fail(
 )
 print(
   ggarrange(
-    plotlist = tate_repeat_plots$tate %>% 
+    plotlist = tate_repeat_plots$tate %>%
       map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
   )
 )
-ggsave(here("fig", "tate_repeat_fail_obs_tate.pdf"), width = 6, height = 3)
+ggsave(
+  here("fig", "pretest", "pretest03-tate_repeat_fail_obs_tate.pdf"),
+  width = 6, height = 3
+)
 
 # Demographic correlations? ====================================================
 

@@ -98,15 +98,17 @@ duration_plot_list <- names(root_var) %>%
   imap(
     ~ ggplot(time) +
       geom_density(
-        aes(x = !!as.name(.x$app)), linetype = "solid", color = .x$col
+        aes(x = !!as.name(.x$app)),
+        linetype = "solid", color = .x$col
       ) +
       geom_density(
-        aes(x = !!as.name(.x$anc)), linetype = "dashed", color = .x$col
-      ) + 
-      xlab(paste0("Completion time in seconds (N = ", nrow(main), ")")) + 
-      ylab("Density") + 
-      ggtitle(.x$title) + 
-      scale_x_continuous(limits = c(0, 60 * 5)) + 
+        aes(x = !!as.name(.x$anc)),
+        linetype = "dashed", color = .x$col
+      ) +
+      xlab(paste0("Completion time in seconds (N = ", nrow(main), ")")) +
+      ylab("Density") +
+      ggtitle(.x$title) +
+      scale_x_continuous(limits = c(0, 60 * 5)) +
       scale_y_continuous(limits = c(0, 0.03))
   ) %>%
   imap(
@@ -125,7 +127,10 @@ ggarrange(plotlist = duration_plot_list)
 ## base R version (YA) ---------------------------------------------------------
 col <- c("#b0015a", "#128ba0", "#a5900d", "gray")
 
-pdf(here("fig", "pretest03-check_duration.pdf"), width = 6, height = 6)
+pdf(
+  here("fig", "pretest", "pretest03-check_duration.pdf"),
+  width = 6, height = 6
+)
 par(mfrow = (c(2, 2)))
 
 plot(

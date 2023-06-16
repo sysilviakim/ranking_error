@@ -63,10 +63,16 @@ uniform_list <- prep_list %>%
 ## Visualization ---------------------------------------------------------------
 ## For other Qs, not much point in visualizing
 print(uniform_list$tate$main)
-ggsave(here("fig", "pretest03-tate-main.pdf"), width = 4.5, height = 2.8)
+ggsave(
+  here("fig", "pretest", "pretest03-tate-main.pdf"),
+  width = 4.5, height = 2.8
+)
 
 print(uniform_list$tate$anch)
-ggsave(here("fig", "pretest03-tate-anchor.pdf"), width = 4.5, height = 2.8)
+ggsave(
+  here("fig", "pretest", "pretest03-tate-anchor.pdf"),
+  width = 4.5, height = 2.8
+)
 
 # Average rankings =============================================================
 ## Tate 1993 (representation) --------------------------------------------------
@@ -191,7 +197,7 @@ p1 <- vis_ranking(
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork"),
   single_plot = FALSE
-) %>% 
+) %>%
   .$p_avg
 
 p2 <- vis_ranking(
@@ -199,7 +205,7 @@ p2 <- vis_ranking(
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork"),
   single_plot = FALSE
-) %>% 
+) %>%
   .$p_avg
 
 p3 <- vis_ranking(
@@ -207,15 +213,21 @@ p3 <- vis_ranking(
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork"),
   single_plot = FALSE
-) %>% 
+) %>%
   .$p_avg
 
 ### Just a placeholder for future corrected figure
 plot_nolegend(pdf_default(p2)) + ggtitle("")
-ggsave(here("fig", "tate_anchor_passed.pdf"), width = 3, height = 2.2)
+ggsave(
+  here("fig", "pretest", "tate_anchor_passed.pdf"),
+  width = 3, height = 2.2
+)
 
 plot_nolegend(pdf_default(p3)) + ggtitle("")
-ggsave(here("fig", "tate_anchor_failed.pdf"), width = 3, height = 2.2)
+ggsave(
+  here("fig", "pretest", "tate_anchor_failed.pdf"),
+  width = 3, height = 2.2
+)
 
 ### Weight
 dt_tate_w <- imprr(
@@ -272,7 +284,7 @@ vis_ranking(
 )
 
 ggsave(
-  here("fig", "pretest03-statistics-id-party.pdf"),
+  here("fig", "pretest", "pretest03-statistics-id-party.pdf"),
   width = 6, height = 4.5
 )
 
@@ -312,14 +324,14 @@ head(dt_polar_w$weight)
 table(dt_polar_w$weight)
 
 # Proportion of non-random answers =============================================
-# Representation (J=3): 41.2%
+# Representation (J = 3): 41.2%
 mean(dt_tate_w$p_non_random)
 
-# Electoral systems (J=7): 21.1%
+# Electoral systems (J = 7): 21.1%
 mean(dt_e_systems_w$p_non_random)
 
-# Identity (J=7): 27.0%
+# Identity (J = 7): 27.0%
 mean(dt_identity_w$p_non_random)
 
-# Polarization (J=8): 65.4%
+# Polarization (J = 8): 65.4%
 mean(dt_polar_w$p_non_random)

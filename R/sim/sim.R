@@ -154,7 +154,7 @@ for (scenario in names(prob_vec_list)) {
 
   # Visualize: compare observed patterns ---------------------------------------
   pdf(
-    here("fig", paste0("sim_obs_ranking_", scenario, ".pdf")),
+    here("fig", "sim", paste0("sim_obs_ranking_", scenario, ".pdf")),
     width = 7, height = 5
   )
   permn_list[[scenario]] <- list(
