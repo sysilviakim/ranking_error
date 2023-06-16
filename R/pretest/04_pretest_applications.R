@@ -251,11 +251,6 @@ imp_af
 
 
 
-imp_tate$Prop_non_random
-imp_id$Prop_non_random
-imp_es$Prop_non_random
-imp_af$Prop_non_random
-
 
 
 # 
