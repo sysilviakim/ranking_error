@@ -1150,8 +1150,9 @@ vis_r <- function(data,
 imprr <- function(data, # all data
                   rank_q, # string for ranking names
                   target,
-                  anc_correct # string for correctness indicator
-) {
+                  anc_correct, # string for correctness indicator
+                  n_bootstrap = 250
+                  ) {
 
 
   # Prepare
@@ -1167,7 +1168,7 @@ imprr <- function(data, # all data
   
   set.seed(123456)
 
-  for(i in 1:10){
+  for(i in 1:n_bootstrap){
     index <- sample(1:nrow(data), size=dim(data)[1], replace=TRUE)   # RESAMPLE WITH REPLACEMENT
     bs.dat <- data[index,]                                        # BOOTSTRAPPED DATA
 
@@ -1214,7 +1215,15 @@ imprr <- function(data, # all data
   E <- f_random_avg # -- estimated pmf of errors in the anchor
 
   imp_avg <- (D_avg - ((1 - B) * E)) / B
-
+  
+# This method produces outside-the-bound values
+# --> Yuki is correcting this temporarily
+  
+  bound <- function(x){ifelse(x<1, 1, ifelse(x>J,J,x))}
+  
+  imp_avg <- imp_avg %>%
+    mutate(across(everything(), ~ bound(.x)))
+  
   list_prop[[i]] <- p_non_random
   list_avg[[i]] <- imp_avg
 
@@ -1231,7 +1240,7 @@ imprr <- function(data, # all data
               "low" = quantile(value, prob=0.025),
               "up" = quantile(value, prob=0.975)) %>%
     ungroup() %>%
-    mutate(imp = "imp")
+    mutate(imp = "improved")
   
   
 # Raw average ranks  
@@ -1249,7 +1258,7 @@ imprr <- function(data, # all data
   raw_ols <- lm_robust(as.numeric(value) ~ 1, dt_j) %>% 
     tidy() %>%
     mutate(item = rank_q[j],
-           imp = "raw") %>%
+           imp = "raw data") %>%
     select(est = estimate,
            low = conf.low,
            up = conf.high,
@@ -1272,5 +1281,31 @@ imprr <- function(data, # all data
   return(out) # return the list
 }
 
+
+viz_avg <- function(data){
+
+  data %>% 
+    mutate(name = fct_reorder(name, est)) %>%  
+    ggplot(., aes(x = fct_rev(name), 
+                 y = est, color = imp)) +
+      geom_point(
+        aes(shape = imp),
+        size = 2, alpha = 0.75,
+        position = position_dodge(width = 0.6)
+      ) +
+      # Reorder by point estimate
+      geom_linerange(
+        aes(ymin = low, ymax = up), alpha = 0.75,
+        lwd = 1, position = position_dodge(width = 0.7)
+      ) +
+      scale_color_manual(values = c("#b0015a", "#999999")) +
+      theme_bw() +
+      coord_flip() +
+      xlab("") +
+      ylab("") +
+      theme(legend.position = "bottom",
+            legend.title = element_text(size=0),
+            plot.title = element_text(face="bold"))
+}
 
 

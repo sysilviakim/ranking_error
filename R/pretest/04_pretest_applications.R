@@ -209,6 +209,7 @@ ggsave(here("fig", "tate_anchor_passed.pdf"), width = 3, height = 2.2)
 plot_nolegend(pdf_default(p3)) + ggtitle("")
 ggsave(here("fig", "tate_anchor_failed.pdf"), width = 3, height = 2.2)
 
+
 ### Improved Average Ranks
 imp_tate <- imprr(
   data = prep_list$tate$dat,
@@ -250,8 +251,28 @@ imp_af <- imprr(
 imp_af
 
 
+# Visualization
+imp_tate$topic <- "representation"
+imp_id$topic <- "identity"
+imp_es$topic <- "electoral systems"
+imp_af$topic <- "polarization"
 
+p1 <- viz_avg(imp_tate) + 
+  ggtitle("Representation") 
+p2 <- viz_avg(imp_id) +
+  ggtitle("Identity")
+p3 <- viz_avg(imp_es) +
+  ggtitle("Electoral Systems") 
+p4 <- viz_avg(imp_af) + 
+  ggtitle("Affective Polarization") 
 
+ggpubr::ggarrange(p1, p2, p3, p4, 
+                  nrow = 2, ncol = 2, 
+                  common.legend = TRUE,
+                  legend = "bottom")
+
+ggsave(here::here("fig", "pretest03-avgranks.pdf"),
+       width = 6.5, height = 5)
 
 # 
 # # Unit check -- bias pulls the PMF to uniform distribution
