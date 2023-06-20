@@ -53,7 +53,8 @@ ggsave(
 
 ### 3-option, resulting
 temp <- table_to_tibble(tab3r)
-plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55)))
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55))) + 
+  xlab("Resulting Ranking")
 ggsave(
   here("fig", "pretest", "pretest03-nocontext-3opt-resulting.pdf"),
   width = 4.5, height = 2.8
@@ -61,7 +62,8 @@ ggsave(
 
 ### 4-option, observed
 temp <- table_to_tibble(tab4r)
-plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55)))
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55))) + 
+  xlab("Resulting Ranking")
 ggsave(
   here("fig", "pretest", "pretest03-nocontext-4opt-resulting.pdf"),
   width = 7.5, height = 2.8
