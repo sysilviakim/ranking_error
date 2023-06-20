@@ -229,42 +229,8 @@ ggsave(
   width = 3, height = 2.2
 )
 
-<<<<<<< HEAD
-### Weight
-dt_tate_w <- imprr(
-  dat = prep_list$tate$dat,
-=======
-
-### Improved Average Ranks
-imp_tate <- imprr(
-  data = prep_list$tate$dat,
->>>>>>> f2e23811b7db62540ba7fb41553311eae68a51b5
-  rank_q = prep_list$tate$labels,
-  target = "policy",
-  anc_correct = "anc_correct_tate"
-)
-
-imp_tate
 
 
-<<<<<<< HEAD
-N <- dim(dt_tate_w)[1]
-w <- unique(dt_tate_w$weight)
-
-freq_raw <- round(table(dt_tate_w$app_tate) / N, d = 2)
-freq_imp <- round(table(dt_tate_w$app_tate) * w / N, d = 2)
-
-# Raw frequency
-freq_raw_dev <- round(table(dt_tate_w$app_tate) / N - 1 / 6, d = 2)
-
-# Improved frequency
-freq_imp_dev <- round(table(dt_tate_w$app_tate) * w / N - 1 / 6, d = 2)
-
-freq_raw
-freq_imp
-
-mean(freq_raw_dev)
-mean(freq_imp_dev)
 
 ## Electoral systems -----------------------------------------------------------
 dt_e_systems_w <- weight_patterns(
@@ -291,32 +257,48 @@ ggsave(
   width = 6, height = 4.5
 )
 
-# Compute weights
-dt_identity_w <- imprr(
-  dat = prep_list$identity$dat,
-=======
+
+## Polarization ----------------------------------------------------------------
+
+
+
+
+# Improved Average Ranks =====================================================
+imp_tate <- imprr(
+  data = prep_list$tate$dat,
+  rank_q = prep_list$tate$labels,
+  target = "policy",
+  anc_correct = "anc_correct_tate"
+)
+
+imp_tate_asy <- imprr(
+  data = prep_list$tate$dat,
+  rank_q = prep_list$tate$labels,
+  target = "policy",
+  anc_correct = "anc_correct_tate",
+  asymptotics = TRUE
+)
+
+imp_tate
+imp_tate_asy
+
 imp_id <- imprr(
   data = prep_list$identity$dat,
->>>>>>> f2e23811b7db62540ba7fb41553311eae68a51b5
   rank_q = prep_list$identity$labels,
   target = "party",
   anc_correct = "anc_correct_identity"
-)
+  )
+
+imp_id_asy <- imprr(
+  data = prep_list$identity$dat,
+  rank_q = prep_list$identity$labels,
+  target = "party",
+  anc_correct = "anc_correct_identity",
+  asymptotics = TRUE
+  )
 
 imp_id
-
-<<<<<<< HEAD
-## Polarization ----------------------------------------------------------------
-vis_ranking(
-  dat = prep_list$polar$dat,
-  target_item = "media",
-  other_items = setdiff(prep_list$polar$labels, "media")
-)
-
-# Compute weights
-dt_polar_w <- imprr(
-  dat = prep_list$polar$dat,
-=======
+imp_id_asy
 
 imp_es <- imprr(
   data = prep_list$e_systems$dat,
@@ -325,39 +307,49 @@ imp_es <- imprr(
   anc_correct = "anc_correct_e_systems"
 )
 
+imp_es_asy <- imprr(
+  data = prep_list$e_systems$dat,
+  rank_q = prep_list$e_systems$labels,
+  target = "minority",
+  anc_correct = "anc_correct_e_systems",
+  asymptotics = TRUE
+
+)
+
 imp_es
+imp_es_asy
 
 
 imp_af <- imprr(
   data = prep_list$polar$dat,
->>>>>>> f2e23811b7db62540ba7fb41553311eae68a51b5
   rank_q = prep_list$polar$labels,
   target = "media",
   anc_correct = "anc_correct_polar"
 )
 
+imp_af_asy <- imprr(
+  data = prep_list$polar$dat,
+  rank_q = prep_list$polar$labels,
+  target = "media",
+  anc_correct = "anc_correct_polar",
+  asymptotics = TRUE
+)
+
+
 imp_af
+imp_af_asy
 
-<<<<<<< HEAD
-# Proportion of non-random answers =============================================
-# Representation (J = 3): 41.2%
-mean(dt_tate_w$p_non_random)
-
-# Electoral systems (J = 7): 21.1%
-mean(dt_e_systems_w$p_non_random)
-
-# Identity (J = 7): 27.0%
-mean(dt_identity_w$p_non_random)
-
-# Polarization (J = 8): 65.4%
-mean(dt_polar_w$p_non_random)
-=======
 
 # Visualization
 imp_tate$topic <- "representation"
 imp_id$topic <- "identity"
 imp_es$topic <- "electoral systems"
 imp_af$topic <- "polarization"
+imp_tate_asy$topic <- "representation"
+imp_id_asy$topic <- "identity"
+imp_es_asy$topic <- "electoral systems"
+imp_af_asy$topic <- "polarization"
+
 
 p1 <- viz_avg(imp_tate) + 
   ggtitle("Representation") 
@@ -367,106 +359,30 @@ p3 <- viz_avg(imp_es) +
   ggtitle("Electoral Systems") 
 p4 <- viz_avg(imp_af) + 
   ggtitle("Affective Polarization") 
+p5 <- viz_avg(imp_tate_asy) + 
+  ggtitle("Representation (asymptotics)") 
+p6 <- viz_avg(imp_id_asy) +
+  ggtitle("Identity  (asymptotics)")
+p7 <- viz_avg(imp_es_asy) +
+  ggtitle("Electoral Systems  (asymptotics)") 
+p8 <- viz_avg(imp_af_asy) + 
+  ggtitle("Affective Polarization  (asymptotics)") 
 
-ggpubr::ggarrange(p1, p2, p3, p4, 
-                  nrow = 2, ncol = 2, 
+
+# m1 <- ggpubr::ggarrange(p1, p2, p3, p4, 
+#                   nrow = 2, ncol = 2, 
+#                   common.legend = TRUE,
+#                   legend = "bottom")
+
+
+# Just for now
+m1 <- ggpubr::ggarrange(p1, p5, p2, p6, p3, p7, p4, p8,
+                  nrow = 4, ncol = 2,
                   common.legend = TRUE,
                   legend = "bottom")
 
-ggsave(here::here("fig", "pretest03-avgranks.pdf"),
-       width = 6.5, height = 5)
 
-# 
-# # Unit check -- bias pulls the PMF to uniform distribution
-# 
-# N <- dim(dt_tate_w)[1]
-# w <- unique(dt_tate_w$weight)
-# 
-# freq_raw <- round(table(dt_tate_w$app_tate) / N, d = 2)
-# freq_imp <- round(table(dt_tate_w$app_tate) * w / N, d = 2)
-# 
-# # Raw frequency
-# freq_raw_dev <- round(table(dt_tate_w$app_tate) / N - 1 / 6, d = 2)
-# 
-# # Improved frequency
-# freq_imp_dev <- round(table(dt_tate_w$app_tate) * w / N - 1 / 6, d = 2)
-# 
-# freq_raw
-# freq_imp
-# 
-# mean(freq_raw_dev)
-# mean(freq_imp_dev)
-# 
-# ## Electoral systems -----------------------------------------------------------
-# dt_e_systems_w <- imprr(
-#   data = prep_list$e_systems$dat,
-#   rank_q = prep_list$e_systems$labels,
-#   main_q = "app_e_systems",
-#   anchor = "anc_e_systems",
-#   anc_correct = "anc_correct_e_systems",
-#   J = 7
-# )
-# 
-# head(dt_e_systems_w)
-# table(dt_e_systems_w$weight)
-# 
-# ## Identity --------------------------------------------------------------------
-# vis_r(
-#   data = prep_list$identity$dat,
-#   target_item = "party",
-#   other_items = setdiff(prep_list$identity$labels, "party")
-# )
-# 
-# ggsave(
-#   here("fig", "pretest03-statistics-id-party.pdf"),
-#   width = 6, height = 4.5
-# )
-# 
-# # Compute weights
-# dt_identity_w <- imprr(
-#   data = prep_list$identity$dat,
-#   rank_q = prep_list$identity$labels,
-#   main_q = "app_identity",
-#   anchor = "anc_identity",
-#   anc_correct = "anc_correct_identity",
-#   J = 7
-# )
-# 
-# head(dt_identity_w)
-# head(dt_identity_w$weight)
-# table(dt_identity_w$weight)
-# 
-# ## Polarization ----------------------------------------------------------------
-# vis_r(
-#   data = prep_list$polar$dat,
-#   target_item = "media",
-#   other_items = setdiff(prep_list$polar$labels, "media")
-# )
-# 
-# # Compute weights
-# dt_polar_w <- imprr(
-#   data = prep_list$polar$dat,
-#   rank_q = prep_list$polar$labels,
-#   main_q = "app_polar",
-#   anchor = "anc_polar",
-#   anc_correct = "anc_correct_polar",
-#   J = 8
-# )
-# 
-# head(dt_polar_w)
-# head(dt_polar_w$weight)
-# table(dt_polar_w$weight)
-# 
-# # Proportion of non-random answers =============================================
-# # Representation (J=3): 41.2%
-# mean(dt_tate_w$p_non_random)
-# 
-# # Electoral systems (J=7): 21.1%
-# mean(dt_e_systems_w$p_non_random)
-# 
-# # Identity (J=7): 27.0%
-# mean(dt_identity_w$p_non_random)
-# 
-# # Polarization (J=8): 65.4%
-# mean(dt_polar_w$p_non_random)
->>>>>>> f2e23811b7db62540ba7fb41553311eae68a51b5
+ggsave(here::here("fig/pretest", "pretest03-avg.pdf"),
+       width = 6.5, height = 5*2)
+
+

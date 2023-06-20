@@ -1159,7 +1159,8 @@ imprr <- function(data, # all data
                   rank_q, # string for ranking names
                   target,
                   anc_correct, # string for correctness indicator
-                  n_bootstrap = 250
+                  n_bootstrap = 250,
+                  asymptotics = FALSE
                   ) {
 
 
@@ -1203,18 +1204,33 @@ imprr <- function(data, # all data
   A_avg <-  loc_anc %>%
     summarise(across(everything(), ~ mean(as.numeric(.x))))      
 
+  
+  
+if(asymptotics==FALSE){  
+
+# We will fully learn from data 
+## including, noise via sampling variability
+  
   #A <- f_anchor$Freq / N # -- empirical pmf of rankings in anchor
   B <- p_non_random # -- estimated proportion of non-random
   C <- data.frame(t(1:J)) # -- true pmf of rankings in anchor
 
   f_random_avg <- (A_avg - (B * C)) / (1 - B)
+}else{
 
+# We use theory to get f_random_avg
+## We know that the entire PMF will follow a uniform distribution
+## f_random <- rep(1/factorial(J), factorial(J))
+## We then compute average ranks based on the asymptotic distribution
+
+  f_random_avg <- (1+J)/2 # This is true as n --> infinity
+
+}
          
-        # Note: Alternatively, asymptotics gives us
-        # f_random <- rep(1/factorial(J), factorial(J))
-        # sum(f_random) # This must be 1
 
-
+  # Redefine B  
+  B <- p_non_random # -- estimated proportion of non-random
+  
 # Equation (10) -- distribution of error-free rankings
 
   D_avg <- loc_app %>%
