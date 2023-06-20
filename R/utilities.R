@@ -17,8 +17,10 @@ library(estimatr)
 library(ggpubr)
 library(Kmisc) ## None-CRAN package. Will wean eventually
 
-# READING THE FUNCTION THAT DRAW FROM PLACKETT-LUCE
+# Read all functions
 source(here("R", "rpluce.R"))
+source(here("R", "vis_ranking.R"))
+source(here("R", "weight_patterns.R"))
 
 # Parameters/stored vectors ====================================================
 qualtrics_meta <- c(

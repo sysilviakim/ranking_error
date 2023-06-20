@@ -3,44 +3,67 @@ df_list <- qualtrics_import("pretest-03.csv")
 main <- df_list$main
 
 # No-context questions =========================================================
-x3 <- main$no_context_3_options_observed
-x4 <- main$no_context_4_options_observed
+x3o <- main$no_context_3_options_observed
+x4o <- main$no_context_4_options_observed
+x3r <- main$no_context_3_options
+x4r <- main$no_context_4_options
 
 ## For a chi-squared test, exclude partial rankings, but in v2, none such
-tab3 <- table(x3[!grepl("9", x3)])
-tab4 <- table(x4[!grepl("9", x4)])
+tab3o <- table(x3o[!grepl("9", x3o)])
+tab4o <- table(x4o[!grepl("9", x4o)])
+tab3r <- table(x3r[!grepl("9", x3r)])
+tab4r <- table(x4r[!grepl("9", x4r)])
 
-round(prop.table(tab3) * 100, digits = 1)
+round(prop.table(tab3o) * 100, digits = 1)
 #  123  132  213  231  312  321
 # 54.2  6.2 20.8  8.3  2.1  8.3
 
-round(prop.table(tab4) * 100, digits = 1)
+round(prop.table(tab4o) * 100, digits = 1)
 # 1234 1324 1342 1423 1432 2134 2143 2314 3124 3142 3214 3241 4132 4213 4231 4321
 #   42    4    2    4    2    4    4    4    4    2    6    2    2    2    6   10
 
 ## This assertion is necessary but does not apply to this small pretest sample
 ## assert_that(length(tab4) == 24)
 ## Therefore, supplement missing permutations
-tab4 <- permn_augment(tab4)
+tab4o <- permn_augment(tab4o)
+tab4r <- permn_augment(tab4r)
 
 ## Chi-square test and power test ----------------------------------------------
-chisq_power(tab3) ## p-value = 1.862e-10, ES = 1.0631, need N = 18+
-chisq_power(tab4) ## p-value < 2.2e-16, ES = 1.9835, need N = 9+
+chisq_power(tab3o) ## p-value = 1.862e-10, ES = 1.0631, need N = 18+
+chisq_power(tab4o) ## p-value < 2.2e-16, ES = 1.9835, need N = 9+
+chisq_power(tab3r) ## p-value = 0.3313, ES = 0.3461, need N = 165+
+chisq_power(tab4r) ## p-value = 0.0724, ES = 0.8188, need N = 48+
 
 ## Visualize -------------------------------------------------------------------
-### 3-option
-temp <- table_to_tibble(tab3)
+### 3-option, observed
+temp <- table_to_tibble(tab3o)
 plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55)))
 ggsave(
-  here("fig", "pretest", "pretest03-nocontext-3opt.pdf"),
+  here("fig", "pretest", "pretest03-nocontext-3opt-observed.pdf"),
   width = 4.5, height = 2.8
 )
 
-### 4-option
-temp <- table_to_tibble(tab4)
+### 4-option, observed
+temp <- table_to_tibble(tab4o)
 plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55)))
 ggsave(
-  here("fig", "pretest", "pretest03-nocontext-4opt.pdf"),
+  here("fig", "pretest", "pretest03-nocontext-4opt-observed.pdf"),
+  width = 7.5, height = 2.8
+)
+
+### 3-option, resulting
+temp <- table_to_tibble(tab3r)
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55)))
+ggsave(
+  here("fig", "pretest", "pretest03-nocontext-3opt-resulting.pdf"),
+  width = 4.5, height = 2.8
+)
+
+### 4-option, observed
+temp <- table_to_tibble(tab4r)
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .55)))
+ggsave(
+  here("fig", "pretest", "pretest03-nocontext-4opt-resulting.pdf"),
   width = 7.5, height = 2.8
 )
 
