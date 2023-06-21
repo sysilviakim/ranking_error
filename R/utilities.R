@@ -33,7 +33,7 @@ qualtrics_meta <- c(
 bootstrap_n <- 1000
 root_var <- c(
   tate = "123",
-  e_systems = "1234567",
+  esystems = "1234567",
   identity = "1234567",
   polar = "12345678"
 )
@@ -153,232 +153,46 @@ pivot_join <- function(x, y) {
 }
 
 ## import and wrangle Qualtrics data
-qualtrics_import <- function(fname) {
+yougov_import <- function(fname) {
   ## Exported using not the choice text but numeric values
   df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE) %>%
-    clean_names() %>%
-    filter(
-      start_date != "Start Date" &
-        start_date != '{"ImportId":"startDate","timeZone":"America/Denver"}'
-    ) %>%
-    mutate(
-      duration_in_seconds = as.numeric(duration_in_seconds),
-      duration_in_minutes = duration_in_seconds / 60,
-      q_recaptcha_score = as.numeric(q_recaptcha_score)
-    )
+    clean_names() 
+  
+    # Check for timing variables
+    # Check for duration + start time + end time
+  
+    # filter(
+    #   start_date != "Start Date" &
+    #     start_date != '{"ImportId":"startDate","timeZone":"America/Denver"}'
+    # ) %>%
+    # mutate(
+    #   duration_in_seconds = as.numeric(duration_in_seconds),
+    #   duration_in_minutes = duration_in_seconds / 60,
+    #   q_recaptcha_score = as.numeric(q_recaptcha_score)
+    # )
 
-  ## Status needs to be "IP Address" which is 0.
   temp <- df_raw %>%
-    filter(status == "0") %>%
     ## Make consistent with root_var
+    ## Fix typos and inconsistencies in names
+    rename_with(~ gsub("order", "_order", .x)) %>%
+    rename_with(~ gsub("__", "_", .x)) %>%
     rename_with(~ gsub("polarization", "polar", .x)) %>%
-    rename_with(~ gsub("affective_polar", "polar", .x)) %>%
-    rename_with(~ gsub("aff_polar", "polar", .x)) %>%
+    rename_with(~ gsub("identityhopkins", "anc_identity", .x)) %>%
+    rename_with(~ gsub("holidays", "anc_polar", .x)) %>%
+    rename_with(~ gsub("^alpha_", "anc_identity_alphabet_", .x)) %>%
+    rename_with(~ gsub("^exact_", "anc_identity_exact_", .x)) %>%
+    rename_with(~ gsub("^esystems_", "anc_esystems_", .x)) %>%
+    rename_with(~ gsub("affectivepolar", "_polar", .x)) %>%
     rename_with(~ gsub("_1993", "", .x)) %>%
-    rename_with(~ gsub("ternovsky", "ternovski", .x))
+    rename_with(~ gsub("TernovskyScreener", "ternovski", .x)) %>%
+    rename_with(~ gsub("apsa_", "esystems_", .x)) %>%
+    rename_with(~ gsub("ternovsky_screener", "ternovski", .x)) %>%
+    rename_with(~ gsub("berinskyscreener", "berinsky", .x)) %>%
+    rename_with(~ gsub("estemporal", "anc_esystems_temporal", .x)) %>%
+    rename_with(~ gsub("esalphabet", "anc_esystems_alphabet", .x)) %>%
+    rename_with(~ gsub("esystems_app", "app_esystems", .x))
 
-  ## If IP addresses overlap, that's a major red flag so stop
-  ## assert_that(!any(duplicated(main$ip_address)))
-  if (any(duplicated(temp$ip_address))) {
-    message("There are duplicates in IP addresses. Please investigate.")
-  }
-
-  message(paste0("We have total ", nrow(temp), " respondents."))
-
-  ## Separate out timing variables to actual responses
-  timing <- temp %>%
-    select(
-      response_id,
-      matches(qualtrics_meta %>% paste(collapse = "|")),
-      contains("timing"), contains("time")
-    ) %>%
-    rename_with(~ gsub("timing_", "time_", .x))
-
-  main <- temp %>%
-    select(-contains("timing"), -contains("time")) %>%
-    select(
-      -matches(
-        setdiff(qualtrics_meta, c("q_recaptcha_score", "response_id")) %>%
-          paste(collapse = "|")
-      )
-    )
-
-  x <- sum(main$q_recaptcha_score < 0.8, na.rm = TRUE) +
-    sum(is.na(main$q_recaptcha_score))
-
-  message(
-    x, " out of ", nrow(main), ", or ",
-    paste0(
-      round(x / nrow(main) * 100, digits = 1),
-      "% of rows have recaptcha score less than 0.8."
-    )
-  )
-
-  main <- main %>%
-    ## Filter out observations with recaptcha score < 0.8
-    filter(q_recaptcha_score >= 0.8) %>%
-    mutate(across(ends_with("_do"), ~ gsub("\\|", "", .x))) %>%
-    ## Remember, this will bring out the true ranking
-    ## and not the *observed* ranking of the respondent
-    ## (i.e., permutation pattern)
-    ## unless the randomization has given a 1234... order
-
-    ## So if the true order respondent gave out  is 3-2-1
-    ## but the order provided is                    3-1-2
-    ## the *observed* ranking is                    1-3-2
-    ## unite_ranking() will give 321 for this respondent! The true ranking!
-
-    ## Note that Qualtrics' "View Response" will always align the
-    ## randomized orders into the original order and show the true ranking
-    ## in the "recovered" fashion
-
-    ## If the true order respondent gave out is     6-3-2-7-1-4-5
-    ## but the order provided is                    6-1-5-2-7-3-4
-    ## the true order respondent provided is        4-6-1-3-5-2-7
-
-    ## IMPORTANT: THIS REQUIRES THAT THE RECODING IS IN NATURAL PROGRESSION
-    ## i.e., the reference set is 1-2-3-4-5-6-7
-    ## If it is 1-2-3-4-6-5-7 or something that's different, doesn't work
-
-    unite_ranking() %>%
-    ## Recovered observed rankings
-    recover_observed_ranking(
-      "no_context_3_options_do", "no_context_3_options", .
-    ) %>%
-    recover_observed_ranking(
-      "no_context_4_options_do", "no_context_4_options", .
-    ) %>%
-    recover_observed_ranking("app_tate_do", "app_tate", .) %>%
-    recover_observed_ranking("app_e_systems_do", "app_e_systems", .) %>%
-    recover_observed_ranking("app_identity_do", "app_identity", .) %>%
-    recover_observed_ranking("app_polar_do", "app_polar", .) %>%
-    ## For anchor questions, too
-    recover_observed_ranking("anc_tate_do", "anc_tate", .) %>%
-    recover_observed_ranking("anc_e_systems_do", "anc_e_systems", .) %>%
-    recover_observed_ranking("anc_identity_do", "anc_identity", .) %>%
-    recover_observed_ranking("anc_polar_do", "anc_polar", .)
-
-  ## Create binary indicators for partial rankers + attention check fails
-  main <- main %>%
-    ## Geometric patterns + attention check fails + repeat task fails
-    mutate(
-      ternovski_fail = case_when(ternovski_screener2 != "1,2" ~ 1, TRUE ~ 0),
-      berinsky_fail = case_when(berinsky_screener != "4,12" ~ 1, TRUE ~ 0),
-      ## Geometric patterns: applications (ns is for old term "non-sincere")
-      ns_tate = case_when(anc_tate != "123" ~ 1, TRUE ~ 0),
-      ns_e_systems = case_when(anc_e_systems != "1234567" ~ 1, TRUE ~ 0),
-      ns_identity = case_when(anc_identity != "1234567" ~ 1, TRUE ~ 0),
-      ns_polar = case_when(anc_polar != "12345678" ~ 1, TRUE ~ 0),
-      ## Perfectly collinear variables, just renamed/recoded for easy access
-      anc_correct_tate = case_when(anc_tate == "123" ~ 1, TRUE ~ 0),
-      anc_correct_e_systems = case_when(anc_e_systems == "1234567" ~ 1, TRUE ~ 0),
-      anc_correct_identity = case_when(anc_identity == "1234567" ~ 1, TRUE ~ 0),
-      anc_correct_polar = case_when(anc_polar == "12345678" ~ 1, TRUE ~ 0),
-      ## Repeat coherence: applications
-      ## 1 means incoherent!
-      repeat_tate = case_when(
-        app_tate == app_tate_repeat ~ 0,
-        app_tate != app_tate_repeat ~ 1
-      ),
-      repeat_e_systems = case_when(
-        app_e_systems == app_e_systems_repeat ~ 0,
-        app_e_systems != app_e_systems_repeat ~ 1
-      ),
-      repeat_identity = case_when(
-        app_identity == app_identity_repeat ~ 0,
-        app_identity != app_identity_repeat ~ 1
-      ),
-      repeat_polar = case_when(
-        app_polar == app_pol_repeat ~ 0,
-        app_polar != app_pol_repeat ~ 1
-      )
-    ) %>%
-    rowwise() %>%
-    mutate(
-      app_tate_trunc1 = str_sub(app_tate, 1, 1),
-      app_tate_trunc1_repeat = str_sub(app_tate_repeat, 1, 1),
-      app_e_systems_trunc1 = str_sub(app_e_systems, 1, 1),
-      app_e_systems_trunc1_repeat = str_sub(app_e_systems_repeat, 1, 1),
-      app_identity_trunc1 = str_sub(app_identity, 1, 1),
-      app_identity_trunc1_repeat = str_sub(app_identity_repeat, 1, 1),
-      app_polar_trunc1 = str_sub(app_polar, 1, 1),
-      app_polar_trunc1_repeat = str_sub(app_pol_repeat, 1, 1),
-      app_e_systems_trunc2 = str_sub(app_e_systems, 1, 2),
-      app_e_systems_trunc2_repeat = str_sub(app_e_systems_repeat, 1, 2),
-      app_identity_trunc2 = str_sub(app_identity, 1, 2),
-      app_identity_trunc2_repeat = str_sub(app_identity_repeat, 1, 2),
-      app_polar_trunc2 = str_sub(app_polar, 1, 2),
-      app_polar_trunc2_repeat = str_sub(app_pol_repeat, 1, 2),
-      app_tate_trunc3 = str_sub(app_tate, 1, 3),
-      app_tate_trunc3_repeat = str_sub(app_tate_repeat, 1, 3),
-      app_e_systems_trunc3 = str_sub(app_e_systems, 1, 3),
-      app_e_systems_trunc3_repeat = str_sub(app_e_systems_repeat, 1, 3),
-      app_identity_trunc3 = str_sub(app_identity, 1, 3),
-      app_identity_trunc3_repeat = str_sub(app_identity_repeat, 1, 3),
-      app_polar_trunc3 = str_sub(app_polar, 1, 3),
-      app_polar_trunc3_repeat = str_sub(app_pol_repeat, 1, 3),
-
-      # repeat_trunc_e_systems = case_when(
-      #   app_e_systems_trunc == app_e_systems_trunc_repeat ~ 0,
-      #   app_e_systems_trunc != app_e_systems_trunc_repeat ~ 1
-      # ),
-      # repeat_trunc_identity = case_when(
-      #   app_identity_trunc == app_identity_trunc_repeat ~ 0,
-      #   app_identity_trunc != app_identity_trunc_repeat ~ 1
-      # ),
-      # repeat_trunc_polar = case_when(
-      #   app_polar_trunc == app_polar_trunc_repeat ~ 0,
-      #   app_polar_trunc != app_polar_trunc_repeat ~ 1
-      # )
-    ) %>%
-    ungroup() %>%
-    ## Partial rankers
-    mutate(
-      partial_tate_main =
-        case_when(grepl("9", app_tate) ~ 1, TRUE ~ 0),
-      partial_tate_anc =
-        case_when(grepl("9", anc_tate) ~ 1, TRUE ~ 0),
-      partial_e_systems_main =
-        case_when(grepl("9", app_e_systems) ~ 1, TRUE ~ 0),
-      partial_e_systems_anc =
-        case_when(grepl("9", anc_e_systems) ~ 1, TRUE ~ 0),
-      partial_identity_main =
-        case_when(grepl("9", app_identity) ~ 1, TRUE ~ 0),
-      partial_identity_anc =
-        case_when(grepl("9", anc_identity) ~ 1, TRUE ~ 0),
-      partial_polar_main =
-        case_when(grepl("9", app_polar) ~ 1, TRUE ~ 0),
-      partial_polar_anc =
-        case_when(grepl("9", anc_polar) ~ 1, TRUE ~ 0)
-    ) %>%
-    ## pid7
-    mutate(
-      pid7 = case_when(
-        pid3 == "1" & pid7_dem == "1" ~ "Strong Democrat",
-        pid3 == "1" & pid7_dem == "2" ~ "Not so strong Democrat",
-        pid3 == "3" & pid7_ind == "2" ~ "Leaning Democrat",
-        pid3 == "3" & pid7_ind == "3" ~ "Independent",
-        pid3 == "3" & pid7_ind == "1" ~ "Leaning Republican",
-        pid3 == "2" & pid7_rep == "2" ~ "Not so strong Republican",
-        pid3 == "2" & pid7_rep == "1" ~ "Strong Republican"
-      ),
-      ## Including leaners
-      pid3alt = case_when(
-        grepl("Democrat", pid7) ~ "Dem",
-        grepl("Republican", pid7) ~ "Rep",
-        TRUE ~ "Ind"
-      ),
-      white = case_when(
-        race == "1" ~ 1,
-        TRUE ~ 0
-      ),
-      uni_or_higher = case_when(
-        education %in% c("1", "2", "3") ~ 0,
-        TRUE ~ 1
-      )
-    )
-
-  return(list(main = main, timing = timing, raw = df_raw))
+  return(list(main = temp, raw = df_raw))
 }
 
 ## Recover the reference (true) ranking
