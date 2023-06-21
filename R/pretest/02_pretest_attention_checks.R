@@ -307,6 +307,14 @@ ggsave(
   width = 6, height = 3
 )
 
+tate_anchor_plots <- pattern_compare_pass_fail(main, "ns_tate", observed = F)
+print(
+  ggarrange(
+    plotlist = tate_anchor_plots$tate %>%
+      map(~ .x + scale_y_continuous(limits = c(0, 0.4), labels = percent))
+  )
+)
+
 # Pattern comparisons by repeat Q pass =========================================
 
 # Oof. Okay. So stringent.
