@@ -1309,7 +1309,13 @@ imprr <- function(data, # all data
 }
 
 ## Not perfectly do-not-repeat-yourself but will return later
-pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL) {
+pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
+                                      observed = TRUE) {
+  if (observed) {
+    sfx <- "_observed"
+  } else {
+    sfx <- ""
+  }
   if (is.null(label)) {
     label <- c("Passed", "Failed")
   }
@@ -1323,7 +1329,7 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL) {
           map(
             ~ main %>%
               filter(!!as.name(v) == .x$v) %>%
-              .[[paste0("app_", y, "_observed")]] %>%
+              .[[paste0("app_", y, sfx)]] %>%
               table() %>%
               table_to_tibble() %>%
               plot_dist_ranking(., ylim = y_upper) +
