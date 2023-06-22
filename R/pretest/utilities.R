@@ -155,7 +155,10 @@ pivot_join <- function(x, y) {
 ## import and wrangle Qualtrics data
 qualtrics_import <- function(fname) {
   ## Exported using not the choice text but numeric values
-  df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE) %>%
+  df_raw <- read_csv(
+    here("data", "raw", "pretest", fname),
+    show_col_types = FALSE
+  ) %>%
     clean_names() %>%
     filter(
       start_date != "Start Date" &

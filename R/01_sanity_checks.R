@@ -1,125 +1,201 @@
 source(here::here("R", "utilities.R"))
 
 # Import data ==================================================================
-test_link <- yougov_import("american_rankchoice_june2023_testdata.csv")$main
+test_link <-
+  yougov_import("american_rankchoice_june2023_testdata_0622.csv")$main %>%
+  filter(!is.na(religpew))
 mock_data <- yougov_import("american_rankchoice_june2023.csv")$main
+
+## To compare with Qualtrics
+df_list <- qualtrics_import("pretest-03.csv")
+main <- df_list$main
 
 # Check names ==================================================================
 setdiff(names(mock_data), names(test_link))
-#  [1] "identity"                "perc_skipped"           
-#  [3] "hcountry_code"           "app_order"              
-#  [5] "esystems_order"          "fav_order"              
-#  [7] "hopkins_order"           "ideo_order"             
-#  [9] "more"                    "party_order"            
-# [11] "points"                  "polar_order"            
-# [13] "posneg"                  "rand_fact10"            
-# [15] "rand_fact12"             "rand_fact13"            
-# [17] "rand_fact14"             "rand_fact19"            
-# [19] "rand_fact4"              "rand_fact5"             
-# [21] "rand_fact6"              "rand_fact7"             
-# [23] "rand_fact8"              "rand_fact9"             
-# [25] "reverse"                 "tate_order"             
-# [27] "type"                    "invalidrank"            
-# [29] "r1"                      "r2"                     
-# [31] "r3"                      "r4"                     
-# [33] "r5"                      "r6"                     
-# [35] "follow_up"               "no_context_3"           
-# [37] "no_context_4"            "anc_tate"               
-# [39] "app_tate"                "anc_identity"           
-# [41] "app_identity"            "alpha"                  
-# [43] "exact"                   "anc_polar"              
-# [45] "app_polar"               "esystems"               
-# [47] "anc_app_esystems"        "anc_esystems_alphabet"  
-# [49] "anc_esystems_temporal"   "app_tate_repeat"        
-# [51] "app_identity_repeat"     "app_polar_repeat"       
-# [53] "anc_app_esystems_repeat"
+#  [1] "identity"                "reverse"
+#  [3] "tate_order"              "type"
+#  [5] "no_context_3"            "no_context_4"
+#  [7] "anc_tate"                "app_tate"
+#  [9] "anc_identity"            "app_identity"
+# [11] "alpha"                   "exact"
+# [13] "anc_polar"               "app_polar"
+# [15] "esystems"                "anc_app_esystems"
+# [17] "anc_esystems_alphabet"   "anc_esystems_temporal"
+# [19] "app_tate_repeat"         "app_identity_repeat"
+# [21] "app_polar_repeat"        "anc_app_esystems_repeat"
 
-setdiff(names(test_link), names(mock_data))
-# [1] "caseid"      "period"      "version"     "exit_status" "disposition"
-# [6] "last_page" 
-
-intersect(names(test_link), names(mock_data))
-#   [1] "immigrant"                 "birthyr"                  
-#   [3] "age"                       "age4"                     
-#   [5] "gender3"                   "gender3_other"            
-#   [7] "race"                      "race4"                    
-#   [9] "hispanic"                  "educ"                     
-#  [11] "educ4"                     "pid3"                     
-#  [13] "pid3_t"                    "pid7"                     
-#  [15] "pid7others"                "ternovski2_1"             
-#  [17] "ternovski2_2"              "ternovski2_3"             
-#  [19] "ternovski2_4"              "ternovski2_5"             
-#  [21] "inputstate"                "region"                   
-#  [23] "area"                      "faminc_new"               
-#  [25] "religpew"                  "religpew_t"               
-#  [27] "newsint"                   "ideo7"                    
-#  [29] "votereg"                   "votereg2"                 
-#  [31] "turnout20post"             "presvote20post"           
-#  [33] "presvote20post_t"          "turnout22post"            
-#  [35] "housevote22post"           "housevote22post_t"        
-#  [37] "freeform"                  "consent"                  
-#  [39] "rand_1_ranking"            "no_context_3_1"           
-#  [41] "no_context_3_2"            "no_context_3_3"           
-#  [43] "no_context_4_1"            "no_context_4_2"           
-#  [45] "no_context_4_3"            "no_context_4_4"           
-#  [47] "tate_order_q"              "anc_tate_1"               
-#  [49] "anc_tate_2"                "anc_tate_3"               
-#  [51] "app_tate_1"                "app_tate_2"               
-#  [53] "app_tate_3"                "berinsky_1"               
-#  [55] "berinsky_2"                "berinsky_3"               
-#  [57] "berinsky_4"                "berinsky_5"               
-#  [59] "berinsky_6"                "berinsky_7"               
-#  [61] "berinsky_8"                "berinsky_9"               
-#  [63] "berinsky_10"               "berinsky_11"              
-#  [65] "berinsky_12"               "berinsky_13"              
-#  [67] "berinsky_14"               "berinsky_15"              
-#  [69] "berinsky_16"               "berinsky_17"              
-#  [71] "berinsky_18"               "hopkins_order_q"          
-#  [73] "anc_identity_1"            "anc_identity_2"           
-#  [75] "anc_identity_3"            "anc_identity_4"           
-#  [77] "app_identity_1"            "app_identity_2"           
-#  [79] "app_identity_3"            "app_identity_4"           
-#  [81] "rand_2_ranking"            "anc_identity_alphabet_1"  
-#  [83] "anc_identity_alphabet_2"   "anc_identity_alphabet_3"  
-#  [85] "anc_identity_alphabet_4"   "anc_identity_exact_1"     
-#  [87] "anc_identity_exact_2"      "anc_identity_exact_3"     
-#  [89] "anc_identity_exact_4"      "hobbies_1"                
-#  [91] "hobbies_2"                 "hobbies_3"                
-#  [93] "hobbies_4"                 "hobbies_5"                
-#  [95] "hobbies_6"                 "hobbies_7"                
-#  [97] "hobbies_8"                 "hobbies_t"                
-#  [99] "socialize"                 "polar_order_q"            
-# [101] "anc_polar_1"               "anc_polar_2"              
-# [103] "anc_polar_3"               "anc_polar_4"              
-# [105] "anc_polar_5"               "app_polar_1"              
-# [107] "app_polar_2"               "app_polar_3"              
-# [109] "app_polar_4"               "app_polar_5"              
-# [111] "esystems_order_q"          "anc_esystems_1"           
-# [113] "anc_esystems_2"            "anc_esystems_3"           
-# [115] "anc_esystems_4"            "anc_esystems_5"           
-# [117] "anc_esystems_6"            "anc_app_esystems_1"       
-# [119] "anc_app_esystems_2"        "anc_app_esystems_3"       
-# [121] "anc_app_esystems_4"        "anc_app_esystems_5"       
-# [123] "anc_app_esystems_6"        "rand_3_ranking"           
-# [125] "anc_esystems_alphabet_1"   "anc_esystems_alphabet_2"  
-# [127] "anc_esystems_alphabet_3"   "anc_esystems_alphabet_4"  
-# [129] "anc_esystems_alphabet_5"   "anc_esystems_alphabet_6"  
-# [131] "anc_esystems_temporal_1"   "anc_esystems_temporal_2"  
-# [133] "anc_esystems_temporal_3"   "anc_esystems_temporal_4"  
-# [135] "anc_esystems_temporal_5"   "anc_esystems_temporal_6"  
-# [137] "rand_4_ranking"            "rand_5_ranking"           
-# [139] "app_tate_repeat_1"         "app_tate_repeat_2"        
-# [141] "app_tate_repeat_3"         "app_identity_repeat_1"    
-# [143] "app_identity_repeat_2"     "app_identity_repeat_3"    
-# [145] "app_identity_repeat_4"     "app_polar_repeat_1"       
-# [147] "app_polar_repeat_2"        "app_polar_repeat_3"       
-# [149] "app_polar_repeat_4"        "app_polar_repeat_5"       
-# [151] "anc_app_esystems_repeat_1" "anc_app_esystems_repeat_2"
-# [153] "anc_app_esystems_repeat_3" "anc_app_esystems_repeat_4"
-# [155] "anc_app_esystems_repeat_5" "anc_app_esystems_repeat_6"
-# [157] "police"                    "reform"                   
-# [159] "gun"                       "abortion"                 
-# [161] "environment"               "respondent_status" 
+View(mock_data[, setdiff(names(mock_data), names(test_link))])
+# Because they are all filled with 9s, hard to know what these are
 
 # Combine and investigate ======================================================
+# df <- bind_rows(mock_data, test_link)
+# Not advisable. immigrant in double for mock data, similarly for other vars
+# e.g., age4, respondent_status, consent, gender3, race, ...
+# These are all character in the test link data
+# Not sure what the final output will resemble
 
+test_link %>%
+  select(contains("no_context_3"))
+# A tibble: 9 × 8
+#   no_context_3_1 no_context_3_2 no_context_3_3 m_no_context_3_module_rnd no_context_3_col_rnd no_context_3_row_rnd  p_no_context_3_page_rnd page_no_context_3_page_timing
+#            <dbl>          <dbl>          <dbl> <chr>                     <chr>                <chr>                 <chr>                                           <dbl>
+# 1              2              3              1 as-is(0, [0,1])           as-is(0, [0,1,2])    randomize(5, [2,0,1]) as-is(0, [0,1])                                 14.2
+# 2              2              1              3 as-is(0, [0,1])           as-is(0, [0,1,2])    randomize(0, [0,1,2]) as-is(0, [0,1])                                 47.6
+# 3             NA             NA             NA as-is(0, [0,1])           NA                   NA                    NA                                               0
+# 4              3              2              1 as-is(0, [0,1])           as-is(0, [0,1,2])    randomize(0, [0,1,2]) as-is(0, [0,1])                                 11.0
+# 5              2              3              1 as-is(0, [0,1])           as-is(0, [0,1,2])    randomize(5, [2,0,1]) as-is(0, [0,1])                                 31.2
+# 6             NA             NA             NA as-is(0, [0,1])           NA                   NA                    NA                                               0
+# 7              2              3              1 as-is(0, [0,1])           as-is(0, [0,1,2])    randomize(5, [2,0,1]) as-is(0, [0,1])                                  4.39
+# 8             NA             NA             NA as-is(0, [0,1])           NA                   NA                    NA                                               0
+# 9             NA             NA             NA as-is(0, [0,1])           NA                   NA                    NA                                               0
+
+test_link %>%
+  select(contains("app_tate")) %>%
+  select(-contains("repeat"))
+
+# A tibble: 9 × 7
+#   app_tate_1 app_tate_2 app_tate_3 app_tate_col_rnd  app_tate_row_rnd      p_app_tate_page_rnd page_app_tate_page_timing
+#        <dbl>      <dbl>      <dbl> <chr>             <chr>                 <chr>                                   <dbl>
+# 1          1          2          3 as-is(0, [0,1,2]) randomize(1, [1,0,2]) as-is(0, [0,1])                          5.63
+# 2          1          2          3 as-is(0, [0,1,2]) randomize(0, [0,1,2]) as-is(0, [0,1])                         23.0
+# 3          1          3          2 as-is(0, [0,1,2]) randomize(2, [0,2,1]) as-is(0, [0,1])                         27.5
+# 4          3          2          1 as-is(0, [0,1,2]) randomize(0, [0,1,2]) as-is(0, [0,1])                         20.8
+# 5          1          2          3 as-is(0, [0,1,2]) randomize(4, [2,1,0]) as-is(0, [0,1])                         27.2
+# 6          1          2          3 as-is(0, [0,1,2]) randomize(0, [0,1,2]) as-is(0, [0,1])                        223.
+# 7          1          2          3 as-is(0, [0,1,2]) randomize(5, [2,0,1]) as-is(0, [0,1])                          9.33
+# 8          1          2          3 as-is(0, [0,1,2]) randomize(2, [0,2,1]) as-is(0, [0,1])                        245.
+# 9          1          2          3 as-is(0, [0,1,2]) randomize(1, [1,0,2]) as-is(0, [0,1])                         18.0
+
+# Looks great
+test_link %>%
+  select(contains("row_rnd")) %>%
+  View()
+
+# Recovering diagonalizing + sincere tests
+sk_test <- test_link %>%
+  filter(birthyr == "1920") %>%
+  filter(grepl("SK", freeform))
+
+sk_test %>%
+  select(contains("no_context_3"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing")
+  ) %>%
+  filter(!is.na(no_context_3_1))
+
+#   no_context_3_1 no_context_3_2 no_context_3_3 no_context_3_row_rnd  freeform
+#            <dbl>          <dbl>          <dbl> <chr>                 <chr>
+# 1              3              2              1 randomize(0, [0,1,2]) SK: diagonalizing but in the opposite direction
+# 2              2              3              1 randomize(5, [2,0,1]) SK: nonrandom ranking trial 1
+# 3              2              3              1 randomize(5, [2,0,1]) SK: nonrandom ranking trial 3
+
+# Yes, diagonal
+main %>%
+  # 312 is the equivalent for `randomize(5, [2,0,1])`
+  filter(no_context_3_options_do == "312" & no_context_3_options == "231") %>%
+  .$no_context_3_options_observed %>%
+  table()
+
+sk_test %>%
+  select(contains("app_tate"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat")
+  )
+
+#   app_tate_1 app_tate_2 app_tate_3 app_tate_row_rnd      freeform                                               
+#        <dbl>      <dbl>      <dbl> <chr>                 <chr>                                                  
+# 1          1          3          2 randomize(2, [0,2,1]) SK: straightlining experiment                          
+# 2          3          2          1 randomize(0, [0,1,2]) SK: diagonalizing but in the opposite direction        
+# 3          1          2          3 randomize(4, [2,1,0]) SK: nonrandom ranking trial 1                          
+# 4          1          2          3 randomize(0, [0,1,2]) SK: nonrandom ranking trial 2                          
+# 5          1          2          3 randomize(5, [2,0,1]) SK: nonrandom ranking trial 3                          
+# 6          1          2          3 randomize(2, [0,2,1]) SK: nonrandom ranking trial 4...?                      
+# 7          1          2          3 randomize(1, [1,0,2]) SK: final test to see why repeat questions might be off
+
+sk_test %>%
+  select(contains("anc_tate"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat")
+  )
+
+#   anc_tate_1 anc_tate_2 anc_tate_3 anc_tate_row_rnd      freeform                                               
+#        <dbl>      <dbl>      <dbl> <chr>                 <chr>                                                  
+# 1          2          3          1 randomize(5, [2,0,1]) SK: straightlining experiment                          
+# 2          3          2          1 randomize(0, [0,1,2]) SK: diagonalizing but in the opposite direction        
+# 3          1          2          3 randomize(2, [0,2,1]) SK: nonrandom ranking trial 1                          
+# 4          1          2          3 randomize(1, [1,0,2]) SK: nonrandom ranking trial 2                          
+# 5          1          2          3 randomize(5, [2,0,1]) SK: nonrandom ranking trial 3                          
+# 6          1          2          3 randomize(3, [1,2,0]) SK: nonrandom ranking trial 4...?                      
+# 7          1          2          3 randomize(3, [1,2,0]) SK: final test to see why repeat questions might be off
+
+sk_test %>%
+  select(contains("anc_identity"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat"),
+    -contains("alphabet"), -contains("exact")
+  )
+
+sk_test %>%
+  select(contains("anc_identity"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat")
+  ) %>%
+  select(contains("alphabet"), freeform) %>%
+  filter(!is.na(anc_identity_alphabet_1))
+
+# Where did I mess up as a researcher and generate 1-2-4-3?
+# Oh no, it's working as intended, because in YouGov survey, reference set was
+# exact_1- prompt once on skip Friends
+# exact_2- prompt once on skip Parents
+# exact_3- prompt once on skip Relatives
+# exact_4- prompt once on skip Teachers
+
+sk_test %>%
+  select(contains("anc_identity"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat")
+  ) %>%
+  select(contains("exact"), freeform) %>%
+  filter(!is.na(anc_identity_exact_1))
+
+sk_test %>%
+  select(contains("anc_polar"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat"),
+    -contains("alphabet"), -contains("temporal")
+  )
+
+sk_test %>%
+  select(contains("anc_esystems"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat"),
+    -contains("alphabet"), -contains("temporal")
+  )
+
+sk_test %>%
+  select(contains("anc_esystems"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat")
+  ) %>%
+  select(contains("alphabet"), freeform) %>%
+  filter(!is.na(anc_esystems_alphabet_1))
+
+sk_test %>%
+  select(contains("anc_esystems"), freeform) %>%
+  select(
+    -contains("col_rnd"), -contains("page_rnd"),
+    -contains("module_rnd"), -contains("timing"), -contains("repeat")
+  ) %>%
+  select(contains("temporal"), freeform) %>%
+  filter(!is.na(anc_esystems_temporal_1))
+
+# Other diagonalizing of anchor questions all pass!
