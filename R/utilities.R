@@ -4,6 +4,7 @@ library(MASS)
 library(here)
 library(combinat) # For permn
 library(gtools) # For permute
+library(tidyselect)
 library(tidyverse)
 library(styler)
 library(PLMIX) # For switch_ord_rank()
@@ -23,13 +24,6 @@ source(here("R", "vis_ranking.R"))
 source(here("R", "weight_patterns.R"))
 
 # Parameters/stored vectors ====================================================
-qualtrics_meta <- c(
-  "start_date", "end_date", "status", "ip_address", "progress",
-  "duration_in_seconds", "finished", "recorded_date", "response_id",
-  "recipient_last_name", "recipient_first_name", "recipient_email",
-  "external_reference", "location_latitude", "location_longitude",
-  "distribution_channel", "user_language", "q_recaptcha_score", "consent"
-)
 bootstrap_n <- 1000
 root_var <- c(
   tate = "123",
@@ -156,21 +150,34 @@ pivot_join <- function(x, y) {
 yougov_import <- function(fname) {
   ## Exported using not the choice text but numeric values
   df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE) %>%
-    clean_names() 
+    clean_names() %>%
+    mutate(response_id = str_pad(row_number(), width = 4, pad = "0")) %>%
+    select(response_id, everything())
   
-    # Check for timing variables
-    # Check for duration + start time + end time
-  
-    # filter(
-    #   start_date != "Start Date" &
-    #     start_date != '{"ImportId":"startDate","timeZone":"America/Denver"}'
-    # ) %>%
-    # mutate(
-    #   duration_in_seconds = as.numeric(duration_in_seconds),
-    #   duration_in_minutes = duration_in_seconds / 60,
-    #   q_recaptcha_score = as.numeric(q_recaptcha_score)
-    # )
+  ## Metadata
+  yougov_meta <- c(
+    "version", "exit_status", "respondent_status", "disposition", "last_page",
+    "endtime", "favor_or_oppose", "follow_up", "hcountry_code", "perc_skipped",
+    "phone_flag", "points", 
+    ## I don't know what these are + must request browser types
+    "posneg", "r1", "r2", "r3", "r4", "r5", "r6"
+  )
 
+  # Check for timing variables
+  # Check for duration + start time + end time
+
+  # filter(
+  #   start_date != "Start Date" &
+  #     start_date != '{"ImportId":"startDate","timeZone":"America/Denver"}'
+  # ) %>%
+  # mutate(
+  #   duration_in_seconds = as.numeric(duration_in_seconds),
+  #   duration_in_minutes = duration_in_seconds / 60,
+  #   q_recaptcha_score = as.numeric(q_recaptcha_score)
+  # )
+
+  ## Aggressively rename variables 
+  ## Next time, alert YouGov to preferred module/page names!
   temp <- df_raw %>%
     ## Make consistent with root_var
     ## Fix typos and inconsistencies in names
@@ -179,20 +186,130 @@ yougov_import <- function(fname) {
     rename_with(~ gsub("polarization", "polar", .x)) %>%
     rename_with(~ gsub("identityhopkins", "anc_identity", .x)) %>%
     rename_with(~ gsub("holidays", "anc_polar", .x)) %>%
-    rename_with(~ gsub("^alpha_", "anc_identity_alphabet_", .x)) %>%
-    rename_with(~ gsub("^exact_", "anc_identity_exact_", .x)) %>%
+    rename_with(~ gsub("^alpha_", "anc_id_alphabet_", .x)) %>%
+    rename_with(~ gsub("^exact_", "anc_id_exact_", .x)) %>%
     rename_with(~ gsub("^esystems_", "anc_esystems_", .x)) %>%
     rename_with(~ gsub("affectivepolar", "_polar", .x)) %>%
     rename_with(~ gsub("_1993", "", .x)) %>%
     rename_with(~ gsub("TernovskyScreener", "ternovski", .x)) %>%
     rename_with(~ gsub("apsa_", "esystems_", .x)) %>%
-    rename_with(~ gsub("ternovsky_screener", "ternovski", .x)) %>%
+    rename_with(~ gsub("ternovsky_screener2", "ternovski", .x)) %>%
     rename_with(~ gsub("berinskyscreener", "berinsky", .x)) %>%
-    rename_with(~ gsub("estemporal", "anc_esystems_temporal", .x)) %>%
-    rename_with(~ gsub("esalphabet", "anc_esystems_alphabet", .x)) %>%
-    rename_with(~ gsub("esystems_app", "app_esystems", .x))
+    rename_with(~ gsub("estemporal", "anc_es_temporal", .x)) %>%
+    rename_with(~ gsub("esalphabet", "anc_es_alphabet", .x)) %>%
+    rename_with(~ gsub("esystems_app", "app_esystems", .x)) %>%
+    rename_with(~ gsub("anc_app_esystems", "app_esystems", .x))
 
-  return(list(main = temp, raw = df_raw))
+  ## Print raw data's number of rows
+  message(paste0("We have total ", nrow(temp), " respondents."))
+  
+  ## Make sure that there are no variations in the _module_rnd
+  temp_rnd <- temp %>%
+    select(
+      ends_with("_module_rnd"),
+      ends_with("_page_rnd"), 
+      ends_with("_col_rnd"), 
+      ends_with("order_q_rnd")
+    )
+  
+  for (v in names(temp_rnd)) {
+    ## After NAs are dismissed, there should be only one entry
+    assert_that(length(setdiff(unique(temp_rnd[[v]]), NA)) < 2)
+  }
+  
+  ## Separate out timing variables away from substantial responses
+  timing <- temp %>%
+    select(
+      response_id,
+      matches(yougov_meta %>% paste(collapse = "|")),
+      ## Timing
+      ends_with("_timing"), 
+      ## No module-level, column, or page randomization took place
+      ## Randomization was actually recorded in variables such as tate_order_q
+      # ends_with("_module_rnd"),
+      # ends_with("_page_rnd"),
+      # ends_with("_col_rnd"),
+      ## This is also empty
+      # ends_width("order_q_rnd"),
+      ## This is the important bit for robustness checks
+      ends_with("_order_q"),
+      ends_with("berinsky_rnd"),
+      ## This indicates whether they were exposed to no-context 3 options vs. 4
+      ## and such; it's pretty straightforward from NA values
+      ## and besides, the naming and values are very uninformative
+      # ends_with("_ranking")
+      ## I'm not even sure what these are
+      ## rand_5_ranking_rnd for example was randomized
+      # starts_with("p_implicit_page_")
+      # ends_with("_ranking_rnd)
+      starts_with("rand_fact")
+    )
+  
+  main <- temp %>% 
+    select(
+      !ends_with("_rnd"),
+      ends_with("_row_rnd")
+    ) %>%
+    select(
+      -ends_with("_timing"),
+      # -ends_with("_module_rnd"),
+      # -ends_with("_page_rnd"),
+      # -ends_with("_col_rnd"),
+      # -ends_with("berinsky_rnd"),
+      # -ends_with("_ranking_rnd"),
+      -ends_with("_order_q"),
+      -ends_with("_ranking"),
+      -matches(yougov_meta %>% paste(collapse = "|")),
+      -starts_with("p_implicit_page_"),
+      -starts_with("rand_fact")
+    )
+  
+  ## Delete further unnecessary variables (recheck with real data)
+  main <- main %>%
+    ## age and age4 already exist
+    select(-contains("birthyr")) %>%
+    ## gender3 is sufficient
+    select(-gender3_other, -gender) %>%
+    ## pid3 and pid7 is sufficient
+    select(-pid3_t, -pid3_why, -pid7others, -pid7text) %>%
+    ## Other text variables
+    select(-religpew_t, -presvote20post_t, -housevote22post_t) %>%
+    ## hobbies/socialize are not substantial questions but cushions
+    select(-contains("hobbies"), -contains("socialize"))
+  
+  ## Berinsky 
+  main <- main %>%
+    mutate(
+      across(
+        contains("berinsky"),
+        ~ case_when(
+          .x == "selected" ~ 1,
+          .x == "not selected" ~ 0,
+          TRUE ~ NA_real_
+        )
+      )
+    )
+  
+  ## Unite columns
+  main <- main %>%
+    unite(
+      col = "ternovski", sep = "|",
+      ternovski_1, ternovski_2, ternovski_3, ternovski_4, ternovski_5
+    )
+  
+  ## Unite rankings into a permutation pattern, a single variable
+  main <- main %>%
+    unite_ranking()
+  
+  ## YouGov has a particular style of showing randomized item order
+  ## Make it consistent with existing code tailored to Qualtrics
+  ## e.g., "randomize(5, [2,0,1])" ---> 312
+  
+  
+  ## After filtering
+  message(paste0("We have total ", nrow(main), " respondents after filtering."))
+  
+  return(list(main = main, timing = timing, raw = df_raw))
 }
 
 ## Recover the reference (true) ranking
@@ -313,7 +430,7 @@ permn_augment <- function(tab, J = 4) {
 }
 
 ## Collapse into resulting ranking pattern in the permutation space
-unite_ranking <- function(x) {
+unite_ranking <- function(x, remove = TRUE) {
   x_raw <- x
 
   ## Find all patterns and bring it to its "root," i.e., without the _1
@@ -327,7 +444,10 @@ unite_ranking <- function(x) {
     ## Is it 3-option, 4-option, 7, 8, ...?
     l <- x %>%
       select(contains(v)) %>%
-      select(-ends_with("_do"))
+      select(
+        -ends_with("timing"), 
+        -ends_with("_rnd")
+      )
 
     if (!grepl("repeat", v)) {
       l <- l %>%
@@ -340,16 +460,10 @@ unite_ranking <- function(x) {
     }
 
     x <- x %>%
-      mutate(
-        across(
-          !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l)),
-          ~ case_when(.x == "-99" ~ "9", TRUE ~ .x)
-        )
-      ) %>%
       unite(
         !!as.name(v),
         sep = "", !!as.name(paste0(v, "_1")):!!as.name(paste0(v, "_", l)),
-        remove = FALSE
+        remove = remove
       ) %>%
       mutate(
         !!as.name(v) := case_when(
@@ -358,16 +472,6 @@ unite_ranking <- function(x) {
         )
       )
   }
-
-  ## restructure variable order
-  x <- x %>%
-    select(
-      ## names(x_raw %>% select(start_date:berinsky_screener)),
-      ## Lucid generated
-      rid, age_2, gender_2, hhi, ethnicity, hispanic, education_2,
-      political_party, region, zip,
-      everything()
-    )
 
   return(x)
 }
@@ -969,7 +1073,6 @@ vis_r <- function(data,
     }
   }
 }
-
 
 imprr <- function(data, # all data
                   rank_q, # string for ranking names
