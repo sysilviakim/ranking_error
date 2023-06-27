@@ -160,7 +160,9 @@ yougov_import <- function(fname) {
     "endtime", "favor_or_oppose", "follow_up", "hcountry_code", "perc_skipped",
     "phone_flag", "points", 
     ## I don't know what these are + must request browser types
-    "posneg", "r1", "r2", "r3", "r4", "r5", "r6"
+    "posneg", "r1", "r2", "r3", "r4", "r5", "r6",
+    "attention_check", "attention_check_word",
+    "capabilities_touch", "invalidrank", "more" 
   )
 
   # Check for timing variables
@@ -198,7 +200,10 @@ yougov_import <- function(fname) {
     rename_with(~ gsub("estemporal", "anc_es_temporal", .x)) %>%
     rename_with(~ gsub("esalphabet", "anc_es_alphabet", .x)) %>%
     rename_with(~ gsub("esystems_app", "app_esystems", .x)) %>%
-    rename_with(~ gsub("anc_app_esystems", "app_esystems", .x))
+    rename_with(~ gsub("anc_app_esystems", "app_esystems", .x)) %>%
+    ## ordering variables
+    rename_with(~ gsub("hopkins_order", "identity_order", .x)) %>%
+    rename_with(~ gsub("app_order", "tate_order", .x))
 
   ## Print raw data's number of rows
   message(paste0("We have total ", nrow(temp), " respondents."))
@@ -242,7 +247,8 @@ yougov_import <- function(fname) {
       ## rand_5_ranking_rnd for example was randomized
       # starts_with("p_implicit_page_")
       # ends_with("_ranking_rnd)
-      starts_with("rand_fact")
+      starts_with("rand_fact"),
+      ends_with("_order")
     )
   
   main <- temp %>% 
@@ -261,7 +267,8 @@ yougov_import <- function(fname) {
       -ends_with("_ranking"),
       -matches(yougov_meta %>% paste(collapse = "|")),
       -starts_with("p_implicit_page_"),
-      -starts_with("rand_fact")
+      -starts_with("rand_fact"),
+      -ends_with("_order")
     )
   
   ## Delete further unnecessary variables (recheck with real data)
@@ -269,7 +276,7 @@ yougov_import <- function(fname) {
     ## age and age4 already exist
     select(-contains("birthyr")) %>%
     ## gender3 is sufficient
-    select(-gender3_other, -gender) %>%
+    select(-contains("gender3_other"), -gender) %>%
     ## pid3 and pid7 is sufficient
     select(-pid3_t, -pid3_why, -pid7others, -pid7text) %>%
     ## Other text variables
@@ -301,10 +308,50 @@ yougov_import <- function(fname) {
   main <- main %>%
     unite_ranking()
   
+  ## Turn _row_rnd (Qualtrics equivalent of _do) into something more legible
+  var_list <- main %>% select(ends_with("_row_rnd")) %>% names()
+  
   ## YouGov has a particular style of showing randomized item order
   ## Make it consistent with existing code tailored to Qualtrics
   ## e.g., "randomize(5, [2,0,1])" ---> 312
+  ## chatGPT output, spot checked
+  item_order_transform <- function(input_string) {
+    ## Extract substring between square brackets
+    substring <- gsub(".*\\[([^]]+)\\].*", "\\1", input_string)
+    
+    ## Split the substring by comma
+    numbers <- strsplit(substring, ",")[[1]]
+    
+    ## Increment each number by 1, remove spaces, and concatenate
+    result <- ""
+    for (number in numbers) {
+      incremented_number <- as.numeric(trimws(number)) + 1
+      result <- paste0(result, incremented_number)
+    }
+    
+    ## Return NA if string NA
+    if (result == "NA") {
+      result <- NA
+    }
+    
+    ## Return the final string
+    return(result)
+  }
   
+  main <- main %>%
+    rowwise() %>%
+    mutate(across(ends_with("_row_rnd"), ~ item_order_transform(.x))) %>%
+    ungroup()
+  
+  ## Only complete responses
+  main <- main %>%
+    filter(
+      response_id %in% (
+        timing %>%
+          filter(respondent_status == "Complete") %>% 
+          .$response_id
+      )
+    )
   
   ## After filtering
   message(paste0("We have total ", nrow(main), " respondents after filtering."))
