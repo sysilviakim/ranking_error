@@ -284,11 +284,11 @@ yougov_import <- function(fname) {
     ## hobbies/socialize are not substantial questions but cushions
     select(-contains("hobbies"), -contains("socialize"))
   
-  ## Berinsky 
+  ## Berinsky and Ternovski screeners
   main <- main %>%
     mutate(
       across(
-        contains("berinsky"),
+        matches("berinsky|ternovski"),
         ~ case_when(
           .x == "selected" ~ 1,
           .x == "not selected" ~ 0,
@@ -360,6 +360,74 @@ yougov_import <- function(fname) {
   for (v in var_list) {
     main <- recover_observed_ranking(v, gsub("_row_rnd", "", v), df = main)
   }
+  
+  ## Create binary indicators for anchor question/attention check/repeat q fails
+  main <- main %>%
+    ## 1 indicates failure; 0 indicates passing the test
+    mutate(
+      ## Attention checks
+      ternovski_fail = case_when(
+        ternovski != "1|1|0|0|0" ~ 1,
+        ternovski == "1|1|0|0|0" ~ 0
+      ),
+      berinsky_fail = case_when(
+        berinsky != "000100000001000000" ~ 1,
+        berinsky == "000100000001000000" ~ 0
+      ),
+      ## Random responses
+      random_tate = case_when(
+        anc_tate != "123" ~ 1,
+        anc_tate == "123" ~ 0
+      ),
+      random_identity = case_when(
+        anc_identity != "1234" ~ 1,
+        anc_identity == "1234" ~ 0
+      ),
+      random_id_alphabet = case_when(
+        anc_id_alphabet != "1234" ~ 1,
+        anc_id_alphabet == "1234" ~ 0
+      ),
+      random_id_exact = case_when(
+        ## The reason this particular string isn't 1234 is because
+        ## teacher and relative were entered in the wrong order in the fielding
+        anc_id_alphabet != "1243" ~ 1,
+        anc_id_alphabet == "1243" ~ 0
+      ),
+      random_polar = case_when(
+        anc_polar != "12345" ~ 1,
+        anc_polar == "12345" ~ 0
+      ),
+      random_esystems = case_when(
+        anc_esystems != "123456" ~ 1,
+        anc_esystems == "123456" ~ 0
+      ),
+      random_es_alphabet = case_when(
+        anc_es_alphabet != "123456" ~ 1,
+        anc_es_alphabet == "123456" ~ 0
+      ),
+      random_es_temporal = case_when(
+        anc_es_temporal != "123456" ~ 1,
+        anc_es_temporal == "123456" ~ 0
+      ),
+      ## Repeat questions
+      repeat_tate = case_when(
+        app_tate == app_tate_repeat ~ 0,
+        app_tate == app_tate_repeat ~ 1
+      ),
+      repeat_identity = case_when(
+        app_identity == app_identity_repeat ~ 0,
+        app_identity == app_identity_repeat ~ 1
+      ),
+      repeat_polar = case_when(
+        app_polar == app_polar_repeat ~ 0,
+        app_polar == app_polar_repeat ~ 1
+      ),
+      repeat_esystems = case_when(
+        app_esystems == app_esystems_repeat ~ 0,
+        app_esystems == app_esystems_repeat ~ 1
+      )
+      ## Truncated rankings not yet propagated to main coding
+    )
   
   ## Only complete responses
   main <- main %>%
