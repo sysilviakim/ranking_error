@@ -224,7 +224,7 @@ qualtrics_import <- function(fname) {
     ## Remember, this will bring out the true ranking
     ## and not the *observed* ranking of the respondent
     ## (i.e., permutation pattern)
-    ## unless the randomization has given a 1234... order
+    ## unless the randomization has been given a 1234... order
 
     ## So if the true order respondent gave out  is 3-2-1
     ## but the order provided is                    3-1-2

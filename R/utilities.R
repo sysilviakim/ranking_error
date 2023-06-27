@@ -338,10 +338,28 @@ yougov_import <- function(fname) {
     return(result)
   }
   
+  ## Transform the item order variables
   main <- main %>%
     rowwise() %>%
     mutate(across(ends_with("_row_rnd"), ~ item_order_transform(.x))) %>%
     ungroup()
+  
+  ## Remember, we still don't have the *observed* ranking of the respondent
+  ## unless the randomization has been given a 1234... natural order
+  
+  ## So if the true order respondent gave out  is 3-2-1
+  ## but the order provided is                    3-1-2
+  ## the *observed* ranking is                    1-3-2
+  ## unite_ranking() will give 321 for this respondent.
+  
+  ## Simiarly, if the true order respondent gave out is 6-3-2-7-1-4-5
+  ## but the order provided is                          6-1-5-2-7-3-4
+  ## the true order respondent provided is              4-6-1-3-5-2-7
+
+  ## Recover observed rankings
+  for (v in var_list) {
+    main <- recover_observed_ranking(v, gsub("_row_rnd", "", v), df = main)
+  }
   
   ## Only complete responses
   main <- main %>%
@@ -384,7 +402,7 @@ recover_observed_ranking <- function(presented_order, true_order, df = NULL) {
       stop("Response order variable is not in the dataframe.")
     }
 
-    variable_name <- gsub("_do", "_observed", presented_order)
+    variable_name <- gsub("_row_rnd", "_observed", presented_order)
     presented_order <- df[[presented_order]] %>%
       map(~ strsplit(.x, "")[[1]])
     true_order <- df[[true_order]] %>%
