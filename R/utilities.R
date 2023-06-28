@@ -17,6 +17,7 @@ library(xtable)
 library(estimatr)
 library(ggpubr)
 library(Kmisc) ## None-CRAN package. Will wean eventually
+library(lubridate)
 
 # Read all functions
 source(here("R", "rpluce.R"))
@@ -249,6 +250,10 @@ yougov_import <- function(fname) {
       # ends_with("_ranking_rnd)
       starts_with("rand_fact"),
       ends_with("_order")
+    ) %>%
+    mutate(
+      duration_in_seconds = as.numeric(ms(endtime)),
+      duration_in_minutes = duration_in_seconds / 60
     )
   
   main <- temp %>% 
@@ -356,9 +361,9 @@ yougov_import <- function(fname) {
   ## but the order provided is                          6-1-5-2-7-3-4
   ## the true order respondent provided is              4-6-1-3-5-2-7
 
-  ## Recover observed rankings
+  ## Recover recorded rankings
   for (v in var_list) {
-    main <- recover_observed_ranking(v, gsub("_row_rnd", "", v), df = main)
+    main <- recover_recorded_rankings(v, gsub("_row_rnd", "", v), df = main)
   }
   
   ## Create binary indicators for anchor question/attention check/repeat q fails
@@ -430,14 +435,11 @@ yougov_import <- function(fname) {
     )
   
   ## Only complete responses
+  timing <- timing %>%
+    filter(respondent_status == "Complete")
+
   main <- main %>%
-    filter(
-      response_id %in% (
-        timing %>%
-          filter(respondent_status == "Complete") %>% 
-          .$response_id
-      )
-    )
+    filter(response_id %in% timing$response_id)
   
   ## After filtering
   message(paste0("We have total ", nrow(main), " respondents after filtering."))
@@ -447,7 +449,7 @@ yougov_import <- function(fname) {
 
 ## Recover the reference (true) ranking
 ## with respect to the reference item set (here: {abc})
-recover_observed_ranking <- function(presented_order, true_order, df = NULL) {
+recover_recorded_rankings <- function(presented_order, true_order, df = NULL) {
   if (is.null(df)) {
     ## Expect as inputs simple strings such as "312" "321"
     presented_order <- strsplit(presented_order, "")[[1]]
@@ -470,7 +472,7 @@ recover_observed_ranking <- function(presented_order, true_order, df = NULL) {
       stop("Response order variable is not in the dataframe.")
     }
 
-    variable_name <- gsub("_row_rnd", "_observed", presented_order)
+    variable_name <- gsub("_row_rnd", "_recorded", presented_order)
     presented_order <- df[[presented_order]] %>%
       map(~ strsplit(.x, "")[[1]])
     true_order <- df[[true_order]] %>%
@@ -498,14 +500,14 @@ recover_observed_ranking <- function(presented_order, true_order, df = NULL) {
   }
 }
 
-## Plot the distribution of observed rankings (over permutation space)
+## Plot the distribution of recorded values (over permutation space)
 plot_dist_ranking <- function(x, ylim = 0.315) {
   J <- nchar(as.character(x$ranking[[1]]))
   x %>%
     ggplot(aes(x = ranking, y = prop, fill = "1")) +
     geom_col() +
     scale_fill_manual(values = "firebrick4") +
-    xlab("Observed Ranking") +
+    xlab("Recorded Rankings") +
     ylab("") +
     scale_y_continuous(labels = scales::percent, limits = c(0, ylim)) +
     geom_hline(yintercept = 1 / factorial(J)) +
