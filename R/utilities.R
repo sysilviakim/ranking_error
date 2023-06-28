@@ -149,8 +149,13 @@ pivot_join <- function(x, y) {
 
 ## import and wrangle Qualtrics data
 yougov_import <- function(fname) {
+  if (grepl(".csv", fname)) {
+    df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE)
+  } else {
+    df_raw <- read_sav(here("data", "raw", fname), show_col_types = FALSE)
+  }
   ## Exported using not the choice text but numeric values
-  df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE) %>%
+  df_raw <- df_raw %>%
     clean_names() %>%
     mutate(response_id = str_pad(row_number(), width = 4, pad = "0")) %>%
     select(response_id, everything())
