@@ -18,6 +18,7 @@ library(estimatr)
 library(ggpubr)
 library(Kmisc) ## None-CRAN package. Will wean eventually
 library(lubridate)
+library(haven)
 
 # Read all functions
 source(here("R", "rpluce.R"))
@@ -152,7 +153,7 @@ yougov_import <- function(fname) {
   if (grepl(".csv", fname)) {
     df_raw <- read_csv(here("data", "raw", fname), show_col_types = FALSE)
   } else {
-    df_raw <- read_sav(here("data", "raw", fname), show_col_types = FALSE)
+    df_raw <- read_sav(here("data", "raw", fname))
   }
   ## Exported using not the choice text but numeric values
   df_raw <- df_raw %>%
@@ -225,11 +226,36 @@ yougov_import <- function(fname) {
   
   for (v in names(temp_rnd)) {
     ## After NAs are dismissed, there should be only one entry
-    assert_that(length(setdiff(unique(temp_rnd[[v]]), NA)) < 2)
+    assert_that(length(setdiff(unique(temp_rnd[[v]]), c(NA, "NA"))) < 2)
   }
   
+  ## Further zero-variance variables
+  temp2 <- Filter(
+    function(x) case_when(
+      all(is.na(x)) ~ FALSE,
+      !any(is.na(x)) & var(x, na.rm = TRUE) == 0 ~ FALSE,
+      TRUE ~ TRUE
+    ), 
+    temp
+  )
+  
+  setdiff(names(temp), names(temp2))
+  #  [1] "consent"                               "invalidrank"                          
+  #  [3] "page_esystems_order_q_timing"          "page_back_timing"                     
+  #  [5] "page_birthyr_timing"                   "page_check_scores_timing"             
+  #  [7] "page_educ4_timing"                     "page_gender_timing"                   
+  #  [9] "page_headers_timing"                   "page_identity_order_q_timing"         
+  # [11] "page_immigrant_screen_out_page_timing" "page_mobilescreenpage_timing"         
+  # [13] "page_p_empty_timing"                   "page_polar_order_q_timing"            
+  # [15] "page_race4_timing"                     "page_rand_1_ranking_timing"           
+  # [17] "page_rand_2_ranking_timing"            "page_rand_3_ranking_timing"           
+  # [19] "page_rand_4_ranking_timing"            "page_rand_5_ranking_timing"           
+  # [21] "page_region_timing"                    "page_tate_order_q_timing"             
+  # [23] "page_three_strikes_timing"             "page_votereg2_timing"                 
+  # [25] "page_welcomeset_timing"                "phone_flag"    
+  
   ## Separate out timing variables away from substantial responses
-  timing <- temp %>%
+  timing <- temp2 %>%
     select(
       response_id,
       matches(yougov_meta %>% paste(collapse = "|")),
@@ -261,7 +287,7 @@ yougov_import <- function(fname) {
       duration_in_minutes = duration_in_seconds / 60
     )
   
-  main <- temp %>% 
+  main <- temp2 %>% 
     select(
       !ends_with("_rnd"),
       ends_with("_row_rnd")
@@ -286,26 +312,32 @@ yougov_import <- function(fname) {
     ## age and age4 already exist
     select(-contains("birthyr")) %>%
     ## gender3 is sufficient
-    select(-contains("gender3_other"), -gender) %>%
+    select(-contains("gender3_other"), -matches("^gender$")) %>%
     ## pid3 and pid7 is sufficient
-    select(-pid3_t, -pid3_why, -pid7others, -pid7text) %>%
+    select(-pid3_t, -matches("^pid3_why$"), -pid7others, -pid7text) %>%
     ## Other text variables
-    select(-religpew_t, -presvote20post_t, -housevote22post_t) %>%
+    select(
+      -matches("^religpew_t$"), 
+      -matches("^presvote20post_t$"), 
+      -matches("^housevote22post_t$")
+    ) %>%
     ## hobbies/socialize are not substantial questions but cushions
     select(-contains("hobbies"), -contains("socialize"))
   
   ## Berinsky and Ternovski screeners
-  main <- main %>%
-    mutate(
-      across(
-        matches("berinsky|ternovski"),
-        ~ case_when(
-          .x == "selected" ~ 1,
-          .x == "not selected" ~ 0,
-          TRUE ~ NA_real_
+  if (any(grepl("selected", main$berinsky_1))) {
+    main <- main %>%
+      mutate(
+        across(
+          matches("berinsky|ternovski"),
+          ~ case_when(
+            .x == "selected" ~ 1,
+            .x == "not selected" ~ 0,
+            TRUE ~ NA_real_
+          )
         )
       )
-    )
+  }
   
   ## Unite columns
   main <- main %>%
@@ -377,8 +409,9 @@ yougov_import <- function(fname) {
     mutate(
       ## Attention checks
       ternovski_fail = case_when(
-        ternovski != "1|1|0|0|0" ~ 1,
-        ternovski == "1|1|0|0|0" ~ 0
+        ## Test link and actual data are different
+        (ternovski != "1|1|0|0|0") & (ternovski != "1|1|2|2|2") ~ 1,
+        (ternovski == "1|1|0|0|0") | (ternovski == "1|1|2|2|2") ~ 0
       ),
       berinsky_fail = case_when(
         berinsky != "000100000001000000" ~ 1,

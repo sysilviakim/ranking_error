@@ -2,7 +2,7 @@ source(here::here("R", "utilities.R"))
 
 # Import data ==================================================================
 ## substitute file name when actual data is sent
-fname <- "american_rankchoice_june2023_testdata_0622.csv"
+fname <- "AmericanRanking_Interim_June_2023.sav"
 df_list <- yougov_import(fname)
 main <- df_list$main
 
