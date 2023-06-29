@@ -2,6 +2,10 @@ source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 
+ggsave_temp <- function(x) {
+  ggsave(here("fig", x), width = 5.5, height = 3)
+}
+
 # Setup ========================================================================
 prep_list <- root_var %>%
   imap(
@@ -158,29 +162,21 @@ save(
   file = here("output", "corrected_avg_list_data.Rda")
 )
 
-print(viz_avg(corrected_avg_list_asymp$tate))
-ggsave(here("fig", "corrected_avg_asymp_tate.pdf"), width = 5.5, height = 3)
+corrected_avg_list_asymp %>%
+  imap(
+    ~ {
+      print(viz_avg(.x))
+      ggsave_temp(paste0("corrected_avg_asymp_", .y, ".pdf"))
+    }
+  )
 
-print(viz_avg(corrected_avg_list_asymp$identity))
-ggsave(here("fig", "corrected_avg_asymp_identity.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_asymp$polar))
-ggsave(here("fig", "corrected_avg_asymp_polar.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_asymp$esystems))
-ggsave(here("fig", "corrected_avg_asymp_esystems.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data$tate))
-ggsave(here("fig", "corrected_avg_data_tate.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data$identity))
-ggsave(here("fig", "corrected_avg_data_identity.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data$polar))
-ggsave(here("fig", "corrected_avg_data_polar.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data$esystems))
-ggsave(here("fig", "corrected_avg_data_esystems.pdf"), width = 5.5, height = 3)
+corrected_avg_list_data %>%
+  imap(
+    ~ {
+      print(viz_avg(.x))
+      ggsave_temp(paste0("corrected_avg_data_", .y, ".pdf"))
+    }
+  )
 
 # Bias corrections but consistent-preference respondents =======================
 corrected_avg_list_asymp_rational <- root_var %>%
@@ -215,26 +211,19 @@ save(
   file = here("output", "corrected_avg_list_data_rational.Rda")
 )
 
-print(viz_avg(corrected_avg_list_asymp_rational$tate))
-ggsave(here("fig", "corrected_avg_asymp_tate_rational.pdf"), width = 5.5, height = 3)
+corrected_avg_list_asymp_rational %>%
+  imap(
+    ~ {
+      print(viz_avg(.x))
+      ggsave_temp(paste0("corrected_avg_asymp_", .y, "_rational.pdf"))
+    }
+  )
 
-print(viz_avg(corrected_avg_list_asymp$identity))
-ggsave(here("fig", "corrected_avg_asymp_identity_rational.pdf"), width = 5.5, height = 3)
+corrected_avg_list_data_rational %>%
+  imap(
+    ~ {
+      print(viz_avg(.x))
+      ggsave_temp(paste0("corrected_avg_data_", .y, "_rational.pdf"))
+    }
+  )
 
-print(viz_avg(corrected_avg_list_asymp_rational$polar))
-ggsave(here("fig", "corrected_avg_asymp_polar_rational.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_asymp_rational$esystems))
-ggsave(here("fig", "corrected_avg_asymp_esystems_rational.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data_rational$tate))
-ggsave(here("fig", "corrected_avg_data_tate_rational.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data_rational$identity))
-ggsave(here("fig", "corrected_avg_data_identity_rational.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data_rational$polar))
-ggsave(here("fig", "corrected_avg_data_polar_rational.pdf"), width = 5.5, height = 3)
-
-print(viz_avg(corrected_avg_list_data_rational$esystems))
-ggsave(here("fig", "corrected_avg_data_esystems_rational.pdf"), width = 5.5, height = 3)
