@@ -15,7 +15,10 @@ prep_list <- root_var %>%
           contains(paste0("app_", .y)),
           matches(paste0("anc_", .y)),
           matches(paste0("anc_correct_", .y, "$")),
-          matches(paste0("anc_", .y, "_recorded"))
+          matches(paste0("anc_", .y, "_recorded")),
+          pid3final,
+          partisan,
+          race4
         ) %>%
         select(-contains("row_rnd")) %>%
         select(-matches("^inputstate$"))
@@ -146,22 +149,6 @@ save(
   file = here("output", "corrected_avg_list_asymp.Rda")
 )
 
-corrected_avg_list_data <- root_var %>%
-  imap(
-    ~ imprr(
-      dat = prep_list[[.y]]$full,
-      main_q = paste0("app_", .y),
-      anchor_q = paste0("anc_", .y),
-      anc_correct = paste0("anc_correct_", .y),
-      main_labels = prep_list[[.y]]$labels,
-      asymptotics = FALSE
-    )
-  )
-save(
-  corrected_avg_list_data,
-  file = here("output", "corrected_avg_list_data.Rda")
-)
-
 corrected_avg_list_asymp %>%
   imap(
     ~ {
@@ -170,15 +157,7 @@ corrected_avg_list_asymp %>%
     }
   )
 
-corrected_avg_list_data %>%
-  imap(
-    ~ {
-      print(viz_avg(.x))
-      ggsave_temp(paste0("corrected_avg_data_", .y, ".pdf"))
-    }
-  )
-
-# Bias corrections but consistent-preference respondents =======================
+# Consistent-preference respondents subset =====================================
 corrected_avg_list_asymp_rational <- root_var %>%
   imap(
     ~ imprr(
@@ -195,22 +174,6 @@ save(
   file = here("output", "corrected_avg_list_asymp_rational.Rda")
 )
 
-corrected_avg_list_data_rational <- root_var %>%
-  imap(
-    ~ imprr(
-      dat = prep_list[[.y]]$rational,
-      main_q = paste0("app_", .y),
-      anchor_q = paste0("anc_", .y),
-      anc_correct = paste0("anc_correct_", .y),
-      main_labels = prep_list[[.y]]$labels,
-      asymptotics = FALSE
-    )
-  )
-save(
-  corrected_avg_list_data_rational,
-  file = here("output", "corrected_avg_list_data_rational.Rda")
-)
-
 corrected_avg_list_asymp_rational %>%
   imap(
     ~ {
@@ -219,11 +182,133 @@ corrected_avg_list_asymp_rational %>%
     }
   )
 
-corrected_avg_list_data_rational %>%
+# By party =====================================================================
+corrected_avg_list_asymp_pid3 <- root_var %>%
   imap(
-    ~ {
-      print(viz_avg(.x))
-      ggsave_temp(paste0("corrected_avg_data_", .y, "_rational.pdf"))
-    }
+    ~ prep_list[[.y]]$full %>%
+      group_split(pid3final, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$pid3final[1]) %>% unlist()) %>%
+      imap(
+        function(x, y) {
+          imprr(
+            dat = x,
+            main_q = paste0("app_", .y),
+            anchor_q = paste0("anc_", .y),
+            anc_correct = paste0("anc_correct_", .y),
+            main_labels = prep_list[[.y]]$labels,
+            asymptotics = TRUE
+          )
+        }
+      )
   )
+save(
+  corrected_avg_list_asymp_pid3,
+  file = here("output", "corrected_avg_list_asymp_pid3.Rda")
+)
+
+corrected_avg_list_asymp_pid3 %>%
+  imap(
+    ~ .x %>%
+      imap(
+        function(x, y) {
+          print(viz_avg(x))
+          ggsave_temp(
+            paste0(
+              "corrected_avg_asymp_", .y, "_pid3_", 
+              gsub(" ", "_", tolower(y)), ".pdf"
+            )
+          )
+        }
+      )
+  )
+
+# By strength of partisanship ==================================================
+corrected_avg_list_asymp_partisan <- root_var %>%
+  imap(
+    ~ prep_list[[.y]]$full %>%
+      group_split(partisan, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$partisan[1]) %>% unlist()) %>%
+      imap(
+        function(x, y) {
+          imprr(
+            dat = x,
+            main_q = paste0("app_", .y),
+            anchor_q = paste0("anc_", .y),
+            anc_correct = paste0("anc_correct_", .y),
+            main_labels = prep_list[[.y]]$labels,
+            asymptotics = TRUE
+          )
+        }
+      )
+  )
+save(
+  corrected_avg_list_asymp_partisan,
+  file = here("output", "corrected_avg_list_asymp_partisan.Rda")
+)
+
+corrected_avg_list_asymp_partisan %>%
+  imap(
+    ~ .x %>%
+      imap(
+        function(x, y) {
+          print(viz_avg(x))
+          ggsave_temp(
+            paste0(
+              "corrected_avg_asymp_", .y, "_partisan_", 
+              gsub(" ", "_", tolower(y)), ".pdf"
+            )
+          )
+        }
+      )
+  )
+
+# By race ======================================================================
+corrected_avg_list_asymp_race <- root_var %>%
+  imap(
+    ~ prep_list[[.y]]$full %>%
+      group_split(race4, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$race4[1]) %>% unlist()) %>%
+      imap(
+        function(x, y) {
+          imprr(
+            dat = x,
+            main_q = paste0("app_", .y),
+            anchor_q = paste0("anc_", .y),
+            anc_correct = paste0("anc_correct_", .y),
+            main_labels = prep_list[[.y]]$labels,
+            asymptotics = TRUE
+          )
+        }
+      )
+  )
+save(
+  corrected_avg_list_asymp_race,
+  file = here("output", "corrected_avg_list_asymp_race.Rda")
+)
+
+corrected_avg_list_asymp_race %>%
+  imap(
+    ~ .x %>%
+      imap(
+        function(x, y) {
+          print(viz_avg(x))
+          ggsave_temp(
+            paste0(
+              "corrected_avg_asymp_", .y, "_race_", 
+              gsub(" ", "_", tolower(y)), ".pdf"
+            )
+          )
+        }
+      )
+  )
+
+
+
+
+
+
+
+
+
+
 
