@@ -280,9 +280,19 @@ yougov_import <- function(fname) {
       # starts_with("p_implicit_page_")
       # ends_with("_ranking_rnd)
       starts_with("rand_fact"),
-      ends_with("_order")
-    ) %>%
-    mutate(duration_in_minutes = endtime - starttime)
+      ends_with("_order"),
+      ## Whether Dem was presented first or Rep
+      matches("^dem_rep_can$"),
+      matches("^lib_con$")
+    )
+  
+  if ("starttime" %in% names(timing)) {
+    timing <- timing %>%
+      mutate(duration_in_minutes = endtime - starttime)
+  } else {
+    timing <- timing %>%
+      mutate(duration_in_minutes = as.numeric(ms(endtime)) / 60)
+  }
   
   main <- temp2 %>% 
     select(
@@ -301,7 +311,9 @@ yougov_import <- function(fname) {
       -matches(yougov_meta %>% paste(collapse = "|")),
       -starts_with("p_implicit_page_"),
       -starts_with("rand_fact"),
-      -ends_with("_order")
+      -ends_with("_order"),
+      -matches("^dem_rep_can$"),
+      -matches("^lib_con$")
     )
   
   ## Delete further unnecessary variables (recheck with real data)
@@ -435,8 +447,8 @@ yougov_import <- function(fname) {
       random_id_exact = case_when(
         ## The reason this particular string isn't 1234 is because
         ## teacher and relative were entered in the wrong order in the fielding
-        anc_id_alphabet != "1243" ~ 1,
-        anc_id_alphabet == "1243" ~ 0
+        anc_id_exact != "1243" ~ 1,
+        anc_id_exact == "1243" ~ 0
       ),
       random_polar = case_when(
         anc_polar != "12345" ~ 1,
@@ -457,19 +469,19 @@ yougov_import <- function(fname) {
       ## Repeat questions
       repeat_tate = case_when(
         app_tate == app_tate_repeat ~ 0,
-        app_tate == app_tate_repeat ~ 1
+        app_tate != app_tate_repeat ~ 1
       ),
       repeat_identity = case_when(
         app_identity == app_identity_repeat ~ 0,
-        app_identity == app_identity_repeat ~ 1
+        app_identity != app_identity_repeat ~ 1
       ),
       repeat_polar = case_when(
         app_polar == app_polar_repeat ~ 0,
-        app_polar == app_polar_repeat ~ 1
+        app_polar != app_polar_repeat ~ 1
       ),
       repeat_esystems = case_when(
         app_esystems == app_esystems_repeat ~ 0,
-        app_esystems == app_esystems_repeat ~ 1
+        app_esystems != app_esystems_repeat ~ 1
       )
       ## Truncated rankings not yet propagated to main coding
     )
@@ -1403,9 +1415,9 @@ imprr <- function(data, # all data
 
 ## Not perfectly do-not-repeat-yourself but will return later
 pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
-                                      observed = TRUE) {
-  if (observed) {
-    sfx <- "_observed"
+                                      recorded = TRUE) {
+  if (recorded) {
+    sfx <- "_recorded"
   } else {
     sfx <- ""
   }
@@ -1439,9 +1451,9 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
   ) %>%
     map(
       ~ main %>%
-        filter(!is.na(no_context_3_options_observed)) %>%
+        filter(!is.na(no_context_3_recorded)) %>%
         filter(!!as.name(v) == .x$v) %>%
-        .$no_context_3_options_observed %>%
+        .$no_context_3_recorded %>%
         table() %>%
         table_to_tibble() %>%
         plot_dist_ranking(., ylim = y_upper) +
@@ -1455,9 +1467,9 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
   ) %>%
     map(
       ~ main %>%
-        filter(!is.na(no_context_4_options_observed)) %>%
+        filter(!is.na(no_context_4_recorded)) %>%
         filter(!!as.name(v) == .x$v) %>%
-        .$no_context_4_options_observed %>%
+        .$no_context_4_recorded %>%
         table() %>%
         table_to_tibble() %>%
         plot_dist_ranking(., ylim = y_upper) +
