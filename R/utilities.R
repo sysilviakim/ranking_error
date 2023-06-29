@@ -864,32 +864,56 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
 }
 
 viz_avg <- function(data) {
-  data %>%
+  J <- nrow(data) / 2
+  p <- data %>%
     rowwise() %>%
     mutate(imp = simple_cap(imp)) %>%
     mutate(name = simple_cap(name)) %>%
+    mutate(
+      name = case_when(
+        name == "Print_media" ~ "Print Media and TV",
+        name == "Social_media" ~ "Social Media",
+        name == "Interest_groups" ~ "Interest Groups",
+        name == "Account_pol" ~ "Accountability (Politicians)",
+        name == "Account_gov" ~ "Accountability (Govt)",
+        name == "Policy_match" ~ "Median Voter Policy",
+        name == "Vote_seat" ~ "Vote-seat Consistency",
+        name == "Women" ~ "Women's Representation",
+        name == "Minority" ~ "Minority Representation",
+        TRUE ~ name
+      ),
+      name = str_pad(name, width = 28)
+    ) %>%
     ungroup() %>%
+    rename(Type = imp) %>%
     mutate(name = fct_reorder(name, est)) %>%
-    ggplot(., aes(x = fct_rev(name), y = est, color = imp)) +
+    ggplot(., aes(x = fct_rev(name), y = est, color = Type)) +
     geom_point(
-      aes(shape = imp),
-      size = 2, alpha = 0.75,
-      position = position_dodge(width = 0.6)
+      aes(shape = Type),
+      size = 2,
+      position = position_dodge(width = 0.5)
     ) +
     # Reorder by point estimate
     geom_linerange(
       aes(ymin = low, ymax = up),
-      alpha = 0.75,
-      lwd = 1, position = position_dodge(width = 0.6)
+      lwd = 1, position = position_dodge(width = 0.5)
     ) +
     scale_color_manual(values = c("#b0015a", "#999999")) +
     theme_bw() +
     coord_flip() +
     xlab("") +
     ylab("") +
-    theme(
-      legend.position = "bottom",
-      legend.title = element_text(size = 0),
-      plot.title = element_text(face = "bold")
-    )
+    ylim(1, J) +
+    geom_hline(yintercept = (J + 1) / 2, linetype = "dashed")
+  return(
+    pdf_default(p) +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        legend.margin = margin(-0.5, 0, 0, 0, unit = "cm"),
+        legend.spacing.x = unit(0, "cm"),
+        legend.spacing.y = unit(0, "cm"),
+        plot.title = element_text(face = "bold")
+      )
+  )
 }

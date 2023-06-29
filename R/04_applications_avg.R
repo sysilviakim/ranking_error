@@ -126,16 +126,59 @@ ggsave(
 )
 
 # Bias corrections =============================================================
-corrected_avg_list <- names(root_var) %>%
-  map(
+corrected_avg_list_asymp <- root_var %>%
+  imap(
     ~ imprr(
-      dat = prep_list[[.x]]$full,
-      main_q = paste0("app_", .x),
-      anchor_q = paste0("anc_", .x),
-      anc_correct = paste0("anc_correct_", .x),
-      main_labels = prep_list[[.x]]$labels,
+      dat = prep_list[[.y]]$full,
+      main_q = paste0("app_", .y),
+      anchor_q = paste0("anc_", .y),
+      anc_correct = paste0("anc_correct_", .y),
+      main_labels = prep_list[[.y]]$labels,
       asymptotics = TRUE
     )
   )
+save(
+  corrected_avg_list_asymp,
+  file = here("output", "corrected_avg_list_asymp.Rda")
+)
 
-print(pdf_default(viz_avg(corrected_avg_list$tate)))
+corrected_avg_list_data <- root_var %>%
+  imap(
+    ~ imprr(
+      dat = prep_list[[.y]]$full,
+      main_q = paste0("app_", .y),
+      anchor_q = paste0("anc_", .y),
+      anc_correct = paste0("anc_correct_", .y),
+      main_labels = prep_list[[.y]]$labels,
+      asymptotics = FALSE
+    )
+  )
+save(
+  corrected_avg_list_data,
+  file = here("output", "corrected_avg_list_data.Rda")
+)
+
+print(viz_avg(corrected_avg_list_asymp$tate))
+ggsave(here("fig", "corrected_avg_asymp_tate.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_asymp$identity))
+ggsave(here("fig", "corrected_avg_asymp_identity.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_asymp$polar))
+ggsave(here("fig", "corrected_avg_asymp_polar.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_asymp$esystems))
+ggsave(here("fig", "corrected_avg_asymp_esystems.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data$tate))
+ggsave(here("fig", "corrected_avg_data_tate.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data$identity))
+ggsave(here("fig", "corrected_avg_data_identity.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data$polar))
+ggsave(here("fig", "corrected_avg_data_polar.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data$esystems))
+ggsave(here("fig", "corrected_avg_data_esystems.pdf"), width = 5.5, height = 3)
+
