@@ -23,7 +23,7 @@ library(haven)
 # Read all functions
 source(here("R", "rpluce.R"))
 source(here("R", "vis_ranking.R"))
-source(here("R", "weight_patterns.R"))
+source(here("R", "imprr.R"))
 
 # Parameters/stored vectors ====================================================
 bootstrap_n <- 1000
@@ -865,6 +865,10 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
 
 viz_avg <- function(data) {
   data %>%
+    rowwise() %>%
+    mutate(imp = simple_cap(imp)) %>%
+    mutate(name = simple_cap(name)) %>%
+    ungroup() %>%
     mutate(name = fct_reorder(name, est)) %>%
     ggplot(., aes(x = fct_rev(name), y = est, color = imp)) +
     geom_point(
@@ -876,7 +880,7 @@ viz_avg <- function(data) {
     geom_linerange(
       aes(ymin = low, ymax = up),
       alpha = 0.75,
-      lwd = 1, position = position_dodge(width = 0.7)
+      lwd = 1, position = position_dodge(width = 0.6)
     ) +
     scale_color_manual(values = c("#b0015a", "#999999")) +
     theme_bw() +

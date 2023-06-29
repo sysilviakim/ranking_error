@@ -34,7 +34,7 @@
 #' @examples [PLACEHOLDER]
 #' @export
 
-vis_ranking <- function(dat,
+viz_ranking <- function(dat,
                         target_item,
                         other_items,
                         treat = NULL,

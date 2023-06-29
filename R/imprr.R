@@ -1,100 +1,156 @@
-imprr <- function(data, # all data
-                  rank_q, # string for ranking names
-                  target,
-                  anc_correct, # string for correctness indicator
-                  n_bootstrap = 250,
-                  asymptotics = FALSE) {
-  # Prepare
-  N <- dim(data)[1] # Number of obs
-  J <- length(rank_q)
-  target_nmb <- which(rank_q %in% target) # -th position
+#' Bias-correct the Distribution of Ranking Permutations
+#' Using a Paired Anchor Question and Produce De-biased Average Rankings
+#'
+#' @description
+#'
+#' @importFrom dplyr `%>%`
+#' @importFrom dplyr mutate
+#' @importFrom dplyr left_join
+#' @importFrom dplyr arrange
+#' @importFrom tibble tibble
+#' @importFrom combinat permn
+#' @importFrom assertthat assert_that
+#'
+#' @param data The input dataset with ranking data.
+#' @param main_q Column name for the main ranking question to be analyzed.
+#' @param anchor_q Column name for the paired anchor question.
+#' @param anc_correct Indicator for passing the anchor question.
+#' @param anc_correct_pattern The correct pattern to pass the anchor question
+#' filter, given the reference set. Defaults to NULL. 
+#' If NULL, it will taken on a J-length string with a natural progression of 
+#' numbers, such as "123", "1234", "1234567", and so on.
+#' @param main_labels Labels for ranking options in the main question.
+#' @param n_bootstrap Number of bootstraps. Defaults to 1,000.
+#' @param asymptotics Whether the computations use asymptotics or the given
+#' data. Defaults to FALSE.
+#' @param seed Seed for \text{set.seed} for reproducibility.
+
+imprr <- function(data,
+                  main_q,
+                  anchor_q,
+                  anc_correct,
+                  anc_correct_pattern = NULL,
+                  main_labels,
+                  n_bootstrap = 1000,
+                  asymptotics = FALSE,
+                  seed = 123456) {
+  # Setup ======================================================================
+  N <- nrow(data)
+  J <- nchar(data[[main_q]][[1]])
   
-  # Storages for bootstrapping
-  list_prop <- list()
-  list_avg <- list()
+  # Check the validity of the input arguments ==================================
+  if (!(main_q %in% names(data))) {
+    stop("The main question is not a valid column name in the given dataset.")
+  }
+  if (!(anchor_q %in% names(data))) {
+    stop("The anchor question is not a valid column name in the given dataset.")
+  }
+  if (!(anc_correct %in% names(data))) {
+    stop(
+      paste0(
+        "The indicator for passing the anchor question ",
+        "is not a valid column name in the given dataset."
+      )
+    )
+  }
+  if (!all(main_labels %in% names(data))) {
+    stop(
+      paste0(
+        "One or more of labels in the ranking options is not a valid column",
+        " in the given dataaset."
+      )
+    )
+  }
+  if (length(main_labels) != J) {
+    stop("Length of the label vector is not equal to the J.")
+  }
+  if (is.null(anc_correct_pattern)) {
+    anc_correct_pattern <- seq(J) %>% paste(collapse = "")
+  }
+  if (nchar(anc_correct_pattern) != J) {
+    stop("Length of anc_correct_pattern does not match J.")
+  }
   
-  # Sampling with replacement
-  
-  set.seed(123456)
-  
+  ## List for bootstrapped results
+  list_avg <- list_prop <- vector("list", length = n_bootstrap)
+
+  # Boostrapping ===============================================================
+  ## Sample with replacement
+  set.seed(seed)
   for (i in 1:n_bootstrap) {
-    index <- sample(1:nrow(data), size = dim(data)[1], replace = TRUE) # RESAMPLE WITH REPLACEMENT
-    bs.dat <- data[index, ] # BOOTSTRAPPED DATA
+    ## Sample indices
+    index <- sample(1:nrow(data), size = nrow(data), replace = TRUE)
     
+    ## This is the bootstrapped data
+    boostrap_dat <- data[index, ]
     
-    # Anchor ranking only
-    loc_anc <- bs.dat %>% select(contains(paste0("anc_")) &
-                                   matches("[[:digit:]]"))
+    ## Anchor ranking only
+    loc_anc <- boostrap_dat %>% 
+      select(matches(anchor_q)) %>%
+      select(matches("_[[:digit:]]$"))
     
-    # Main ranking only
-    loc_app <- bs.dat %>% select(all_of(rank_q))
+    ## Main ranking only
+    loc_app <- boostrap_dat %>% 
+      select(all_of(main_labels))
     
+    ## Originally unknown quantity 1: proportion of random answers
+    p_non_random <- (mean(boostrap_dat[[anc_correct]]) - 1 / factorial(J)) / 
+      (1 - 1 / factorial(J))
     
-    # Equation (8) -- proportion of random answers
-    Corr <- bs.dat[anc_correct] %>% pull()
-    adjust <- mean(Corr) - 1 / factorial(J)
-    normalizer <- (1 - 1 / factorial(J))
-    p_non_random <- adjust / normalizer
-    
-    
-    # Equation (9) -- distribution of random answers
-    
-    # Directly apply bias correction to our QOIs
-    
+    ## Originally unknown quantity 2: distribution of random answers
+    ## Directly apply bias correction to our QOIs
     A_avg <- loc_anc %>%
       summarise(across(everything(), ~ mean(as.numeric(.x))))
     
-    
-    
     if (asymptotics == FALSE) {
-      # We will fully learn from data
-      ## including, noise via sampling variability
+      ## We will fully learn from data including noise via sampling variability
       
-      # A <- f_anchor$Freq / N # -- empirical pmf of rankings in anchor
-      B <- p_non_random # -- estimated proportion of non-random
-      C <- data.frame(t(1:J)) # -- true pmf of rankings in anchor
+      ## Empirical PMF of rankings in anchor
+      # A <- f_anchor$Freq
+      
+      ## Estimated proportion of non-random responses
+      B <- p_non_random
+      
+      ## True PMF of rankings in anchor
+      C <- data.frame(t(1:J))
       
       f_random_avg <- (A_avg - (B * C)) / (1 - B)
     } else {
-      # We use theory to get f_random_avg
+      ## We use theory to get f_random_avg
       ## We know that the entire PMF will follow a uniform distribution
-      ## f_random <- rep(1/factorial(J), factorial(J))
+      ## f_random <- rep(1 / factorial(J), factorial(J))
       ## We then compute average ranks based on the asymptotic distribution
       
-      f_random_avg <- (1 + J) / 2 # This is true as n --> infinity
+      ## This is true as N goes to infinity
+      f_random_avg <- (1 + J) / 2 
+      B <- p_non_random
     }
     
-    
-    # Redefine B
-    B <- p_non_random # -- estimated proportion of non-random
-    
-    # Equation (10) -- distribution of error-free rankings
-    
+    ## Distribution of error-free rankings
     D_avg <- loc_app %>%
       summarise(across(everything(), ~ mean(as.numeric(.x))))
     
-    E <- f_random_avg # -- estimated pmf of errors in the anchor
-    
+    ## Estimated PMF of errors in the anchor
+    E <- f_random_avg
     imp_avg <- (D_avg - ((1 - B) * E)) / B
     
-    # This method produces outside-the-bound values
-    # --> Yuki is correcting this temporarily
-    
-    bound <- function(x) {
-      ifelse(x < 1, 1, ifelse(x > J, J, x))
-    }
-    
+    ## This method may produce outside-the-bound values; temporarily truncate
     imp_avg <- imp_avg %>%
-      mutate(across(everything(), ~ bound(.x)))
+      mutate(
+        across(
+          everything(),
+          ~ ifelse(.x < 1, 1, ifelse(.x > J, J, .x))
+        )
+      )
     
     list_prop[[i]] <- p_non_random
     list_avg[[i]] <- imp_avg
   }
-  
+  message("Bootstrapping finished.")
   
   out_prop <- do.call(rbind.data.frame, list_prop)
   
-  # Improved average ranks
+  # Improved average ranks =====================================================
   out_avg <- do.call(rbind.data.frame, list_avg) %>%
     pivot_longer(everything()) %>%
     group_by(name) %>%
@@ -104,48 +160,40 @@ imprr <- function(data, # all data
       "up" = quantile(value, prob = 0.975)
     ) %>%
     ungroup() %>%
-    mutate(imp = "improved")
-  
+    mutate(imp = "debiased data")
   
   # Raw average ranks
   raw_avg <- data %>%
-    select(all_of(rank_q)) %>%
+    select(all_of(main_labels)) %>%
     pivot_longer(everything())
   
-  
-  raw_est <- list()
-  
+  raw_est <- vector("list", length = J)
   for (j in 1:J) {
     dt_j <- raw_avg %>%
-      filter(name == rank_q[j])
+      filter(name == main_labels[j])
     
     raw_ols <- lm_robust(as.numeric(value) ~ 1, dt_j) %>%
       tidy() %>%
       mutate(
-        item = rank_q[j],
+        name = main_labels[j],
         imp = "raw data"
       ) %>%
       select(
         est = estimate,
         low = conf.low,
         up = conf.high,
-        name = item,
+        name,
         imp
       )
-    
+
     raw_est[[j]] <- raw_ols
   }
-  
-  
   raw_est <- do.call(rbind.data.frame, raw_est)
-  raw_est
   
-  
-  # Combine both estimates
+  # Combine both estimates of average ranks
   out <- rbind(out_avg, raw_est) %>%
     arrange(name)
   
-  
-  return(out) # return the list
+  return(out)
 }
 

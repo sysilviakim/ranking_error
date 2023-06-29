@@ -77,25 +77,25 @@ prep_list %>%
   )
 
 # Avg., pair, top-k, and marginal rankings =====================================
-p1 <- vis_ranking(
+p1 <- viz_ranking(
   dat = prep_list$tate$full,
   target_item = "pork",
   other_items = setdiff(prep_list$tate$labels, "pork")
 )
 
-p2 <- vis_ranking(
+p2 <- viz_ranking(
   dat = prep_list$identity$full,
   target_item = "party",
   other_items = setdiff(prep_list$identity$labels, "party")
 )
 
-p3 <- vis_ranking(
+p3 <- viz_ranking(
   dat = prep_list$polar$full,
   target_item = "social_media",
   other_items = setdiff(prep_list$polar$labels, "social_media")
 )
 
-p4 <- vis_ranking(
+p4 <- viz_ranking(
   dat = prep_list$esystems$full,
   target_item = "account_pol",
   other_items = setdiff(prep_list$esystems$labels, "account_pol")
@@ -124,3 +124,18 @@ ggsave(
   here("fig", "esystems_account_pol_emphasized.pdf"),
   width = 6.5, height = 4
 )
+
+# Bias corrections =============================================================
+corrected_avg_list <- names(root_var) %>%
+  map(
+    ~ imprr(
+      dat = prep_list[[.x]]$full,
+      main_q = paste0("app_", .x),
+      anchor_q = paste0("anc_", .x),
+      anc_correct = paste0("anc_correct_", .x),
+      main_labels = prep_list[[.x]]$labels,
+      asymptotics = TRUE
+    )
+  )
+
+print(pdf_default(viz_avg(corrected_avg_list$tate)))
