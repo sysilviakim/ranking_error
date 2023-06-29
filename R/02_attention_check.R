@@ -4,6 +4,8 @@ source(here::here("R", "utilities.R"))
 ## substitute file name when actual data is sent
 fname <- "AmericanRanking_Interim_June_2023.sav"
 df_list <- yougov_import(fname)
+save(df_list, file = here("data", "tidy", "df_list.Rda"))
+
 main <- df_list$main
 
 # Correlation between attention filters ========================================

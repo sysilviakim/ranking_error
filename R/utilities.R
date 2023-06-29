@@ -164,8 +164,8 @@ yougov_import <- function(fname) {
   ## Metadata
   yougov_meta <- c(
     "version", "exit_status", "respondent_status", "disposition", "last_page",
-    "endtime", "favor_or_oppose", "follow_up", "hcountry_code", "perc_skipped",
-    "phone_flag", "points", 
+    "starttime", "endtime", "favor_or_oppose", "follow_up", "hcountry_code", 
+    "perc_skipped", "phone_flag", "points", 
     ## I don't know what these are + must request browser types
     "posneg", "r1", "r2", "r3", "r4", "r5", "r6",
     "attention_check", "attention_check_word",
@@ -282,10 +282,7 @@ yougov_import <- function(fname) {
       starts_with("rand_fact"),
       ends_with("_order")
     ) %>%
-    mutate(
-      duration_in_seconds = as.numeric(ms(endtime)),
-      duration_in_minutes = duration_in_seconds / 60
-    )
+    mutate(duration_in_minutes = endtime - starttime)
   
   main <- temp2 %>% 
     select(
@@ -381,6 +378,8 @@ yougov_import <- function(fname) {
   }
   
   ## Transform the item order variables
+  ## rowwise will slow things down; must find way to optimize
+  message("Stripping item orders of brackets and other unnecessary strings.")
   main <- main %>%
     rowwise() %>%
     mutate(across(ends_with("_row_rnd"), ~ item_order_transform(.x))) %>%
@@ -399,6 +398,7 @@ yougov_import <- function(fname) {
   ## the true order respondent provided is              4-6-1-3-5-2-7
 
   ## Recover recorded rankings
+  message("Recovering recorded rankings.")
   for (v in var_list) {
     main <- recover_recorded_rankings(v, gsub("_row_rnd", "", v), df = main)
   }
@@ -414,8 +414,10 @@ yougov_import <- function(fname) {
         (ternovski == "1|1|0|0|0") | (ternovski == "1|1|2|2|2") ~ 0
       ),
       berinsky_fail = case_when(
-        berinsky != "000100000001000000" ~ 1,
-        berinsky == "000100000001000000" ~ 0
+        (berinsky != "000100000001000000") & 
+          (berinsky != "222122222221222222") ~ 1,
+        (berinsky == "000100000001000000") | 
+          (berinsky == "222122222221222222") ~ 0
       ),
       ## Random responses
       random_tate = case_when(
@@ -473,12 +475,13 @@ yougov_import <- function(fname) {
     )
   
   ## Only complete responses
-  timing <- timing %>%
-    filter(respondent_status == "Complete")
+  if ("respondent_status" %in% names(timing)) {
+    timing <- timing %>%
+      filter(respondent_status == "Complete")
+    main <- main %>%
+      filter(response_id %in% timing$response_id)
+  }
 
-  main <- main %>%
-    filter(response_id %in% timing$response_id)
-  
   ## After filtering
   message(paste0("We have total ", nrow(main), " respondents after filtering."))
   
