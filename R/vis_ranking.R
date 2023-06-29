@@ -106,14 +106,14 @@ vis_ranking <- function(dat,
   # Is the item's rank exactly k?
   Y_marg <- seq(J) %>%
     map(~ ifelse(Y_rank_target == .x, 1, 0))
-  
+
   label_capitalize <- function(x) {
     x %>%
       rowwise() %>%
       mutate(outcome = simple_cap(gsub("_", " ", outcome))) %>%
       ungroup()
   }
-  
+
   rev_outcome <- function(x) {
     x %>%
       mutate(outcome = factor(outcome, levels = rev(unique(outcome)))) %>%
@@ -154,19 +154,23 @@ vis_ranking <- function(dat,
       )
 
     gg_avg <- rbind(m_rank, m_rank_catch) %>%
-      label_capitalize()
+      label_capitalize() %>%
+      unify_label_length()
 
     gg_pair <- do.call(rbind.data.frame, m_pair) %>%
-      label_capitalize()
+      label_capitalize() %>%
+      unify_label_length()
 
     gg_marg <- do.call(rbind.data.frame, m_marg) %>%
       mutate(outcome = paste("Ranked", seq(J))) %>%
-      rev_outcome()
+      rev_outcome() %>%
+      unify_label_length()
 
     gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       mutate(outcome = paste0("Top-", seq(J))) %>%
       .[seq(J - 1), ] %>%
-      rev_outcome()
+      rev_outcome() %>%
+      unify_label_length()
 
     # Visualize all effects
     p_avg <- ggplot(
@@ -191,7 +195,10 @@ vis_ranking <- function(dat,
       )
     p_pair <- vis_helper(p_pair, "pair", J, use_col, label, treat)
 
-    p_topk <- ggplot(gg_topk, aes(x = outcome, y = estimate)) +
+    p_topk <- ggplot(
+      gg_topk, 
+      aes(x = fct_reorder(outcome, sort(outcome)), y = estimate)
+    ) +
       geom_point(size = 2) +
       geom_linerange(
         aes(ymin = conf.low, ymax = conf.high),
@@ -199,7 +206,10 @@ vis_ranking <- function(dat,
       )
     p_topk <- vis_helper(p_topk, "topk", J, use_col, label, treat)
 
-    p_marg <- ggplot(gg_marg, aes(x = outcome, y = estimate)) +
+    p_marg <- ggplot(
+      gg_marg, 
+      aes(x = fct_reorder(outcome, sort(outcome)), y = estimate)
+    ) +
       geom_point(size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high),
@@ -208,7 +218,20 @@ vis_ranking <- function(dat,
     p_marg <- vis_helper(p_marg, "marg", J, use_col, label, treat)
 
     if (single_plot == TRUE) {
-      return(ggarrange(p_avg, p_pair, p_topk, p_marg))
+      return(
+        ggarrange(
+          plot_nolegend(pdf_default(p_avg)),
+          plot_nolegend(pdf_default(p_pair)),
+          plot_nolegend(pdf_default(p_topk)),
+          plot_nolegend(pdf_default(p_marg))
+        ) +
+          theme(
+            plot.background = element_blank(),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.border = element_blank()
+          )
+      )
     } else {
       return(
         list(p_avg = p_avg, p_pair = p_pair, p_topk = p_topk, p_marg = p_marg)
@@ -246,7 +269,7 @@ vis_ranking <- function(dat,
       c(color_palette[3]),
       c(color_palette[2])
     )
-    
+
     color_significance <- function(x) {
       x$col <- ifelse(x$conf.low > 0, "Positive", "Not_significant")
       x$col <- ifelse(x$conf.high < 0, "Negative", x$col)
@@ -278,24 +301,28 @@ vis_ranking <- function(dat,
 
     gg_avg <- m_rank %>%
       label_capitalize() %>%
-      color_significance()
+      color_significance() %>%
+      unify_label_length()
 
     gg_pair <- do.call(rbind.data.frame, m_pair) %>%
       label_capitalize() %>%
-      color_significance()
+      color_significance() %>%
+      unify_label_length()
 
     gg_marg <- do.call(rbind.data.frame, m_marg) %>%
       filter(term == "D") %>%
       mutate(outcome = paste("Ranked", seq(J))) %>%
       rev_outcome() %>%
-      color_significance()
+      color_significance() %>%
+      unify_label_length()
 
     gg_topk <- do.call(rbind.data.frame, m_topk) %>%
       filter(term == "D") %>%
       mutate(outcome = paste0("Top-", seq(J))) %>%
       .[seq(J - 1), ] %>%
       rev_outcome() %>%
-      color_significance()
+      color_significance() %>%
+      unify_label_length()
 
     # Visualize all effects
     names(av_scena_col) <- av_scenario
@@ -332,7 +359,9 @@ vis_ranking <- function(dat,
     pattern <- unique(gg_topk$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
 
-    p_topk <- ggplot(gg_topk, aes(x = outcome, y = estimate)) +
+    p_topk <- ggplot(
+      gg_topk, aes(x = fct_reorder(outcome, sort(outcome)), y = estimate)
+    ) +
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
@@ -344,7 +373,9 @@ vis_ranking <- function(dat,
     pattern <- unique(gg_marg$col) # Observed pattern
     use_col <- scena_col[pattern] # Use this color pallet
 
-    p_marg <- ggplot(gg_marg, aes(x = outcome, y = estimate)) +
+    p_marg <- ggplot(
+      gg_marg, aes(x = fct_reorder(outcome, sort(outcome)), y = estimate)
+    ) +
       geom_point(aes(color = col), size = 2) +
       geom_linerange(
         aes(x = outcome, ymin = conf.low, ymax = conf.high, color = col),
@@ -353,7 +384,20 @@ vis_ranking <- function(dat,
     p_marg <- vis_helper(p_marg, "marg", J, use_col, label, treat)
 
     if (single_plot == TRUE) {
-      return(ggarrange(p_avg, p_pair, p_topk, p_marg))
+      return(
+        ggarrange(
+          plot_nolegend(pdf_default(p_avg)),
+          plot_nolegend(pdf_default(p_pair)),
+          plot_nolegend(pdf_default(p_topk)),
+          plot_nolegend(pdf_default(p_marg))
+        ) +
+          theme(
+            plot.background = element_blank(),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.border = element_blank()
+          )
+      )
     } else {
       return(
         list(p_avg = p_avg, p_pair = p_pair, p_topk = p_topk, p_marg = p_marg)
@@ -386,7 +430,7 @@ vis_helper <- function(p, type, J, use_col, label, treat) {
   if (tolower(type) == "avg") {
     p <- p +
       scale_colour_manual(values = use_col) +
-      ggtitle(paste0("A. Average Ranks"))
+      ggtitle(paste0("A. Average Ranks\n"))
     if (is.null(treat)) {
       p <- p +
         ylim(1, J) +
@@ -396,7 +440,7 @@ vis_helper <- function(p, type, J, use_col, label, treat) {
     p <- p +
       scale_colour_manual(values = use_col) +
       ggtitle(
-        paste0("B. pair Ranking of", " ", label, " ", "Over Other Items")
+        paste0("B. Pair Ranking of\n", label, " ", "Over Others")
       )
     if (is.null(treat)) {
       p <- p +
@@ -406,7 +450,7 @@ vis_helper <- function(p, type, J, use_col, label, treat) {
   } else if (tolower(type) == "topk") {
     p <- p +
       scale_colour_manual(values = use_col) +
-      ggtitle(paste0("C. Top-k Ranking of", " ", label))
+      ggtitle(paste0("C. Top-k Ranking\nof", " ", label))
     if (is.null(treat)) {
       p <- p +
         ylim(0, 1) +
@@ -415,7 +459,7 @@ vis_helper <- function(p, type, J, use_col, label, treat) {
   } else if (tolower(type) == "marg") {
     p <- p +
       scale_colour_manual(values = use_col) +
-      ggtitle(paste0("D. Marginal Ranking of", " ", label))
+      ggtitle(paste0("D. Marginal Ranking\nof", " ", label))
     if (is.null(treat)) {
       p <- p +
         ylim(0, 1) +
@@ -424,6 +468,13 @@ vis_helper <- function(p, type, J, use_col, label, treat) {
         )
     }
   }
-
+  
   return(p)
+}
+
+unify_label_length <- function(x, width = 20) {
+  x %>%
+    mutate(
+      outcome = str_pad(outcome, width = width)
+    )
 }
