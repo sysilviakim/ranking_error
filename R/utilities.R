@@ -503,21 +503,24 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
   return(out)
 }
 
-viz_avg <- function(data) {
+viz_avg <- function(data, order = NULL) {
   J <- nrow(data) / 2
-  p <- data %>%
+  data <- data %>%
     rowwise() %>%
-    mutate(imp = simple_cap(imp)) %>%
-    mutate(name = simple_cap(name)) %>%
     mutate(
+      imp = simple_cap(imp),
+      imp = str_pad(imp, width = 15, side = "right")
+    ) %>%
+    mutate(
+      name = simple_cap(name),
       name = case_when(
         name == "Print_media" ~ "Print Media and TV",
         name == "Social_media" ~ "Social Media",
         name == "Interest_groups" ~ "Interest Groups",
         name == "Account_pol" ~ "Accountability (Politicians)",
-        name == "Account_gov" ~ "Accountability (Govt)",
+        name == "Account_gov" ~ "Accountability (Government)",
         name == "Policy_match" ~ "Median Voter Policy",
-        name == "Vote_seat" ~ "Vote-seat Consistency",
+        name == "Vote_seat" ~ "Seat-Vote Unbiased",
         name == "Women" ~ "Women's Representation",
         name == "Minority" ~ "Minority Representation",
         TRUE ~ name
@@ -525,9 +528,76 @@ viz_avg <- function(data) {
       name = str_pad(name, width = 28)
     ) %>%
     ungroup() %>%
-    rename(Type = imp) %>%
-    mutate(name = fct_reorder(name, est)) %>%
-    ggplot(., aes(x = fct_rev(name), y = est, color = Type)) +
+    rename(Type = imp)
+
+  if (!is.null(order)) {
+    if (all(order == "est")) {
+      data <- data %>%
+        mutate(name = fct_reorder(name, est))
+    } else if (all(order == "fixed")) {
+      ## Hardcoded order; not great code, will fix later
+      if (J == 3) {
+        data <- data %>%
+          mutate(
+            name = factor(
+              name,
+              levels = str_pad(
+                c("Policy", "Pork", "Service"),
+                width = 28
+              )
+            )
+          )
+      } else if (J == 4) {
+        data <- data %>%
+          mutate(
+            name = factor(
+              name,
+              levels = str_pad(
+                c("Gender", "Religion", "Race", "Party"),
+                width = 28
+              )
+            )
+          )
+      } else if (J == 5) {
+        data <- data %>%
+          mutate(
+            name = factor(
+              name,
+              levels = str_pad(
+                c(
+                  "Politicians", "Print Media and TV",
+                  "Social Media", "Interest Groups", "Citizens"
+                ),
+                width = 28
+              )
+            )
+          )
+      } else if (J == 6) {
+        data <- data %>%
+          mutate(
+            name = factor(
+              name,
+              levels = str_pad(
+                c(
+                  "Accountability (Politicians)",
+                  "Accountability (Government)",
+                  "Median Voter Policy",
+                  "Seat-Vote Unbiased", 
+                  "Minority Representation",
+                  "Women's Representation"
+                ),
+                width = 28
+              )
+            )
+          )
+      }
+    } else {
+      data <- data %>%
+        mutate(name = factor(name, levels = str_pad(order, width = 28)))
+    }
+  }
+
+  p <- ggplot(data, aes(x = fct_rev(name), y = est, color = Type)) +
     geom_point(
       aes(shape = Type),
       size = 2,
@@ -543,7 +613,7 @@ viz_avg <- function(data) {
     coord_flip() +
     xlab("") +
     ylab("") +
-    ylim(1, J) +
+    scale_y_continuous(limits = c(1, J), breaks = seq(J)) +
     geom_hline(yintercept = (J + 1) / 2, linetype = "dashed")
   return(
     pdf_default(p) +
