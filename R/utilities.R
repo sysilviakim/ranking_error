@@ -606,7 +606,7 @@ table_to_tibble <- function(tab) {
 ## If necessary, supplement all possible permutation patterns
 ## for a distribution table
 permn_augment <- function(tab, J = 4) {
-  deframe(
+  out <- deframe(
     enframe(tab) %>%
       bind_rows(
         ., tibble(name = permn(seq(J)) %>%
@@ -615,6 +615,8 @@ permn_augment <- function(tab, J = 4) {
           setdiff(., names(tab)), value = as.table(0))
       )
   )
+  out <- out[sort(names(out))]
+  return(out)
 }
 
 ## Collapse into resulting ranking pattern in the permutation space
