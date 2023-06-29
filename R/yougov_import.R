@@ -363,6 +363,10 @@ yougov_import <- function(fname) {
         race4 == 2 ~ "Black",
         race4 == 3 ~ "Hispanic",
         race4 == 4 ~ "Other race"
+      ),
+      race2 = case_when(
+        race4 == 1 ~ "White",
+        race4 %in% c(2, 3, 4) ~ "None-white"
       )
     )
   
