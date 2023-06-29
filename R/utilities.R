@@ -29,9 +29,9 @@ source(here("R", "weight_patterns.R"))
 bootstrap_n <- 1000
 root_var <- c(
   tate = "123",
-  esystems = "1234567",
-  identity = "1234567",
-  polar = "12345678"
+  identity = "1234",
+  polar = "12345",
+  esystems = "123456"
 )
 ## Previously...
 # x <- c(
@@ -46,30 +46,23 @@ option_crosswalk <- c(
   pork = "app_tate_2",
   service = "app_tate_3",
   ## Electoral systems
-  account_pol = "app_e_systems_1",
-  account_gov = "app_e_systems_2",
-  stable = "app_e_systems_3",
-  prop = "app_e_systems_4",
-  women = "app_e_systems_5",
-  minority = "app_e_systems_6",
-  median = "app_e_systems_7",
+  account_pol = "app_esystems_1",
+  account_gov = "app_esystems_2",
+  vote_seat = "app_esystems_3",
+  women = "app_esystems_4",
+  minority = "app_esystems_5",
+  policy_match = "app_esystems_6",
   ## Identity
   party = "app_identity_1",
-  job = "app_identity_2",
-  religion = "app_identity_3",
-  gender = "app_identity_4",
-  family_role = "app_identity_5",
-  race = "app_identity_6",
-  American = "app_identity_7",
+  religion = "app_identity_2",
+  gender = "app_identity_3",
+  race = "app_identity_4",
   ## Polarization
-  dem_pol = "app_polar_1",
-  rep_pol = "app_polar_2",
-  media = "app_polar_3",
-  social_media = "app_polar_4",
-  interest_groups = "app_polar_5",
-  dem_citizens = "app_polar_6",
-  rep_citizens = "app_polar_7",
-  e_systems = "app_polar_8"
+  politicians = "app_polar_1",
+  print_media = "app_polar_2",
+  social_media = "app_polar_3",
+  interest_groups = "app_polar_4",
+  citizens = "app_polar_5"
 )
 
 # Functions ====================================================================
@@ -620,7 +613,7 @@ permn_augment <- function(tab, J = 4) {
 }
 
 ## Collapse into resulting ranking pattern in the permutation space
-unite_ranking <- function(x, remove = TRUE) {
+unite_ranking <- function(x, remove = FALSE) {
   x_raw <- x
 
   ## Find all patterns and bring it to its "root," i.e., without the _1
@@ -668,14 +661,24 @@ unite_ranking <- function(x, remove = TRUE) {
 
 ## Avg. rank compute
 avg_rank <- function(df, var, split_only = FALSE) {
-  l <- nchar(df[[var]][[1]])
+  ## What is the J?
+  J <- nchar(df[[var]][[1]])
   v <- c("1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th")
   out <- df %>%
     select(!!as.name(var)) %>%
-    separate(!!as.name(var), sep = seq(9)[1:l], into = v[1:l])
+    separate(!!as.name(var), sep = seq(9)[1:J], into = v[1:J])
   if (split_only == FALSE) {
     out <- out %>%
-      summarise(across(everything(), ~ mean(as.numeric(.x))))
+      summarise(
+        across(
+          everything(),
+          ~ tibble(
+            mean = mean(as.numeric(.x)),
+            # sd = sd(as.numeric(.x)),
+            se = sd(as.numeric(.x)) / sqrt(nrow(out))
+          )
+        )
+      )
   }
   return(out)
 }
