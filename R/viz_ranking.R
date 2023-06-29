@@ -229,7 +229,13 @@ viz_ranking <- function(dat,
             plot.background = element_blank(),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
-            panel.border = element_blank()
+            panel.border = element_blank(),
+            legend.position = "bottom",
+            legend.title = element_blank(),
+            legend.margin = margin(-0.5, 0, 0, 0, unit = "cm"),
+            legend.spacing.x = unit(0, "cm"),
+            legend.spacing.y = unit(0, "cm"),
+            plot.title = element_text(face = "bold")
           )
       )
     } else {
@@ -395,7 +401,13 @@ viz_ranking <- function(dat,
             plot.background = element_blank(),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
-            panel.border = element_blank()
+            panel.border = element_blank(),
+            legend.position = "bottom",
+            legend.title = element_blank(),
+            legend.margin = margin(-0.5, 0, 0, 0, unit = "cm"),
+            legend.spacing.x = unit(0, "cm"),
+            legend.spacing.y = unit(0, "cm"),
+            plot.title = element_text(face = "bold")
           )
       )
     } else {
