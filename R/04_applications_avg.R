@@ -182,3 +182,59 @@ ggsave(here("fig", "corrected_avg_data_polar.pdf"), width = 5.5, height = 3)
 print(viz_avg(corrected_avg_list_data$esystems))
 ggsave(here("fig", "corrected_avg_data_esystems.pdf"), width = 5.5, height = 3)
 
+# Bias corrections but consistent-preference respondents =======================
+corrected_avg_list_asymp_rational <- root_var %>%
+  imap(
+    ~ imprr(
+      dat = prep_list[[.y]]$rational,
+      main_q = paste0("app_", .y),
+      anchor_q = paste0("anc_", .y),
+      anc_correct = paste0("anc_correct_", .y),
+      main_labels = prep_list[[.y]]$labels,
+      asymptotics = TRUE
+    )
+  )
+save(
+  corrected_avg_list_asymp_rational,
+  file = here("output", "corrected_avg_list_asymp_rational.Rda")
+)
+
+corrected_avg_list_data_rational <- root_var %>%
+  imap(
+    ~ imprr(
+      dat = prep_list[[.y]]$rational,
+      main_q = paste0("app_", .y),
+      anchor_q = paste0("anc_", .y),
+      anc_correct = paste0("anc_correct_", .y),
+      main_labels = prep_list[[.y]]$labels,
+      asymptotics = FALSE
+    )
+  )
+save(
+  corrected_avg_list_data_rational,
+  file = here("output", "corrected_avg_list_data_rational.Rda")
+)
+
+print(viz_avg(corrected_avg_list_asymp_rational$tate))
+ggsave(here("fig", "corrected_avg_asymp_tate_rational.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_asymp$identity))
+ggsave(here("fig", "corrected_avg_asymp_identity_rational.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_asymp_rational$polar))
+ggsave(here("fig", "corrected_avg_asymp_polar_rational.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_asymp_rational$esystems))
+ggsave(here("fig", "corrected_avg_asymp_esystems_rational.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data_rational$tate))
+ggsave(here("fig", "corrected_avg_data_tate_rational.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data_rational$identity))
+ggsave(here("fig", "corrected_avg_data_identity_rational.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data_rational$polar))
+ggsave(here("fig", "corrected_avg_data_polar_rational.pdf"), width = 5.5, height = 3)
+
+print(viz_avg(corrected_avg_list_data_rational$esystems))
+ggsave(here("fig", "corrected_avg_data_esystems_rational.pdf"), width = 5.5, height = 3)
