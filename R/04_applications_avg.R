@@ -2,8 +2,18 @@ source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 
-ggsave_temp <- function(x) {
-  ggsave(here("fig", x), width = 5.5, height = 3)
+ggsave_temp <- function(x, width = 5.5, height = 3) {
+  ggsave(here("fig", x), width = width, height = height)
+}
+
+pdf_short <- function(p) {
+  pdf_default(p) +
+    theme(
+      plot.background = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_blank()
+    )
 }
 
 # Setup ========================================================================
@@ -87,25 +97,29 @@ prep_list %>%
 p1 <- viz_ranking(
   dat = prep_list$tate$full,
   target_item = "pork",
-  other_items = setdiff(prep_list$tate$labels, "pork")
+  other_items = setdiff(prep_list$tate$labels, "pork"),
+  order = "est"
 )
 
 p2 <- viz_ranking(
   dat = prep_list$identity$full,
   target_item = "party",
-  other_items = setdiff(prep_list$identity$labels, "party")
+  other_items = setdiff(prep_list$identity$labels, "party"),
+  order = "est"
 )
 
 p3 <- viz_ranking(
   dat = prep_list$polar$full,
   target_item = "social_media",
-  other_items = setdiff(prep_list$polar$labels, "social_media")
+  other_items = setdiff(prep_list$polar$labels, "social_media"),
+  order = "est"
 )
 
 p4 <- viz_ranking(
   dat = prep_list$esystems$full,
   target_item = "account_pol",
-  other_items = setdiff(prep_list$esystems$labels, "account_pol")
+  other_items = setdiff(prep_list$esystems$labels, "account_pol"),
+  order = "est"
 )
 
 print(p1)
@@ -152,7 +166,7 @@ save(
 corrected_avg_list_asymp %>%
   imap(
     ~ {
-      print(viz_avg(.x))
+      print(viz_avg(.x, order = "est"))
       ggsave_temp(paste0("corrected_avg_asymp_", .y, ".pdf"))
     }
   )
@@ -177,7 +191,7 @@ save(
 corrected_avg_list_asymp_rational %>%
   imap(
     ~ {
-      print(viz_avg(.x))
+      print(viz_avg(.x, order = "est"))
       ggsave_temp(paste0("corrected_avg_asymp_", .y, "_rational.pdf"))
     }
   )
@@ -211,7 +225,7 @@ corrected_avg_list_asymp_pid3 %>%
     ~ .x %>%
       imap(
         function(x, y) {
-          print(viz_avg(x))
+          print(viz_avg(x, order = "est"))
           ggsave_temp(
             paste0(
               "corrected_avg_asymp_", .y, "_pid3_", 
@@ -220,6 +234,30 @@ corrected_avg_list_asymp_pid3 %>%
           )
         }
       )
+  )
+
+root_var %>%
+  imap(
+    ~ {
+      p <- ggarrange(
+        viz_avg(
+          corrected_avg_list_asymp_pid3[[.y]]$Democrat,
+          order = "fixed"
+        ) +
+          ggtitle("Democrat"),
+        viz_avg(
+          corrected_avg_list_asymp_pid3[[.y]]$Republican,
+          order = "fixed"
+        ) +
+          ggtitle("Republican"),
+        ncol = 1
+      )
+      pdf_short(p)
+      ggsave_temp(
+        paste0("corrected_avg_asymp_", .y, "_pid3.pdf"),
+        height = 6
+      )
+    }
   )
 
 # By strength of partisanship ==================================================
@@ -262,6 +300,30 @@ corrected_avg_list_asymp_partisan %>%
       )
   )
 
+root_var %>%
+  imap(
+    ~ {
+      p <- ggarrange(
+        viz_avg(
+          corrected_avg_list_asymp_partisan[[.y]]$`Strong Partisan`,
+          order = "fixed"
+        ) +
+          ggtitle("Strong Partisan"),
+        viz_avg(
+          corrected_avg_list_asymp_partisan[[.y]]$`Weak Partisan`,
+          order = "fixed"
+        ) +
+          ggtitle("Weak Partisan"),
+        ncol = 1
+      )
+      pdf_short(p)
+      ggsave_temp(
+        paste0("corrected_avg_asymp_", .y, "_partisan.pdf"),
+        height = 6
+      )
+    }
+  )
+
 # By race ======================================================================
 corrected_avg_list_asymp_race <- root_var %>%
   imap(
@@ -302,6 +364,34 @@ corrected_avg_list_asymp_race %>%
       )
   )
 
+root_var %>%
+  imap(
+    ~ {
+      p <- ggarrange(
+        viz_avg(
+          corrected_avg_list_asymp_race[[.y]]$White,
+          order = "fixed"
+        ) +
+          ggtitle("White"),
+        viz_avg(
+          corrected_avg_list_asymp_race[[.y]]$Black,
+          order = "fixed"
+        ) +
+          ggtitle("Black"),
+        viz_avg(
+          corrected_avg_list_asymp_race[[.y]]$Hispanic,
+          order = "fixed"
+        ) +
+          ggtitle("Hispanic"),
+        ncol = 1
+      )
+      pdf_short(p)
+      ggsave_temp(
+        paste0("corrected_avg_asymp_", .y, "_race.pdf"),
+        height = 9
+      )
+    }
+  )
 
 
 
