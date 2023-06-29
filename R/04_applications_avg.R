@@ -28,7 +28,8 @@ prep_list <- root_var %>%
           matches(paste0("anc_", .y, "_recorded")),
           pid3final,
           partisan,
-          race4
+          race4,
+          race2
         ) %>%
         select(-contains("row_rnd")) %>%
         select(-matches("^inputstate$"))
@@ -393,12 +394,66 @@ root_var %>%
     }
   )
 
+# By binary race ===============================================================
+corrected_avg_list_asymp_race2 <- root_var %>%
+  imap(
+    ~ prep_list[[.y]]$full %>%
+      group_split(race2, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$race2[1]) %>% unlist()) %>%
+      imap(
+        function(x, y) {
+          imprr(
+            dat = x,
+            main_q = paste0("app_", .y),
+            anchor_q = paste0("anc_", .y),
+            anc_correct = paste0("anc_correct_", .y),
+            main_labels = prep_list[[.y]]$labels,
+            asymptotics = TRUE
+          )
+        }
+      )
+  )
+save(
+  corrected_avg_list_asymp_race2,
+  file = here("output", "corrected_avg_list_asymp_race2.Rda")
+)
 
+corrected_avg_list_asymp_race2 %>%
+  imap(
+    ~ .x %>%
+      imap(
+        function(x, y) {
+          print(viz_avg(x))
+          ggsave_temp(
+            paste0(
+              "corrected_avg_asymp_", .y, "_race2_", 
+              gsub(" ", "_", tolower(y)), ".pdf"
+            )
+          )
+        }
+      )
+  )
 
-
-
-
-
-
-
-
+root_var %>%
+  imap(
+    ~ {
+      p <- ggarrange(
+        viz_avg(
+          corrected_avg_list_asymp_race2[[.y]]$White,
+          order = "fixed"
+        ) +
+          ggtitle("White"),
+        viz_avg(
+          corrected_avg_list_asymp_race2[[.y]]$`None-white`,
+          order = "fixed"
+        ) +
+          ggtitle("None-white"),
+        ncol = 1
+      )
+      pdf_short(p)
+      ggsave_temp(
+        paste0("corrected_avg_asymp_", .y, "_race2.pdf"),
+        height = 6
+      )
+    }
+  )
