@@ -349,9 +349,20 @@ yougov_import <- function(fname) {
   main <- main %>%
     mutate(
       pid3final = case_when(
-        pid7 %in% c(1, 2, 3) ~ "Dem",
-        pid7 %in% c(5, 6, 7) ~ "Rep",
-        pid7 %in% c(4, 8) ~ "Ind"
+        pid7 %in% c(1, 2, 3) ~ "Democrat",
+        pid7 %in% c(5, 6, 7) ~ "Republican",
+        pid7 %in% c(4, 8) ~ "Independent"
+      ),
+      partisan = case_when(
+        pid7 %in% c(1, 7) ~ "Strong Partisan",
+        pid7 %in% c(2, 3, 5, 6) ~ "Weak Partisan",
+        pid7 %in% c(4, 8) ~ "Independent"
+      ),
+      race4labeled = case_when(
+        race4 == 1 ~ "White",
+        race4 == 2 ~ "Black",
+        race4 == 3 ~ "Hispanic",
+        race4 == 4 ~ "Other race"
       )
     )
   
