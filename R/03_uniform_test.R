@@ -42,7 +42,8 @@ chisq_power(tab4r) ## p-value < 2.2e-16, ES = 2.7334, need N = 3+
 ## Visualize -------------------------------------------------------------------
 ### 3-option, observed
 temp <- table_to_tibble(tab3o)
-plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65)))
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65))) + 
+  xlab("Observed Rankings")
 ggsave(
   here("fig", "nocontext3-observed.pdf"),
   width = 4.5, height = 2.8
@@ -50,7 +51,8 @@ ggsave(
 
 ### 4-option, observed
 temp <- table_to_tibble(tab4o)
-plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65)))
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65))) + 
+  xlab("Observed Rankings")
 ggsave(
   here("fig", "nocontext4-observed.pdf"),
   width = 7.5, height = 2.8
@@ -58,8 +60,7 @@ ggsave(
 
 ### 3-option, recorded
 temp <- table_to_tibble(tab3r)
-plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65))) + 
-  xlab("Resulting Ranking")
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65)))
 ggsave(
   here("fig", "nocontext3-recorded.pdf"),
   width = 4.5, height = 2.8
@@ -67,12 +68,25 @@ ggsave(
 
 ### 4-option, recorded
 temp <- table_to_tibble(tab4r)
-plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65))) + 
-  xlab("Resulting Ranking")
+plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .65)))
 ggsave(
   here("fig", "nocontext4-recorded.pdf"),
   width = 7.5, height = 2.8
 )
+
+# Chi-square tests by attention checks =========================================
+temp <- main %>%
+  group_by(ternovski_fail) %>%
+  group_split() %>%
+  `names<-`({.} %>% map(~ .x$ternovski_fail[1]) %>% unlist()) %>%
+  map(
+    ~ round(
+      permn_augment(prop.table(table(.x$no_context_3)), J = 3) * 100,
+      digits = 1
+    )
+  )
+temp
+temp %>% map(chisq_power)
 
 # Chi-square tests by attention checks =========================================
 temp <- main %>%
