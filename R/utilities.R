@@ -503,7 +503,8 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
   return(out)
 }
 
-viz_avg <- function(data, order = NULL, J = NULL) {
+viz_avg <- function(data, order = NULL, J = NULL,
+                    color_list = c("#b0015a", "#999999")) {
   if (is.null(J)) {
     J <- nrow(data) / 2
   }
@@ -610,7 +611,7 @@ viz_avg <- function(data, order = NULL, J = NULL) {
       aes(ymin = low, ymax = up),
       lwd = 1, position = position_dodge(width = 0.5)
     ) +
-    scale_color_manual(values = c("#b0015a", "#999999")) +
+    scale_color_manual(values = color_list) +
     theme_bw() +
     coord_flip() +
     xlab("") +

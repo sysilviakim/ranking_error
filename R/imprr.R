@@ -5,11 +5,20 @@
 #'
 #' @importFrom dplyr `%>%`
 #' @importFrom dplyr mutate
+#' @importFrom dplyr select
+#' @importFrom dplyr group_by
 #' @importFrom dplyr left_join
 #' @importFrom dplyr arrange
+#' @importFrom dplyr filter
+#' @importFrom dplyr across
+#' @importFrom dplyr summarise
 #' @importFrom tibble tibble
+#' @importFrom tidyselect everything
+#' @importFrom tidyselect matches
+#' @importFrom tidyr pivot_longer
 #' @importFrom combinat permn
 #' @importFrom assertthat assert_that
+#' @importFrom estimatr lm_robust
 #'
 #' @param data The input dataset with ranking data.
 #' @param main_q Column name for the main ranking question to be analyzed.
@@ -148,7 +157,13 @@ imprr <- function(data,
   }
   message("Bootstrapping finished.")
   
-  out_prop <- do.call(rbind.data.frame, list_prop)
+  out_prop <- lm_robust(as.numeric(unlist(list_prop)) ~ 1) %>%
+    tidy() %>%
+    select(
+      est = estimate,
+      low = conf.low,
+      up = conf.high
+    )
   
   # Improved average ranks =====================================================
   out_avg <- do.call(rbind.data.frame, list_avg) %>%
@@ -194,6 +209,6 @@ imprr <- function(data,
   out <- rbind(out_avg, raw_est) %>%
     arrange(name)
   
-  return(out)
+  return(list(est = out, p_non_random = out_prop))
 }
 

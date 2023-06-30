@@ -171,10 +171,31 @@ save(
 )
 
 corrected_avg_list_asymp %>%
+  map("est") %>%
   imap(
     ~ {
       print(viz_avg(.x, order = "fixed"))
       ggsave_temp(paste0("corrected_avg_asymp_", .y, ".pdf"))
+    }
+  )
+
+corrected_avg_list_asymp %>% map("p_non_random") %>% bind_rows(.id = "app")
+#        app       est       low        up
+# 1     tate 0.5740763 0.5728997 0.5752529
+# 2 identity 0.6531275 0.6521123 0.6541427
+# 3    polar 0.7692743 0.7684214 0.7701272
+# 4 esystems 0.5366934 0.5356606 0.5377261
+
+corrected_avg_list_asymp$identity$est %>%
+  group_split(imp, .keep = TRUE) %>%
+  `names<-`({.} %>% map(~ .x$imp[1]) %>% unlist()) %>%
+  imap(
+    ~ {
+      print(viz_avg(., order = "fixed", J = 4, color_list = "black"))
+      ggsave_temp(
+        paste0("avg_asymp_identity_", gsub(" ", "_", .y), ".pdf"),
+        width = 4.5, height = 2
+      )
     }
   )
 
@@ -196,6 +217,7 @@ save(
 )
 
 corrected_avg_list_asymp_rational %>%
+  map("est") %>%
   imap(
     ~ {
       print(viz_avg(.x, order = "est"))
@@ -228,6 +250,7 @@ save(
 )
 
 corrected_avg_list_asymp_pid3 %>%
+  map("est") %>%
   imap(
     ~ .x %>%
       imap(
@@ -269,6 +292,7 @@ root_var %>%
 
 # By strength of partisanship ==================================================
 corrected_avg_list_asymp_partisan <- root_var %>%
+  map("est") %>%
   imap(
     ~ prep_list[[.y]]$full %>%
       group_split(partisan, .keep = TRUE) %>%
@@ -292,6 +316,7 @@ save(
 )
 
 corrected_avg_list_asymp_partisan %>%
+  map("est") %>%
   imap(
     ~ .x %>%
       imap(
@@ -356,6 +381,7 @@ save(
 )
 
 corrected_avg_list_asymp_race %>%
+  map("est") %>%
   imap(
     ~ .x %>%
       imap(
@@ -430,6 +456,7 @@ save(
 )
 
 corrected_avg_list_asymp_race2 %>%
+  map("est") %>%
   imap(
     ~ .x %>%
       imap(
