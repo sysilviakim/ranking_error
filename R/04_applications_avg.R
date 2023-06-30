@@ -22,10 +22,10 @@ prep_list <- root_var %>%
     ~ {
       full <- main %>%
         select(
-          contains(paste0("app_", .y)),
-          matches(paste0("anc_", .y)),
-          matches(paste0("anc_correct_", .y, "$")),
-          matches(paste0("anc_", .y, "_recorded")),
+          contains(paste0("app_", str_sub(.y, 1, 2))),
+          matches(paste0("anc_", str_sub(.y, 1, 2))),
+          matches(paste0("anc_correct_", str_sub(.y, 1, 2))),
+          matches(paste0("anc_", str_sub(.y, 1, 2), ".*_recorded")),
           pid3final,
           partisan,
           race4,
@@ -384,12 +384,17 @@ root_var %>%
           order = "fixed"
         ) +
           ggtitle("Hispanic"),
-        ncol = 1
+        viz_avg(
+          corrected_avg_list_asymp_race[[.y]]$`Other race`,
+          order = "fixed"
+        ) +
+          ggtitle("Other race"),
+        ncol = 2, nrow = 2
       )
       pdf_short(p)
       ggsave_temp(
         paste0("corrected_avg_asymp_", .y, "_race.pdf"),
-        height = 9
+        width = 11, height = 6
       )
     }
   )
@@ -457,3 +462,44 @@ root_var %>%
       )
     }
   )
+
+# Alternative anchors ==========================================================
+id_alphabet <- imprr(
+  dat = prep_list$identity$full %>% filter(!is.na(anc_id_alphabet)),
+  main_q = "app_identity",
+  anchor_q = "anc_id_alphabet",
+  anc_correct = "anc_correct_id_alphabet",
+  main_labels = prep_list$identity$labels,
+  asymptotics = TRUE
+)
+viz_avg(id_alphabet, order = "fixed")
+
+id_exact <- imprr(
+  dat = prep_list$identity$full %>% filter(!is.na(anc_id_exact)),
+  main_q = "app_identity",
+  anchor_q = "anc_id_exact",
+  anc_correct = "anc_correct_id_exact",
+  main_labels = prep_list$identity$labels,
+  asymptotics = TRUE
+)
+viz_avg(id_exact, order = "fixed") ## religion
+
+es_alphabet <- imprr(
+  dat = prep_list$esystems$full %>% filter(!is.na(anc_es_alphabet)),
+  main_q = "app_esystems",
+  anchor_q = "anc_es_alphabet",
+  anc_correct = "anc_correct_es_alphabet",
+  main_labels = prep_list$esystems$labels,
+  asymptotics = TRUE
+)
+viz_avg(es_alphabet, order = "fixed")
+
+es_temporal <- imprr(
+  dat = prep_list$esystems$full %>% filter(!is.na(anc_es_temporal)),
+  main_q = "app_esystems",
+  anchor_q = "anc_es_temporal",
+  anc_correct = "anc_correct_es_temporal",
+  main_labels = prep_list$esystems$labels,
+  asymptotics = TRUE
+)
+viz_avg(es_temporal, order = "fixed")
