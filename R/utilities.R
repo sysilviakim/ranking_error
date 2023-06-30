@@ -503,8 +503,10 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
   return(out)
 }
 
-viz_avg <- function(data, order = NULL) {
-  J <- nrow(data) / 2
+viz_avg <- function(data, order = NULL, J = NULL) {
+  if (is.null(J)) {
+    J <- nrow(data) / 2
+  }
   data <- data %>%
     rowwise() %>%
     mutate(

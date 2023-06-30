@@ -275,11 +275,21 @@ yougov_import <- function(fname) {
         (ternovski != "1|1|0|0|0") & (ternovski != "1|1|2|2|2") ~ 1,
         (ternovski == "1|1|0|0|0") | (ternovski == "1|1|2|2|2") ~ 0
       ),
+      ternovski_fail_label = case_when(
+        (ternovski != "1|1|0|0|0") & (ternovski != "1|1|2|2|2") ~ "Failed",
+        (ternovski == "1|1|0|0|0") | (ternovski == "1|1|2|2|2") ~ "Passed"
+      ),
       berinsky_fail = case_when(
         (berinsky != "000100000001000000") & 
           (berinsky != "222122222221222222") ~ 1,
         (berinsky == "000100000001000000") | 
           (berinsky == "222122222221222222") ~ 0
+      ),
+      berinsky_fail_label = case_when(
+        (berinsky != "000100000001000000") & 
+          (berinsky != "222122222221222222") ~ "Failed",
+        (berinsky == "000100000001000000") | 
+          (berinsky == "222122222221222222") ~ "Passed"
       ),
       ## Random responses
       random_tate = case_when(
@@ -363,6 +373,12 @@ yougov_import <- function(fname) {
         race4 == 2 ~ "Black",
         race4 == 3 ~ "Hispanic",
         race4 == 4 ~ "Other race"
+      ),
+      race4asians = case_when(
+        race == 1 ~ "White",
+        race == 2 ~ "Black",
+        race == 3 ~ "Hispanic",
+        race == 4 ~ "Asian"
       ),
       race2 = case_when(
         race4 == 1 ~ "White",

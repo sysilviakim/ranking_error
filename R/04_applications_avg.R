@@ -16,6 +16,27 @@ pdf_short <- function(p) {
     )
 }
 
+crosswalk_short <- function(x, label) {
+  x %>%
+    map(~.x) %>%
+    bind_rows(.id = "reference") %>%
+    rowwise() %>%
+    mutate(varname = paste0("app_", label, "_", substr(reference, 1, 1))) %>%
+    mutate(
+      crosswalk = names(option_crosswalk)[which(option_crosswalk == varname)]
+    ) %>%
+    ungroup() %>%
+    select(reference, varname, crosswalk, everything()) %>%
+    ## Must refactor code
+    mutate(
+      name = crosswalk, 
+      est = mean,
+      low = mean - 1.96 * se,
+      up = mean + 1.96 * se,
+      imp = ""
+    )
+}
+
 # Setup ========================================================================
 prep_list <- root_var %>%
   imap(
@@ -26,10 +47,7 @@ prep_list <- root_var %>%
           matches(paste0("anc_", str_sub(.y, 1, 2))),
           matches(paste0("anc_correct_", str_sub(.y, 1, 2))),
           matches(paste0("anc_", str_sub(.y, 1, 2), ".*_recorded")),
-          pid3final,
-          partisan,
-          race4,
-          race2
+          pid3final, partisan, race4asians, race2, berinsky_fail, ternovski_fail
         ) %>%
         select(-contains("row_rnd")) %>%
         select(-matches("^inputstate$"))
@@ -83,44 +101,32 @@ prep_list %>%
 prep_list %>%
   imap(
     ~ avg_rank(.x$full, paste0("app_", .y)) %>%
-      map(~.x) %>%
-      bind_rows(.id = "reference") %>%
-      rowwise() %>%
-      mutate(varname = paste0("app_", .y, "_", substr(reference, 1, 1))) %>%
-      mutate(
-        crosswalk = names(option_crosswalk)[which(option_crosswalk == varname)]
-      ) %>%
-      ungroup() %>%
-      select(reference, varname, crosswalk, everything())
+      crosswalk_short(., .y)
   )
 
 # Avg., pair, top-k, and marginal rankings =====================================
 p1 <- viz_ranking(
   dat = prep_list$tate$full,
   target_item = "pork",
-  other_items = setdiff(prep_list$tate$labels, "pork"),
-  order = "est"
+  other_items = setdiff(prep_list$tate$labels, "pork")
 )
 
 p2 <- viz_ranking(
   dat = prep_list$identity$full,
   target_item = "party",
-  other_items = setdiff(prep_list$identity$labels, "party"),
-  order = "est"
+  other_items = setdiff(prep_list$identity$labels, "party")
 )
 
 p3 <- viz_ranking(
   dat = prep_list$polar$full,
   target_item = "social_media",
-  other_items = setdiff(prep_list$polar$labels, "social_media"),
-  order = "est"
+  other_items = setdiff(prep_list$polar$labels, "social_media")
 )
 
 p4 <- viz_ranking(
   dat = prep_list$esystems$full,
   target_item = "account_pol",
-  other_items = setdiff(prep_list$esystems$labels, "account_pol"),
-  order = "est"
+  other_items = setdiff(prep_list$esystems$labels, "account_pol")
 )
 
 print(p1)
@@ -167,7 +173,7 @@ save(
 corrected_avg_list_asymp %>%
   imap(
     ~ {
-      print(viz_avg(.x, order = "est"))
+      print(viz_avg(.x, order = "fixed"))
       ggsave_temp(paste0("corrected_avg_asymp_", .y, ".pdf"))
     }
   )
@@ -329,8 +335,8 @@ root_var %>%
 corrected_avg_list_asymp_race <- root_var %>%
   imap(
     ~ prep_list[[.y]]$full %>%
-      group_split(race4, .keep = TRUE) %>%
-      `names<-`({.} %>% map(~ .x$race4[1]) %>% unlist()) %>%
+      group_split(race4asians, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$race4asians[1]) %>% unlist()) %>%
       imap(
         function(x, y) {
           imprr(
@@ -385,10 +391,10 @@ root_var %>%
         ) +
           ggtitle("Hispanic"),
         viz_avg(
-          corrected_avg_list_asymp_race[[.y]]$`Other race`,
+          corrected_avg_list_asymp_race[[.y]]$Asian,
           order = "fixed"
         ) +
-          ggtitle("Other race"),
+          ggtitle("Asian"),
         ncol = 2, nrow = 2
       )
       pdf_short(p)
@@ -503,3 +509,169 @@ es_temporal <- imprr(
   asymptotics = TRUE
 )
 viz_avg(es_temporal, order = "fixed")
+
+# By attention checks ==========================================================
+corrected_avg_list_asymp_berinsky_fail <- root_var %>%
+  imap(
+    ~ prep_list[[.y]]$full %>%
+      mutate(
+        berinsky_fail = case_when(
+          berinsky_fail == 1 ~ "Failed",
+          TRUE ~ "Passed"
+        )
+      ) %>%
+      group_split(berinsky_fail, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$berinsky_fail[1]) %>% unlist()) %>%
+      imap(
+        function(x, y) {
+          imprr(
+            dat = x,
+            main_q = paste0("app_", .y),
+            anchor_q = paste0("anc_", .y),
+            anc_correct = paste0("anc_correct_", .y),
+            main_labels = prep_list[[.y]]$labels,
+            asymptotics = TRUE
+          )
+        }
+      )
+  )
+save(
+  corrected_avg_list_asymp_berinsky_fail,
+  file = here("output", "corrected_avg_list_asymp_berinsky_fail.Rda")
+)
+
+root_var %>%
+  imap(
+    ~ {
+      p <- ggarrange(
+        viz_avg(
+          corrected_avg_list_asymp_berinsky_fail[[.y]]$Failed,
+          order = "fixed"
+        ) +
+          ggtitle("Failed"),
+        viz_avg(
+          corrected_avg_list_asymp_berinsky_fail[[.y]]$Passed,
+          order = "fixed"
+        ) +
+          ggtitle("Passed"),
+        ncol = 1
+      )
+      pdf_short(p)
+      ggsave_temp(
+        paste0("corrected_avg_asymp_", .y, "_berinsky.pdf"),
+        height = 6
+      )
+    }
+  )
+
+corrected_avg_list_asymp_ternovski_fail <- root_var %>%
+  imap(
+    ~ prep_list[[.y]]$full %>%
+      mutate(
+        ternovski_fail = case_when(
+          ternovski_fail == 1 ~ "Failed",
+          TRUE ~ "Passed"
+        )
+      ) %>%
+      group_split(ternovski_fail, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$ternovski_fail[1]) %>% unlist()) %>%
+      imap(
+        function(x, y) {
+          imprr(
+            dat = x,
+            main_q = paste0("app_", .y),
+            anchor_q = paste0("anc_", .y),
+            anc_correct = paste0("anc_correct_", .y),
+            main_labels = prep_list[[.y]]$labels,
+            asymptotics = TRUE
+          )
+        }
+      )
+  )
+save(
+  corrected_avg_list_asymp_ternovski_fail,
+  file = here("output", "corrected_avg_list_asymp_ternovski_fail.Rda")
+)
+
+root_var %>%
+  imap(
+    ~ {
+      p <- ggarrange(
+        viz_avg(
+          corrected_avg_list_asymp_ternovski_fail[[.y]]$Failed,
+          order = "fixed"
+        ) +
+          ggtitle("Failed"),
+        viz_avg(
+          corrected_avg_list_asymp_ternovski_fail[[.y]]$Passed,
+          order = "fixed"
+        ) +
+          ggtitle("Passed"),
+        ncol = 1
+      )
+      pdf_short(p)
+      ggsave_temp(
+        paste0("corrected_avg_asymp_", .y, "_ternovski.pdf"),
+        height = 6
+      )
+    }
+  )
+
+# By anchor passes =============================================================
+## Uncorrected versions; raw
+avg_list_anchor_fail <- root_var %>%
+  imap(
+    ~ {
+      out <- prep_list[[.y]]$full %>%
+        mutate(
+          !!as.name(paste0("anc_correct_", .y)) := case_when(
+            !!as.name(paste0("anc_correct_", .y)) == 1 ~ "Passed",
+            TRUE ~ "Failed"
+          )
+        ) %>%
+        group_split(!!as.name(paste0("anc_correct_", .y)), .keep = TRUE) %>%
+        `names<-`(
+          {.} %>% 
+            map(
+              function(x, y) x[[paste0("anc_correct_", .y)]][[1]]
+            ) %>% 
+            unlist()
+        )
+      
+      list(
+        Passed = avg_rank(out$Passed, paste0("app_", .y)) %>%
+          crosswalk_short(., .y),
+        Failed = avg_rank(out$Failed, paste0("app_", .y)) %>%
+          crosswalk_short(., .y)
+      )
+    }
+  )
+
+root_var %>%
+  imap(
+    ~ {
+      p <- ggarrange(
+        plot_nolegend(
+          viz_avg(
+            avg_list_anchor_fail[[.y]]$Passed,
+            order = "fixed", J = nrow(avg_list_anchor_fail[[.y]]$Passed)
+          ) +
+            ggtitle("Passed")
+        ),
+        plot_nolegend(
+          viz_avg(
+            avg_list_anchor_fail[[.y]]$Failed,
+            order = "fixed", J = nrow(avg_list_anchor_fail[[.y]]$Failed)
+          ) +
+            ggtitle("Failed")
+        ),
+        ncol = 1
+      )
+      pdf_short(p)
+      ggsave_temp(
+        paste0("avg_list_", .y, "_anchor_fail.pdf"),
+        height = 6
+      )
+    }
+  )
+
