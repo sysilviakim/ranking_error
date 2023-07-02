@@ -2,7 +2,7 @@ source(here::here("R", "utilities.R"))
 
 # Import data ==================================================================
 ## substitute file name when actual data is sent
-fname <- "AmericanRanking_Interim_June_2023.sav"
+fname <- "AmericanRanking_June_2023.sav"
 if (!file.exists(here("data", "tidy", "df_list.Rda"))) {
   df_list <- yougov_import(fname)
   save(df_list, file = here("data", "tidy", "df_list.Rda"))
@@ -12,22 +12,22 @@ if (!file.exists(here("data", "tidy", "df_list.Rda"))) {
 main <- df_list$main
 
 # What are the raw proportion of passing the test? =============================
-prop(main, "ternovski_fail")                   ## 85.1%
-prop(main, "berinsky_fail")                    ## 83.5%
+prop(main, "ternovski_fail")                   ## 86.3%
+prop(main, "berinsky_fail")                    ## 85.5%
 
-prop(main, "random_tate")                      ## 64.5%
-prop(main, "random_identity")                  ## 66.8%
-prop(main, "random_id_alphabet", useNA = "no") ## 44.2%
-prop(main, "random_id_exact", useNA = "no")    ## 49.3%
-prop(main, "random_polar")                     ## 77.1%
-prop(main, "random_esystems")                  ## 53.7%
-prop(main, "random_es_alphabet", useNA = "no") ## 66.2%
-prop(main, "random_es_temporal", useNA = "no") ## 57.3%
+prop(main, "random_tate")                      ## 67.9%
+prop(main, "random_identity")                  ## 69.7%
+prop(main, "random_id_alphabet", useNA = "no") ## 43.9%
+prop(main, "random_id_exact", useNA = "no")    ## 53.4%
+prop(main, "random_polar")                     ## 79.7%
+prop(main, "random_esystems")                  ## 56.3%
+prop(main, "random_es_alphabet", useNA = "no") ## 69.0%
+prop(main, "random_es_temporal", useNA = "no") ## 59.6%
 
-prop(main, "repeat_tate", useNA = "no")        ## 62.7%
-prop(main, "repeat_identity", useNA = "no")    ## 62.8%
-prop(main, "repeat_polar", useNA = "no")       ## 50.9%
-prop(main, "repeat_esystems", useNA = "no")    ## 35.5%
+prop(main, "repeat_tate", useNA = "no")        ## 66.3%
+prop(main, "repeat_identity", useNA = "no")    ## 65.6%
+prop(main, "repeat_polar", useNA = "no")       ## 53.6%
+prop(main, "repeat_esystems", useNA = "no")    ## 36.5%
 
 # Correlation between attention filters ========================================
 ## Between attention filters
@@ -182,114 +182,114 @@ ggsave(
   width = 6, height = 3
 )
 
-# [1] 0.3176585
-# Cond. on berinsky_fail == 1, Pr(ternovski_fail == 1) is 40.4%
-# Cond. on ternovski_fail == 1, Pr(berinsky_fail == 1) is 44.7%
-# [1] 0.1612602
-# Cond. on random_tate == 1, Pr(ternovski_fail == 1) is 22.7%
-# Cond. on ternovski_fail == 1, Pr(random_tate == 1) is 53.9%
-# [1] 0.1720154
-# Cond. on random_identity == 1, Pr(ternovski_fail == 1) is 23.6%
-# Cond. on ternovski_fail == 1, Pr(random_identity == 1) is 52.5%
-# [1] 0.1583064
+# [1] 0.2483813
+# Cond. on berinsky_fail == 1, Pr(ternovski_fail == 1) is 34.4%
+# Cond. on ternovski_fail == 1, Pr(berinsky_fail == 1) is 36.5%
+# [1] 0.1241025
+# Cond. on random_tate == 1, Pr(ternovski_fail == 1) is 19.9%
+# Cond. on ternovski_fail == 1, Pr(random_tate == 1) is 46.6%
+# [1] 0.1470883
+# Cond. on random_identity == 1, Pr(ternovski_fail == 1) is 21.3%
+# Cond. on ternovski_fail == 1, Pr(random_identity == 1) is 47.3%
+# [1] 0.172759
 # Cond. on random_id_alphabet == 1, Pr(ternovski_fail == 1) is 19.3%
-# Cond. on ternovski_fail == 1, Pr(random_id_alphabet == 1) is 36.2%
-# [1] 0.2341973
-# Cond. on random_id_exact == 1, Pr(ternovski_fail == 1) is 23.8%
-# Cond. on ternovski_fail == 1, Pr(random_id_exact == 1) is 40.4%
-# [1] 0.2245339
-# Cond. on random_polar == 1, Pr(ternovski_fail == 1) is 29.6%
-# Cond. on ternovski_fail == 1, Pr(random_polar == 1) is 45.4%
-# [1] 0.1652626
-# Cond. on random_esystems == 1, Pr(ternovski_fail == 1) is 21.3%
-# Cond. on ternovski_fail == 1, Pr(random_esystems == 1) is 66%
-# [1] 0.2218898
-# Cond. on random_es_alphabet == 1, Pr(ternovski_fail == 1) is 26.8%
-# Cond. on ternovski_fail == 1, Pr(random_es_alphabet == 1) is 29.8%
-# [1] 0.1024154
-# Cond. on random_es_temporal == 1, Pr(ternovski_fail == 1) is 18.5%
-# Cond. on ternovski_fail == 1, Pr(random_es_temporal == 1) is 27%
-# [1] 0.2720568
-# Cond. on random_tate == 1, Pr(berinsky_fail == 1) is 30.1%
-# Cond. on berinsky_fail == 1, Pr(random_tate == 1) is 64.7%
-# [1] 0.2864146
-# Cond. on random_identity == 1, Pr(berinsky_fail == 1) is 31.6%
-# Cond. on berinsky_fail == 1, Pr(random_identity == 1) is 63.5%
-# [1] 0.2308334
-# Cond. on random_id_alphabet == 1, Pr(berinsky_fail == 1) is 23.1%
-# Cond. on berinsky_fail == 1, Pr(random_id_alphabet == 1) is 39.1%
-# [1] 0.2283639
-# Cond. on random_id_exact == 1, Pr(berinsky_fail == 1) is 25.9%
-# Cond. on berinsky_fail == 1, Pr(random_id_exact == 1) is 39.7%
-# [1] 0.3687182
-# Cond. on random_polar == 1, Pr(berinsky_fail == 1) is 41.7%
-# Cond. on berinsky_fail == 1, Pr(random_polar == 1) is 57.7%
-# [1] 0.2962079
-# Cond. on random_esystems == 1, Pr(berinsky_fail == 1) is 28.4%
-# Cond. on berinsky_fail == 1, Pr(random_esystems == 1) is 79.5%
-# [1] 0.3547062
-# Cond. on random_es_alphabet == 1, Pr(berinsky_fail == 1) is 35.7%
-# Cond. on berinsky_fail == 1, Pr(random_es_alphabet == 1) is 35.9%
-# [1] 0.23084
-# Cond. on random_es_temporal == 1, Pr(berinsky_fail == 1) is 25.9%
-# Cond. on berinsky_fail == 1, Pr(random_es_temporal == 1) is 34%
-# [1] 0.2551209
-# Cond. on random_id_alphabet == 1, Pr(random_identity == 1) is 42%
-# Cond. on random_identity == 1, Pr(random_id_alphabet == 1) is 35.5%
-# [1] 0.3011365
-# Cond. on random_id_exact == 1, Pr(random_identity == 1) is 49%
-# Cond. on random_identity == 1, Pr(random_id_exact == 1) is 37.4%
-# [1] 0.449361
-# Cond. on random_es_alphabet == 1, Pr(random_esystems == 1) is 78.3%
-# Cond. on random_esystems == 1, Pr(random_es_alphabet == 1) is 28.1%
-# [1] 0.2407266
-# Cond. on random_es_temporal == 1, Pr(random_esystems == 1) is 59.5%
-# Cond. on random_esystems == 1, Pr(random_es_temporal == 1) is 27.9%
-# [1] 0.1662184
-# Cond. on repeat_tate == 1, Pr(ternovski_fail == 1) is 24.2%
-# Cond. on ternovski_fail == 1, Pr(repeat_tate == 1) is 28.4%
-# [1] 0.1814794
-# Cond. on repeat_identity == 1, Pr(ternovski_fail == 1) is 22.7%
-# Cond. on ternovski_fail == 1, Pr(repeat_identity == 1) is 29.1%
-# [1] 0.1319604
-# Cond. on repeat_polar == 1, Pr(ternovski_fail == 1) is 19.7%
-# Cond. on ternovski_fail == 1, Pr(repeat_polar == 1) is 32.6%
-# [1] 0.1298967
-# Cond. on repeat_esystems == 1, Pr(ternovski_fail == 1) is 17.6%
-# Cond. on ternovski_fail == 1, Pr(repeat_esystems == 1) is 39%
-# [1] 0.2417485
-# Cond. on repeat_tate == 1, Pr(berinsky_fail == 1) is 27.3%
-# Cond. on berinsky_fail == 1, Pr(repeat_tate == 1) is 28.8%
-# [1] 0.3292162
-# Cond. on repeat_identity == 1, Pr(berinsky_fail == 1) is 33.7%
-# Cond. on berinsky_fail == 1, Pr(repeat_identity == 1) is 39.1%
-# [1] 0.2426608
-# Cond. on repeat_polar == 1, Pr(berinsky_fail == 1) is 26.6%
-# Cond. on berinsky_fail == 1, Pr(repeat_polar == 1) is 39.7%
-# [1] 0.2225142
-# Cond. on repeat_esystems == 1, Pr(berinsky_fail == 1) is 21.5%
-# Cond. on berinsky_fail == 1, Pr(repeat_esystems == 1) is 42.9%
-# [1] 0.3444331
-# Cond. on repeat_tate == 1, Pr(random_tate == 1) is 54.5%
-# Cond. on random_tate == 1, Pr(repeat_tate == 1) is 26.9%
-# [1] 0.315108
-# Cond. on repeat_identity == 1, Pr(random_identity == 1) is 53%
-# Cond. on random_identity == 1, Pr(repeat_identity == 1) is 30.7%
-# [1] 0.177041
-# Cond. on repeat_identity == 1, Pr(random_id_alphabet == 1) is 32%
-# Cond. on random_id_alphabet == 1, Pr(repeat_identity == 1) is 22%
-# [1] 0.1559984
-# Cond. on repeat_identity == 1, Pr(random_id_exact == 1) is 30.9%
-# Cond. on random_id_exact == 1, Pr(repeat_identity == 1) is 23.4%
-# [1] 0.3638615
-# Cond. on repeat_polar == 1, Pr(random_polar == 1) is 41.6%
-# Cond. on random_polar == 1, Pr(repeat_polar == 1) is 44.9%
-# [1] 0.2904052
-# Cond. on repeat_esystems == 1, Pr(random_esystems == 1) is 55.8%
-# Cond. on random_esystems == 1, Pr(repeat_esystems == 1) is 39.8%
-# [1] 0.2645219
-# Cond. on repeat_esystems == 1, Pr(random_es_alphabet == 1) is 21.2%
-# Cond. on random_es_alphabet == 1, Pr(repeat_esystems == 1) is 42%
-# [1] 0.2917813
-# Cond. on repeat_esystems == 1, Pr(random_es_temporal == 1) is 24%
-# Cond. on random_es_temporal == 1, Pr(repeat_esystems == 1) is 36.6%
+# Cond. on ternovski_fail == 1, Pr(random_id_alphabet == 1) is 39.2%
+# [1] 0.1941519
+# Cond. on random_id_exact == 1, Pr(ternovski_fail == 1) is 20.5%
+# Cond. on ternovski_fail == 1, Pr(random_id_exact == 1) is 35.1%
+# [1] 0.1798178
+# Cond. on random_polar == 1, Pr(ternovski_fail == 1) is 25.9%
+# Cond. on ternovski_fail == 1, Pr(random_polar == 1) is 38.5%
+# [1] 0.1371913
+# Cond. on random_esystems == 1, Pr(ternovski_fail == 1) is 19%
+# Cond. on ternovski_fail == 1, Pr(random_esystems == 1) is 60.8%
+# [1] 0.1717841
+# Cond. on random_es_alphabet == 1, Pr(ternovski_fail == 1) is 21.8%
+# Cond. on ternovski_fail == 1, Pr(random_es_alphabet == 1) is 24.3%
+# [1] 0.1117112
+# Cond. on random_es_temporal == 1, Pr(ternovski_fail == 1) is 18.9%
+# Cond. on ternovski_fail == 1, Pr(random_es_temporal == 1) is 28.4%
+# [1] 0.2004261
+# Cond. on random_tate == 1, Pr(berinsky_fail == 1) is 24.8%
+# Cond. on berinsky_fail == 1, Pr(random_tate == 1) is 54.8%
+# [1] 0.2192757
+# Cond. on random_identity == 1, Pr(berinsky_fail == 1) is 26.2%
+# Cond. on berinsky_fail == 1, Pr(random_identity == 1) is 54.8%
+# [1] 0.1946443
+# Cond. on random_id_alphabet == 1, Pr(berinsky_fail == 1) is 20.6%
+# Cond. on berinsky_fail == 1, Pr(random_id_alphabet == 1) is 39.5%
+# [1] 0.2108547
+# Cond. on random_id_exact == 1, Pr(berinsky_fail == 1) is 22.4%
+# Cond. on berinsky_fail == 1, Pr(random_id_exact == 1) is 36.3%
+# [1] 0.2808623
+# Cond. on random_polar == 1, Pr(berinsky_fail == 1) is 34.1%
+# Cond. on berinsky_fail == 1, Pr(random_polar == 1) is 47.8%
+# [1] 0.2399974
+# Cond. on random_esystems == 1, Pr(berinsky_fail == 1) is 24.1%
+# Cond. on berinsky_fail == 1, Pr(random_esystems == 1) is 72.6%
+# [1] 0.2539862
+# Cond. on random_es_alphabet == 1, Pr(berinsky_fail == 1) is 29.1%
+# Cond. on berinsky_fail == 1, Pr(random_es_alphabet == 1) is 30.6%
+# [1] 0.1914317
+# Cond. on random_es_temporal == 1, Pr(berinsky_fail == 1) is 21.6%
+# Cond. on berinsky_fail == 1, Pr(random_es_temporal == 1) is 30.6%
+# [1] 0.2112265
+# Cond. on random_id_alphabet == 1, Pr(random_identity == 1) is 37.5%
+# Cond. on random_identity == 1, Pr(random_id_alphabet == 1) is 34.5%
+# [1] 0.2836382
+# Cond. on random_id_exact == 1, Pr(random_identity == 1) is 45.7%
+# Cond. on random_identity == 1, Pr(random_id_exact == 1) is 35.4%
+# [1] 0.423808
+# Cond. on random_es_alphabet == 1, Pr(random_esystems == 1) is 74.5%
+# Cond. on random_esystems == 1, Pr(random_es_alphabet == 1) is 26%
+# [1] 0.2083223
+# Cond. on random_es_temporal == 1, Pr(random_esystems == 1) is 56.8%
+# Cond. on random_esystems == 1, Pr(random_es_temporal == 1) is 26.6%
+# [1] 0.08910355
+# Cond. on repeat_tate == 1, Pr(ternovski_fail == 1) is 18.8%
+# Cond. on ternovski_fail == 1, Pr(repeat_tate == 1) is 22.3%
+# [1] 0.1731812
+# Cond. on repeat_identity == 1, Pr(ternovski_fail == 1) is 21.2%
+# Cond. on ternovski_fail == 1, Pr(repeat_identity == 1) is 27%
+# [1] 0.06668797
+# Cond. on repeat_polar == 1, Pr(ternovski_fail == 1) is 17.5%
+# Cond. on ternovski_fail == 1, Pr(repeat_polar == 1) is 29.7%
+# [1] 0.123865
+# Cond. on repeat_esystems == 1, Pr(ternovski_fail == 1) is 15.4%
+# Cond. on ternovski_fail == 1, Pr(repeat_esystems == 1) is 36.5%
+# [1] 0.1632269
+# Cond. on repeat_tate == 1, Pr(berinsky_fail == 1) is 22.2%
+# Cond. on berinsky_fail == 1, Pr(repeat_tate == 1) is 24.8%
+# [1] 0.2502592
+# Cond. on repeat_identity == 1, Pr(berinsky_fail == 1) is 27%
+# Cond. on berinsky_fail == 1, Pr(repeat_identity == 1) is 32.5%
+# [1] 0.2138874
+# Cond. on repeat_polar == 1, Pr(berinsky_fail == 1) is 24.3%
+# Cond. on berinsky_fail == 1, Pr(repeat_polar == 1) is 38.9%
+# [1] 0.1849397
+# Cond. on repeat_esystems == 1, Pr(berinsky_fail == 1) is 18%
+# Cond. on berinsky_fail == 1, Pr(repeat_esystems == 1) is 40.1%
+# [1] 0.2833433
+# Cond. on repeat_tate == 1, Pr(random_tate == 1) is 48.3%
+# Cond. on random_tate == 1, Pr(repeat_tate == 1) is 24.5%
+# [1] 0.2649168
+# Cond. on repeat_identity == 1, Pr(random_identity == 1) is 47.6%
+# Cond. on random_identity == 1, Pr(repeat_identity == 1) is 27.4%
+# [1] 0.1346784
+# Cond. on repeat_identity == 1, Pr(random_id_alphabet == 1) is 31.7%
+# Cond. on random_id_alphabet == 1, Pr(repeat_identity == 1) is 19.9%
+# [1] 0.1255438
+# Cond. on repeat_identity == 1, Pr(random_id_exact == 1) is 27%
+# Cond. on random_id_exact == 1, Pr(repeat_identity == 1) is 20.1%
+# [1] 0.3039608
+# Cond. on repeat_polar == 1, Pr(random_polar == 1) is 36.7%
+# Cond. on random_polar == 1, Pr(repeat_polar == 1) is 41.8%
+# [1] 0.247155
+# Cond. on repeat_esystems == 1, Pr(random_esystems == 1) is 52.3%
+# Cond. on random_esystems == 1, Pr(repeat_esystems == 1) is 38.7%
+# [1] 0.2543388
+# Cond. on repeat_esystems == 1, Pr(random_es_alphabet == 1) is 19.4%
+# Cond. on random_es_alphabet == 1, Pr(repeat_esystems == 1) is 41.2%
+# [1] 0.2473715
+# Cond. on repeat_esystems == 1, Pr(random_es_temporal == 1) is 22.6%
+# Cond. on random_es_temporal == 1, Pr(repeat_esystems == 1) is 35.6%
