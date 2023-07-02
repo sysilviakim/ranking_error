@@ -47,7 +47,9 @@ prep_list <- root_var %>%
           matches(paste0("anc_", str_sub(.y, 1, 2))),
           matches(paste0("anc_correct_", str_sub(.y, 1, 2))),
           matches(paste0("anc_", str_sub(.y, 1, 2), ".*_recorded")),
-          pid3final, partisan, race4asians, race2, berinsky_fail, ternovski_fail
+          pid3final, partisan, race4asians, race2,
+          berinsky_fail, ternovski_fail,
+          berinsky_fail_label, ternovski_fail_label
         ) %>%
         select(-contains("row_rnd")) %>%
         select(-matches("^inputstate$"))
@@ -496,7 +498,7 @@ id_alphabet <- imprr(
   main_labels = prep_list$identity$labels,
   asymptotics = TRUE
 )
-viz_avg(id_alphabet, order = "fixed")
+viz_avg(id_alphabet$est, order = "fixed")
 
 id_exact <- imprr(
   dat = prep_list$identity$full %>% filter(!is.na(anc_id_exact)),
@@ -506,7 +508,7 @@ id_exact <- imprr(
   main_labels = prep_list$identity$labels,
   asymptotics = TRUE
 )
-viz_avg(id_exact, order = "fixed") ## religion
+viz_avg(id_exact$est, order = "fixed") ## religion
 
 es_alphabet <- imprr(
   dat = prep_list$esystems$full %>% filter(!is.na(anc_es_alphabet)),
@@ -516,7 +518,7 @@ es_alphabet <- imprr(
   main_labels = prep_list$esystems$labels,
   asymptotics = TRUE
 )
-viz_avg(es_alphabet, order = "fixed")
+viz_avg(es_alphabet$est, order = "fixed")
 
 es_temporal <- imprr(
   dat = prep_list$esystems$full %>% filter(!is.na(anc_es_temporal)),
@@ -526,20 +528,14 @@ es_temporal <- imprr(
   main_labels = prep_list$esystems$labels,
   asymptotics = TRUE
 )
-viz_avg(es_temporal, order = "fixed")
+viz_avg(es_temporal$est, order = "fixed")
 
 # By attention checks ==========================================================
 corrected_avg_list_asymp_berinsky_fail <- root_var %>%
   imap(
     ~ prep_list[[.y]]$full %>%
-      mutate(
-        berinsky_fail = case_when(
-          berinsky_fail == 1 ~ "Failed",
-          TRUE ~ "Passed"
-        )
-      ) %>%
-      group_split(berinsky_fail, .keep = TRUE) %>%
-      `names<-`({.} %>% map(~ .x$berinsky_fail[1]) %>% unlist()) %>%
+      group_split(berinsky_fail_label, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$berinsky_fail_label[1]) %>% unlist()) %>%
       imap(
         function(x, y) {
           imprr(
@@ -585,14 +581,8 @@ root_var %>%
 corrected_avg_list_asymp_ternovski_fail <- root_var %>%
   imap(
     ~ prep_list[[.y]]$full %>%
-      mutate(
-        ternovski_fail = case_when(
-          ternovski_fail == 1 ~ "Failed",
-          TRUE ~ "Passed"
-        )
-      ) %>%
-      group_split(ternovski_fail, .keep = TRUE) %>%
-      `names<-`({.} %>% map(~ .x$ternovski_fail[1]) %>% unlist()) %>%
+      group_split(ternovski_fail_label, .keep = TRUE) %>%
+      `names<-`({.} %>% map(~ .x$ternovski_fail_label[1]) %>% unlist()) %>%
       imap(
         function(x, y) {
           imprr(
