@@ -41,7 +41,7 @@ imprr <- function(data,
                   anc_correct_pattern = NULL,
                   main_labels,
                   n_bootstrap = 1000,
-                  asymptotics = FALSE,
+                  asymptotics = TRUE,
                   seed = 123456) {
   # Setup ======================================================================
   N <- nrow(data)
@@ -81,8 +81,8 @@ imprr <- function(data,
   }
   
   ## List for bootstrapped results
-  list_avg <- list_prop <- vector("list", length = n_bootstrap)
-
+  list_PMF <- list_avg <- list_prop <- vector("list", length = n_bootstrap)
+  
   # Boostrapping ===============================================================
   ## Sample with replacement
   set.seed(seed)
@@ -94,16 +94,16 @@ imprr <- function(data,
     boostrap_dat <- data[index, ]
     
     ## Anchor ranking only
-    loc_anc <- boostrap_dat %>% 
+    loc_anc <- boostrap_dat %>%
       select(matches(anchor_q)) %>%
       select(matches("_[[:digit:]]$"))
     
     ## Main ranking only
-    loc_app <- boostrap_dat %>% 
+    loc_app <- boostrap_dat %>%
       select(all_of(main_labels))
     
     ## Originally unknown quantity 1: proportion of random answers
-    p_non_random <- (mean(boostrap_dat[[anc_correct]]) - 1 / factorial(J)) / 
+    p_non_random <- (mean(boostrap_dat[[anc_correct]]) - 1 / factorial(J)) /
       (1 - 1 / factorial(J))
     
     ## Originally unknown quantity 2: distribution of random answers
@@ -124,6 +124,8 @@ imprr <- function(data,
       C <- data.frame(t(1:J))
       
       f_random_avg <- (A_avg - (B * C)) / (1 - B)
+      
+      ## Must fill in for PMF
     } else {
       ## We use theory to get f_random_avg
       ## We know that the entire PMF will follow a uniform distribution
@@ -131,14 +133,42 @@ imprr <- function(data,
       ## We then compute average ranks based on the asymptotic distribution
       
       ## This is true as N goes to infinity
-      f_random_avg <- (1 + J) / 2 
+      f_random_avg <- (1 + J) / 2
       B <- p_non_random
     }
     
     ## Distribution of error-free rankings
+    D_PMF_0 <- loc_app %>%
+      unite(ranking, sep = "") %>%
+      group_by(ranking) %>%
+      count()
+    
     D_avg <- loc_app %>%
       summarise(across(everything(), ~ mean(as.numeric(.x))))
+
+    ## Create sample space to merge
+    perm_j <- permn(1:J)
+    perm_j <- do.call(rbind.data.frame, perm_j)
+    colnames(perm_j) <- c(paste0("position_", 1:J))
+    perm_j <- perm_j %>% unite(col = "ranking", sep = "")
     
+    ## We need this because some rankings do not appear in the data
+    D_PMF <- perm_j %>%
+      left_join(D_PMF_0, by = "ranking") %>%
+      mutate(
+        n = n / sum(n),
+        n = ifelse(is.na(n), 0, n)
+      )
+    
+    ## Get Uniform Distribution
+    U <- 1 / factorial(J)
+    
+    imp_PMF_0 <- (D_PMF$n - ((1 - p_non_random) * U)) / p_non_random
+    
+    imp_PMF <- perm_j %>%
+      mutate(n = imp_PMF_0)
+    
+    ## This method may produce outside-the-bound values; temporarily truncate
     ## Estimated PMF of errors in the anchor
     E <- f_random_avg
     imp_avg <- (D_avg - ((1 - B) * E)) / B
@@ -153,10 +183,12 @@ imprr <- function(data,
       )
     
     list_prop[[i]] <- p_non_random
+    list_PMF[[i]] <- imp_PMF
     list_avg[[i]] <- imp_avg
   }
   message("Bootstrapping finished.")
   
+  ## Mean and CI of the proportion of random/nonrandom answers =================
   out_prop <- lm_robust(as.numeric(unlist(list_prop)) ~ 1) %>%
     tidy() %>%
     select(
@@ -177,7 +209,7 @@ imprr <- function(data,
     ungroup() %>%
     mutate(imp = "debiased data")
   
-  # Raw average ranks
+  # Raw average ranks ==========================================================
   raw_avg <- data %>%
     select(all_of(main_labels)) %>%
     pivot_longer(everything())
@@ -200,15 +232,37 @@ imprr <- function(data,
         name,
         imp
       )
-
+    
     raw_est[[j]] <- raw_ols
   }
   raw_est <- do.call(rbind.data.frame, raw_est)
   
   # Combine both estimates of average ranks
-  out <- rbind(out_avg, raw_est) %>%
+  out_avg <- rbind(out_avg, raw_est) %>%
     arrange(name)
   
-  return(list(est = out, p_non_random = out_prop))
+  # Improved average ranks =====================================================
+  ## Uncorrected estimate
+  raw_PMF <- D_PMF %>% 
+    mutate(
+      est = n,
+      low = n,
+      up = n,
+      imp = "A. Raw Data"
+    ) %>%
+    select(-n)
+  
+  out_PMF <- do.call(rbind.data.frame, list_PMF) %>%
+    group_by(ranking) %>%
+    summarise(
+      est = mean(n),
+      low = quantile(n, prob = 0.025),
+      up = quantile(n, prob = 0.975)
+    ) %>%
+    ungroup() %>%
+    mutate(imp = "B. Bias Corrected")
+  
+  out_PMF <- rbind(raw_PMF, out_PMF)
+  
+  return(list(PMF = out_PMF, p_non_random = out_prop, avg = out_avg))
 }
-
