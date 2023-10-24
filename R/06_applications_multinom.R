@@ -28,12 +28,33 @@ head(dt) # check
 
 
 # Run Multinomial logit =========================================================
+library(nnet)
+library(ggeffects)
+library(car)
+library(clarify)
 
 fit_basic <- multinom(choice ~ ideo7, data = dt)
 summary(fit_basic)
-tidy(fit_basic, conf.int = TRUE)
 
 ggeffect(fit_basic, terms = "ideo7[1:7 by = 1]") %>%
   plot()
+
+
+set.seed(123)
+sim_coefs <- sim(fit_basic)
+
+sim_pa <- sim_setx(sim_coefs, outcome = "party",  x = list(ideo7 = 1:7))
+sim_ra <- sim_setx(sim_coefs, outcome = "race",  x = list(ideo7 = 1:7))
+sim_re <- sim_setx(sim_coefs, outcome = "religion",  x = list(ideo7 = 1:7))
+sim_ge <- sim_setx(sim_coefs, outcome = "gender",  x = list(ideo7 = 1:7))
+
+plot(sim_pa) + ylim(0, 0.6) + ggtitle("Party") -> p1
+plot(sim_ra) + ylim(0, 0.6) + ggtitle("Race") -> p2
+plot(sim_re) + ylim(0, 0.6) + ggtitle("Religion") -> p3
+plot(sim_ge) + ylim(0, 0.6) + ggtitle("Gender") -> p4
+
+ggpubr::ggarrange(p1, p2, p3, p4)
+
+
 
 

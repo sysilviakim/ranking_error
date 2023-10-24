@@ -58,6 +58,16 @@ summary(m)
 
 # Interpret results ============================================================
 
+# Clarify does not support rank-order logit
+# Placket-Luce
+library(PlackettLuce)
+
+
+
+
+
+
+
 # Fitted values for starter: 1082*3 = 3246 choices
 fit <- fitted(m, type = "probabilities")
 head(fit)
@@ -72,6 +82,17 @@ dt2 <- dt %>%
 
 dt2 <- cbind(dt2, fit) %>%
   data.frame()
+
+# Predicted probabilities in many forms
+# (1)  Probability (Party = 1)
+# (2A) Probability (Party = 2 | Race = 1)
+# (2B) Probability (Party = 2 | Religion = 1)
+# (2C) Probability (Party = 2 | Gender = 1)
+# (3A) Probability (Party = 3 | (Race, Religion) = 1,2)
+# (3B) Probability (Party = 3 | (Gender, Religion) = 1,2)
+# (3C) Probability (Party = 3 | (Race, Gender = 1,2)
+
+# What are other two cases?
 
 
 # Visualize fitted values over ideology
