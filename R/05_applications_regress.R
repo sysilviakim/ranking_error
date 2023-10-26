@@ -49,12 +49,58 @@ mdat$ideo7     # explanatory variable
 # Estimating parameters
 m <- mlogit(ch ~ 1 | ideo7,  # Y ~ X_item | X_resp
             mdat,                # Data
-            reflevel = "party"   # Base category
+            reflevel = "gender"   # Base category
             ) 
 
 
 # Raw result
 summary(m)
+
+library(clarify)
+set.seed(123)
+sim_coefs <- sim(m)
+
+v <- sim_coefs$sim.coefs %>% as_tibble()
+
+p_qoi <- data.frame(ideology = 1:7,
+                    mean = NA,
+                    low = NA,
+                    up = NA)
+for(i in 1:7){
+e_XB_party <- exp(v$`(Intercept):party` + v$`ideo7:party` * i)
+e_XB_race <- exp(v$`(Intercept):race` + v$`ideo7:race` * i)
+e_XB_reli <- exp(v$`(Intercept):religion` + v$`ideo7:religion` * i)
+
+# Prob: party, race, religion, gender
+# Prob(party) * Prob(race) * Prob(religion)
+p <- e_XB_party/(e_XB_party+e_XB_race+e_XB_reli) *
+         e_XB_race/(e_XB_race+e_XB_reli) *
+         e_XB_reli/(e_XB_reli + 1)
+
+p_qoi[i,2] <- mean(p)
+p_qoi[i,3] <- quantile(p, prob=0.025)
+p_qoi[i,4] <- quantile(p, prob=0.975)
+
+}
+
+p_qoi
+
+p_qoi %>%
+  ggplot(aes(x = ideology, y = mean)) +
+  geom_point(color = "darkcyan") +
+  geom_pointrange(aes(ymin = low, ymax = up), color = "darkcyan") +
+  theme_bw() +
+  xlim(1, 7) +
+  xlab("Ideology: 1 = Most Liberal, 7 = Most Conservative") +
+  ylab("Predicted Probability") +
+  ggtitle("Ranking: (Party > Race > Religion > Gender)") 
+
+ggsave(here::here("fig", "placketluce.pdf"),
+       width = 5, height = 3.5)
+
+
+
+
 
 # Interpret results ============================================================
 
