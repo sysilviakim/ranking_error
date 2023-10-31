@@ -56,6 +56,7 @@ m <- mlogit(ch ~ 1 | ideo7,  # Y ~ X_item | X_resp
 # Raw result
 summary(m)
 
+# Generate 1000 sets of parameters (parametric bootstrap)
 library(clarify)
 set.seed(123)
 sim_coefs <- sim(m)
@@ -100,57 +101,6 @@ ggsave(here::here("fig", "placketluce.pdf"),
 
 
 
-
-
-# Interpret results ============================================================
-
-# Clarify does not support rank-order logit
-# Placket-Luce
+# Try Placket-Luce Package too
 library(PlackettLuce)
-
-
-
-
-
-
-
-# Fitted values for starter: 1082*3 = 3246 choices
-fit <- fitted(m, type = "probabilities")
-head(fit)
-
-dt2 <- dt %>% 
-  slice(rep(1:n(), each = 3)) %>%
-  group_by(id) %>%
-  mutate(stage = c("First choice", 
-                   "Second choice", 
-                   "Third choice")) %>%
-  ungroup() 
-
-dt2 <- cbind(dt2, fit) %>%
-  data.frame()
-
-# Predicted probabilities in many forms
-# (1)  Probability (Party = 1)
-# (2A) Probability (Party = 2 | Race = 1)
-# (2B) Probability (Party = 2 | Religion = 1)
-# (2C) Probability (Party = 2 | Gender = 1)
-# (3A) Probability (Party = 3 | (Race, Religion) = 1,2)
-# (3B) Probability (Party = 3 | (Gender, Religion) = 1,2)
-# (3C) Probability (Party = 3 | (Race, Gender = 1,2)
-
-# What are other two cases?
-
-
-# Visualize fitted values over ideology
-p <-  ggplot(dt2, aes(x = ideo7, y = party)) +
-  geom_point(color = "maroon") +
-  facet_wrap( ~ stage, nrow = 1) +
-  theme_bw() +
-  ylab("Pr (Political Party)") +
-  xlab("Ideology")
-
-p
-ggsave(here::here("fig", "regress.pdf"),
-       height = 4, width = 10)
-
 
