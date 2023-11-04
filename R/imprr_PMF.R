@@ -36,15 +36,18 @@
 
 #########################################
 # # For my coding
-# data <- prep_list$identity$full
-# main_q <- "app_identity"
-# anchor_q <- "anc_identity"
-# anc_correct <- "anc_correct_identity"
-# anc_correct_pattern <- NULL
-# main_labels <- prep_list$identity$labels
-# asymptotics <- TRUE
-# n_bootstrap <- 200
-# seed <- 123456
+data <- prep_list$identity$full
+main_q <- "app_identity"
+anchor_q <- "anc_identity"
+anc_correct <- "anc_correct_identity"
+anc_correct_pattern <- NULL
+main_labels <- prep_list$identity$labels
+asymptotics <- TRUE
+n_bootstrap <- 200
+seed <- 123456
+
+# library(remotes)
+# remotes::install_github("sysilviakim/Kmisc")
 
 # Apply the bias correction to the PMF
 temp <- imprr(data = data,
@@ -229,8 +232,13 @@ imprr <- function(data,
     ungroup() %>%
     mutate(imp = "B. Bias Corrected")
   
-  combine <- rbind(out_PMF, out_prop)
+#  combine <- rbind(out_PMF, out_prop)
+  weight <- out_PMF %>%
+    left_join(out_prop, by = "ranking") %>%
+    mutate(est.x.adj = ifelse(est.x < 0, 0, est.x), # drop negative PMFs
+           est.x.norm = est.x.adj / sum(est.x.adj), # normalize PMF
+           weight = est.x.norm / est.y)             # weight
   
-  return(combine)
+  return(weight)
 }
 
