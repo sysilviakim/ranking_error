@@ -61,26 +61,28 @@ temp <- imprr(data = data,
               seed = 123456
               )
 
-gdat <- temp %>%
-  mutate(est = ifelse(est < 0, 0, est)) %>%
-  data.frame()
+write_csv(temp, here::here("data/tidy", "temp_weight.csv"))
 
-
-p <- ggplot(gdat, aes(est, ranking, fill = imp)) +
-  geom_col() +
-  scale_fill_manual(
-   values = c("A. Raw Data" = "#128ba0",
-              "B. Bias Corrected"  = "#b0015a")) +  
-  geom_vline(xintercept = 1/24, lty=2, color = "dimgray") +
-  xlab("Proportion of Unique Ranking Profiles") +
-  ylab("Reference choice set: {Party, Religion, Gender, Race/Ethnicity}") +
-  facet_wrap(~ imp, ncol = 1) +
-  coord_flip() +
-  theme_classic() +
-  theme(legend.position = "none")
-
-ggsave(here::here("fig", "corrected_PMF.pdf"),
-       width = 8, height = 5)
+# gdat <- temp %>%
+#   mutate(est = ifelse(est < 0, 0, est)) %>%
+#   data.frame()
+# 
+# 
+# p <- ggplot(gdat, aes(est, ranking, fill = imp)) +
+#   geom_col() +
+#   scale_fill_manual(
+#    values = c("A. Raw Data" = "#128ba0",
+#               "B. Bias Corrected"  = "#b0015a")) +  
+#   geom_vline(xintercept = 1/24, lty=2, color = "dimgray") +
+#   xlab("Proportion of Unique Ranking Profiles") +
+#   ylab("Reference choice set: {Party, Religion, Gender, Race/Ethnicity}") +
+#   facet_wrap(~ imp, ncol = 1) +
+#   coord_flip() +
+#   theme_classic() +
+#   theme(legend.position = "none")
+# 
+# ggsave(here::here("fig", "corrected_PMF.pdf"),
+#        width = 8, height = 5)
 
 
 imprr <- function(data,

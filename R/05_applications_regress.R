@@ -1,7 +1,18 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 
+# Grab rankings and weights
+imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
+  mutate(app_identity = as.character(ranking),
+         bias_weight = weight) %>%
+  dplyr::select(app_identity, bias_weight)
+
+imp_w
+hist(imp_w$bias_weight, breaks = 20) # 6 rankings should not exist, thus  w = 0
+
+# Grab main data
 main <- df_list$main
+
 
 # Data processing ==============================================================
 # Fix some weird situation
@@ -20,10 +31,14 @@ dt <- main %>%
          ch.religion = app_identity_2,
          ch.gender = app_identity_3,
          ch.race = app_identity_4) %>%
-  select(starts_with("ch"), id, ideo7) %>%
+  left_join(imp_w, by = "app_identity") %>%
+  select(starts_with("ch"), id, ideo7, bias_weight) %>%
   filter(!is.na(ideo7))
 
+
 head(dt) # check
+hist(dt$bias_weight, border = "white") # good, no extremely small weight
+abline(v = 1, lty = 2, lwd = 2, col = "darkred")
 
 
 # Run Rank-order logit =========================================================
@@ -46,7 +61,7 @@ mdat$idx       # position id (1st, 2nd, 3rd, 4th = depressed)
 mdat$ideo7     # explanatory variable
 
 
-# Estimating parameters
+# Estimating parameters (no weight)
 m <- mlogit(ch ~ 1 | ideo7,  # Y ~ X_item | X_resp
             mdat,                # Data
             reflevel = "gender"   # Base category
@@ -86,18 +101,146 @@ p_qoi[i,4] <- quantile(p, prob=0.975)
 
 p_qoi
 
-p_qoi %>%
-  ggplot(aes(x = ideology, y = mean)) +
-  geom_point(color = "darkcyan") +
-  geom_pointrange(aes(ymin = low, ymax = up), color = "darkcyan") +
+
+
+
+# Estimating parameters (with weight)
+m2 <- mlogit(ch ~ 1 | ideo7,  # Y ~ X_item | X_resp
+             mdat,                # Data
+             reflevel = "gender",   # Base category
+             weight = bias_weight
+) 
+
+
+# Raw result
+summary(m2)
+
+# Generate 1000 sets of parameters (parametric bootstrap)
+set.seed(123)
+sim_coefs <- sim(m2)
+
+v <- sim_coefs$sim.coefs %>% as_tibble()
+
+p_qoi2 <- data.frame(ideology = 1:7,
+                    mean = NA,
+                    low = NA,
+                    up = NA)
+for(i in 1:7){
+  e_XB_party <- exp(v$`(Intercept):party` + v$`ideo7:party` * i)
+  e_XB_race <- exp(v$`(Intercept):race` + v$`ideo7:race` * i)
+  e_XB_reli <- exp(v$`(Intercept):religion` + v$`ideo7:religion` * i)
+  
+  # Prob: party, race, religion, gender
+  # Prob(party) * Prob(race) * Prob(religion)
+  p <- e_XB_party/(e_XB_party+e_XB_race+e_XB_reli) *
+    e_XB_race/(e_XB_race+e_XB_reli) *
+    e_XB_reli/(e_XB_reli + 1)
+  
+  p_qoi2[i,2] <- mean(p)
+  p_qoi2[i,3] <- quantile(p, prob=0.025)
+  p_qoi2[i,4] <- quantile(p, prob=0.975)
+  
+}
+
+
+
+p_qoi$results <- "raw data"    # no weight
+p_qoi2$results <- "with bias correction"  # with weight
+
+
+ggdt <- rbind(p_qoi, p_qoi2)
+
+ggdt %>%
+  ggplot(aes(x = ideology, y = mean, color = results)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = low, ymax = up)) +
+  scale_color_manual(values=c("darkcyan", "darkred")) +
+#  facet_wrap(~ type) +
   theme_bw() +
   xlim(1, 7) +
-  xlab("Ideology: 1 = Most Liberal, 7 = Most Conservative") +
+  xlab("Ideology (liberal - conservative)") +
   ylab("Predicted Probability") +
-  ggtitle("Ranking: (Party > Race > Religion > Gender)") 
+  ggtitle("Ranking 1423 (Party, Race, Religion, Gender)") -> p
 
-ggsave(here::here("fig", "placketluce.pdf"),
+p
+
+ggsave(here::here("fig", "placketluce_weight.pdf"),
        width = 5, height = 3.5)
+
+
+
+
+# Additional checks with mean ranks (recreating Figure 7)
+
+dt2 <- dt %>%
+  rename(party = ch.party,
+         religion = ch.religion,
+         gender = ch.gender,
+         race = ch.race)
+
+## no weight
+mrank <-  lm_robust(party ~ 1, dt2) %>% tidy()
+mrank <- rbind(mrank,  lm_robust(religion ~ 1, dt2)  %>% tidy())
+mrank <- rbind(mrank,  lm_robust(gender ~ 1, dt2)  %>% tidy())
+mrank <- rbind(mrank,  lm_robust(race ~ 1, dt2)  %>% tidy())
+
+
+## with weight
+mrank2 <-  lm_robust(party ~ 1, dt2, 
+                     weight = bias_weight) %>% tidy()
+mrank2 <- rbind(mrank2,  lm_robust(religion ~ 1, dt2,
+                                  weight = bias_weight)  %>% tidy())
+mrank2 <- rbind(mrank2,  lm_robust(gender ~ 1, dt2,
+                                  weight = bias_weight)  %>% tidy())
+mrank2 <- rbind(mrank2,  lm_robust(race ~ 1, dt2,
+                                  weight = bias_weight)  %>% tidy())
+
+mrank$Type <- "raw data"
+mrank2$Type <- "de-biased"
+
+ggdt <- rbind(mrank, mrank2) %>%
+  rename(low = conf.low,
+         up = conf.high,
+         est = estimate)
+ggdt$outcome <- factor(ggdt$outcome, 
+                        levels = c("gender", "religion", "race", "party"))
+J <- 4
+color_list = c("#b0015a", "#999999")
+
+
+ggplot(ggdt, aes(x = fct_rev(outcome),
+                 y = est, color = Type)) +
+  geom_point(
+    aes(shape = Type),
+    size = 2,
+    position = position_dodge(width = 0.5)
+  ) +
+  # Reorder by point estimate
+  geom_linerange(
+    aes(ymin = low, ymax = up),
+    lwd = 1, position = position_dodge(width = 0.5)
+  ) +
+  scale_color_manual(values = color_list) +
+  theme_bw() +
+  coord_flip() +
+  xlab("") +
+  ylab("") +
+  scale_y_continuous(limits = c(1, J), breaks = seq(J)) +
+  geom_hline(yintercept = (J + 1) / 2, linetype = "dashed") +
+    theme(
+      legend.position = "bottom",
+      legend.title = element_blank(),
+      legend.margin = margin(-0.5, 0, 0, 0, unit = "cm"),
+      legend.spacing.x = unit(0, "cm"),
+      legend.spacing.y = unit(0, "cm"),
+      plot.title = element_text(face = "bold")
+    ) +
+  ggtitle("Recreation of Figure 7 via Weighting")
+
+
+
+ggsave(here::here("fig", "weighting_check.pdf"), 
+       width = 6.5, height = 4)
 
 
 
