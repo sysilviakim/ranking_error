@@ -3,14 +3,6 @@ load(here("data", "tidy", "df_list.Rda"))
 
 # remotes::install_github("sysilviakim/Kmisc")
 
-# Grab rankings and weights
-imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
-  mutate(app_identity = as.character(ranking),
-         bias_weight = weight) %>%
-  dplyr::select(app_identity, bias_weight)
-
-imp_w
-hist(imp_w$bias_weight, breaks = 20) # 6 rankings should not exist, thus  w = 0
 
 # Grab main data
 main <- df_list$main
@@ -38,15 +30,54 @@ dt <- main %>%
   filter(!is.na(ideo7))
 
 
-# Run Unfolding (there is no way to incorporate weights...)
+
+# Grab rankings and weights
+imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
+  mutate(app_identity = as.character(ranking),
+         bias_weight = weight) %>%
+  dplyr::select(app_identity, est.x.adj)
+
+# "sample" from correct PMF
+set.seed(142)
+rank_sample <- NA
+for(i in 1:1081){
+  rank_sample[i] <- imp_w$app_identity[rmultinom(1, size = 1, prob = imp_w$est.x.adj) == 1]
+}
+
+rank_sample <- rank_sample %>%
+  tibble() %>%
+  mutate(party = as.integer(substr(., 1, 1)),
+         religion = as.integer(substr(., 2, 2)),
+         gender = as.integer(substr(., 3, 3)),
+         race_ethnicity = as.integer(substr(., 4, 4))) %>%
+  dplyr::select(-.)
+
+
+
+# Run Unfolding (there is no way to incorporate weights..., so I improvised)
 library(smacof)
 
-dt_trans <- dt %>%
-  distinct(party, religion, gender, race_ethnicity)
+set.seed(142)
+out <- unfolding(dt[,1:4], type = "ordinal")
+out_w <- unfolding(rank_sample, type = "ordinal")
 
-out <- unfolding(dt[,1:4], 
-                 type = "ordinal")
 
-plot(out, type = "p", pch = 16, col.columns = "darkcyan",
+pdf(here::here("fig", "weighting_unfolding.pdf"), width = 9.5, height = 5)
+par(mfrow = c(1,2))
+plot(out, ylim = c(-1, 1), 
+     main = "Raw Data",
+     type = "p", pch = 16, col.columns = "darkred", cex = 1.5,
+     label.conf.columns = list(label = TRUE, pos = 3, col = "darkred", cex = 1.2),
+     col.rows = 8, label.conf.rows = list(label = F, pos = 3, col = 8))
+abline(v = 0, lty = 2, col = "gray80")
+abline(h = 0, lty = 2, col = "gray80")
+
+plot(out_w, ylim = c(-1, 1), 
+     main = "With Bias Correction",
+     type = "p", pch = 16, col.columns = "darkcyan", cex = 1.5,
      label.conf.columns = list(label = TRUE, pos = 3, col = "darkcyan", cex = 1.2),
      col.rows = 8, label.conf.rows = list(label = F, pos = 3, col = 8))
+abline(v = 0, lty = 2, col = "gray80")
+abline(h = 0, lty = 2, col = "gray80")
+
+dev.off()
