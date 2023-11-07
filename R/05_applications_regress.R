@@ -26,14 +26,17 @@ class(main$ideo7) <- "numeric"
 
 # Downsize data
 dt <- main %>%
-  mutate(id = 1:nrow(main)) %>%
+  mutate(id = 1:nrow(main),
+         black = ifelse(race == 2, 1, 0)) %>%
   rename(ch.party = app_identity_1,
          ch.religion = app_identity_2,
          ch.gender = app_identity_3,
          ch.race = app_identity_4) %>%
   left_join(imp_w, by = "app_identity") %>%
-  select(starts_with("ch"), id, ideo7, bias_weight) %>%
-  filter(!is.na(ideo7))
+  select(starts_with("ch"), id, ideo7, pid7, black, bias_weight) %>%
+  filter(!is.na(ideo7),
+         !is.na(pid7),
+         !is.na(black))
 
 
 head(dt) # check
@@ -244,6 +247,13 @@ ggsave(here::here("fig", "weighting_check.pdf"),
 
 
 
-# Try Placket-Luce Package too
+
+
+# Try Placket-Luce Package does not allow covariates
 library(PlackettLuce)
+out <- PlackettLuce(dt[,1:4])
+coef(out, log = FALSE)
+
+
+
 

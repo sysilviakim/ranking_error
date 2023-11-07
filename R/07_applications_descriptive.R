@@ -1,0 +1,88 @@
+source(here::here("R", "utilities.R"))
+load(here("data", "tidy", "df_list.Rda"))
+
+# Grab rankings and weights
+imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
+  mutate(app_identity = as.character(ranking),
+         bias_weight = weight) %>%
+  dplyr::select(app_identity, bias_weight)
+
+# Grab main data
+main <- df_list$main
+
+
+# Data processing ==============================================================
+# Fix some weird situation
+class(main$app_identity_1) <- "numeric"
+class(main$app_identity_2) <- "numeric"
+class(main$app_identity_3) <- "numeric"
+class(main$app_identity_4) <- "numeric"
+class(main$ideo7) <- "numeric"
+
+# Reference set: (party, religion, gender, race)
+
+# Downsize data
+dt <- main %>%
+  mutate(id = 1:nrow(main)) %>%
+  rename(party = app_identity_1,
+         religion = app_identity_2,
+         gender = app_identity_3,
+         race_ethnicity = app_identity_4) %>%
+  left_join(imp_w, by = "app_identity") %>%
+  select(party, religion, gender, race_ethnicity, id, ideo7, pid7, race, bias_weight) %>%
+  filter(!is.na(ideo7),
+         !is.na(pid7),
+         !is.na(race))
+
+
+# Visualize descriptive statistics
+
+target <- "party"
+others <- c("religion", "gender", "race_ethnicity")
+
+## Raw data
+viz_ranking(dt,
+            target_item = target,
+            other_items = others) -> p
+
+
+## With bias correction
+viz_ranking(dt,
+            target_item = target,
+            other_items = others,
+            weight = dt$bias_weight) -> p_w
+
+### Check
+ggarrange(p + ggtitle("Raw Data"), 
+          p_w + ggtitle("With Bias Correction"),
+          ncol = 2)
+
+ggsave(p_w, here::here("fig", "weight_descriptive.pdf"), width = 7, height = 4)
+
+
+## Results by Race
+dt_white <- dt %>% filter(race == 1)
+dt_black <- dt %>% filter(race == 2)
+dt_latino <- dt %>% filter(race == 3)
+dt_asian <- dt %>% filter(race == 4)
+
+
+p_white <- viz_ranking(dt_white, target_item = target,
+                       other_items = others, weight = dt_white$bias_weight) +
+           ggtitle("Whites")
+
+p_black <- viz_ranking(dt_black, target_item = target,
+                       other_items = others, weight = dt_black$bias_weight) +
+           ggtitle("Blacks")
+
+p_latino <- viz_ranking(dt_latino, target_item = target,
+                       other_items = others, weight = dt_latino$bias_weight) +
+           ggtitle("Latinos")
+
+p_asian <- viz_ranking(dt_asian, target_item = target,
+                       other_items = others, weight = dt_asian$bias_weight) +
+            ggtitle("Asians")
+
+### Check
+p_com <- ggarrange(p_white, p_black, p_latino, p_asian)
+ggsave(here::here("fig", "weight_descriptive_race.pdf"), p_com, width = 12, height = 7)

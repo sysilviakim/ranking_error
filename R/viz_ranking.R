@@ -25,6 +25,7 @@
 #' If FALSE, returns a list of plots that will compose the combined plot.
 #' Defaults to TRUE.
 #' @param color_palette The color palette to be used.
+#' @param weight The weight vector to be used.
 #'
 #' @return A ggplot that visualizes all treatment effects.
 #' If single_plot is TRUE, it will return a single ggplot.
@@ -39,6 +40,7 @@ viz_ranking <- function(dat,
                         other_items,
                         treat = NULL,
                         single_plot = TRUE,
+                        weight = rep(1, dim(dat)[1]),
                         color_palette = c(
                           "black",
                           "#b0015a",
@@ -123,23 +125,23 @@ viz_ranking <- function(dat,
   # Collect estimated means: without treatment
   if (is.null(treat)) {
     # Estimate baseline outcome values via OLS
-    m_rank_target <- lm_robust(Y_rank_target ~ 1) %>% tidy()
+    m_rank_target <- lm_robust(Y_rank_target ~ 1, weight = weight) %>% tidy()
 
     m_rank_others <- other_items %>%
-      map(~ lm_robust(Y_rank_others[[.x]] ~ 1) %>% tidy())
+      map(~ lm_robust(Y_rank_others[[.x]] ~ 1, weight = weight) %>% tidy())
 
     m_topk <- seq(J) %>%
-      map(~ lm_robust(Y_topk[[.x]] ~ 1) %>% tidy())
+      map(~ lm_robust(Y_topk[[.x]] ~ 1, weight = weight) %>% tidy())
 
     m_pair <- other_items %>%
       imap(
-        ~ lm_robust(Y_pair[[.x]] ~ 1) %>%
+        ~ lm_robust(Y_pair[[.x]] ~ 1, weight = weight) %>%
           tidy() %>%
           mutate(outcome = .y)
       )
 
     m_marg <- seq(J) %>%
-      map(~ lm_robust(Y_marg[[.x]] ~ 1) %>% tidy())
+      map(~ lm_robust(Y_marg[[.x]] ~ 1, weight = weight) %>% tidy())
 
     m_rank_catch <- do.call(rbind.data.frame, m_rank_others) %>%
       mutate(
