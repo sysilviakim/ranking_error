@@ -33,10 +33,8 @@ dt <- main %>%
          ch.gender = app_identity_3,
          ch.race = app_identity_4) %>%
   left_join(imp_w, by = "app_identity") %>%
-  select(starts_with("ch"), id, ideo7, pid7, black, bias_weight) %>%
-  filter(!is.na(ideo7),
-         !is.na(pid7),
-         !is.na(black))
+  select(starts_with("ch"), id, ideo7, pid7, race, bias_weight) %>%
+  drop_na()
 
 
 head(dt) # check
@@ -108,7 +106,7 @@ p_qoi
 
 
 # Estimating parameters (with weight)
-m2 <- mlogit(ch ~ 1 | ideo7,  # Y ~ X_item | X_resp
+m2 <- mlogit(ch ~ 1 | ideo7 + as.factor(race) + pid7,  # Y ~ X_item | X_resp
              mdat,                # Data
              reflevel = "gender",   # Base category
              weight = bias_weight

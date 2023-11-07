@@ -87,14 +87,33 @@ abline(v = 0, lty = 2, col = alpha("gray80", 0.4))
 abline(h = 0, lty = 2, col = alpha("gray80", 0.4))
 
 
-plot(pca, col = c("darkred", alpha("gray80", 0.01)), 
+plot(pca, col = c("darkred", alpha("gray80", 0.1)), 
      cex = c(1, 0.7), xlim = c(-1.5, 1.5))
-plot(pca_w, col = c("darkcyan", alpha("gray80", 0.01)), 
+abline(v = 0, lty = 2, col = alpha("black", 0.4))
+abline(h = 0, lty = 2, col = alpha("black", 0.4))
+
+plot(pca_w, col = c("darkcyan", alpha("gray80", 0.1)), 
      cex = c(1, 0.7), xlim = c(-1.5, 1.5))
+abline(v = 0, lty = 2, col = alpha("black", 0.4))
+abline(h = 0, lty = 2, col = alpha("black", 0.4))
+text(x = 1.5, y = 1, labels = "White Man?")
+text(x = -1.5, y = 1, labels = "White Woman?")
+text(x = 1, y = -0.5, labels = "Minority Man?")
+text(x = -1, y = -0.5, labels = "Minority Woman?")
 
 
 dev.off()
 
+
+temp <- dt %>% filter(pid7 >= 5)
+temp2 <- dt %>% filter(pid7 <= 3)
+
+pca_temp <- vmu(temp[,1:4])
+pca_temp2 <- vmu(temp2[,1:4])
+
+par(mfrow=c(1,2))
+plot(pca_temp, main = "Republicans", xlim=c(-2,2), ylim=c(-2,2))
+plot(pca_temp2, main = "Democrats", xlim=c(-2,2), ylim=c(-2,2))
 
 
 
