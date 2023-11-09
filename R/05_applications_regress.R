@@ -12,6 +12,7 @@ imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
 imp_w
 hist(imp_w$bias_weight, breaks = 20) # 6 rankings should not exist, thus  w = 0
 
+
 # Grab main data
 main <- df_list$main
 
@@ -92,20 +93,27 @@ p_qoi <- data.frame(
   low = NA,
   up = NA
 )
+
 for (i in 1:7) {
+  
   e_XB_party <- exp(v$`(Intercept):party` + v$`ideo7:party` * i)
   e_XB_race <- exp(v$`(Intercept):race` + v$`ideo7:race` * i)
   e_XB_reli <- exp(v$`(Intercept):religion` + v$`ideo7:religion` * i)
 
-  # Prob: party, race, religion, gender
-  # Prob(party) * Prob(race) * Prob(religion)
-  p <- e_XB_party / (e_XB_party + e_XB_race + e_XB_reli) *
-    e_XB_race / (e_XB_race + e_XB_reli) *
-    e_XB_reli / (e_XB_reli + 1)
+  # Here, we want to compute the probability for one unique ranking
+  # Prob (party, race, religion, gender)
+  # Prob(party) * Prob(race) * Prob(religion) * Prob(gender)
+  # This is multiplication of three multinomial choices
+  p <- e_XB_party / (e_XB_party + e_XB_race + e_XB_reli + 1) *
+    e_XB_race / (e_XB_race + e_XB_reli + 1) *
+    e_XB_reli / (e_XB_reli + 1) * 
+    1 # prob(choosing gender out of gender)
 
+   # we want to generate 24 ps. They should sum up to one.
+  
   p_qoi[i, 2] <- mean(p)
-  p_qoi[i, 3] <- quantile(p, prob = 0.025)
-  p_qoi[i, 4] <- quantile(p, prob = 0.975)
+  p_qoi[i, 3] <- quantile(p, prob = 0.025) # if we bootstrap the whole thing, we don't need to save this
+  p_qoi[i, 4] <- quantile(p, prob = 0.975) # if we bootstrap the whole thing, we don't need to save this
 }
 
 p_qoi
