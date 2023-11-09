@@ -16,6 +16,7 @@ library(pwr)
 library(xtable)
 library(estimatr)
 library(ggpubr)
+# remotes::install_github("sysilviakim/Kmisc")
 library(Kmisc) ## None-CRAN package. Will wean eventually
 library(lubridate)
 library(haven)

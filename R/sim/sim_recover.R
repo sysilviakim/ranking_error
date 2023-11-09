@@ -63,7 +63,7 @@ for (scenario in names(prob_vec_list)) {
 }
 
 # Inverse Probability Weighting on Observed Rankings ===========================
-inv <- as_tibble(N / table(obs_half)) %>% rename(obs_rank = obs_half, inv = n)
+inv <- as_tibble(N / table(obs_half)) %>% rename(inv = n)
 ## the actual choices presented
 random_choices <- rowid(random_choices)
 
@@ -76,7 +76,7 @@ random_choices <- rowid(random_choices)
 ## For example, 2nd respondent
 true_permn[2, ] ## likes a-b-c
 random_permn[2, ] ## was presented with c-a-b
-obs_pattern[2, ] ## therefore, writes c = 3, a = 1, b = 2
+# obs_pattern[2, ] ## therefore, writes c = 3, a = 1, b = 2
 
 ## Now let's recover "true" orderings, or the underlying preference
 ## i.e., given the c-a-b, can we recover a respondent's ranking?
