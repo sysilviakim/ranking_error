@@ -197,6 +197,10 @@ m3 <- mlogit(
   weight = bias_weight
 )
 
+
+saveRDS(m2, file="m2.RData") # save mlogit object for checking
+saveRDS(m3, file="m3.RData")
+
 # investigating why clarify does not support mlogit
 ## https://github.com/IQSS/clarify/blob/main/R/sim_setx.R
 summary(m3)
