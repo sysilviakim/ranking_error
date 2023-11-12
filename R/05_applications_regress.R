@@ -49,7 +49,6 @@ abline(v = 1, lty = 2, lwd = 2, col = "darkred")
 
 # Run Rank-order logit =========================================================
 library(mlogit)
-library(effects)
 
 # Transform into mlogit format
 dt <- as.data.frame(dt)
@@ -189,91 +188,133 @@ ggsave(here::here("fig", "placketluce_weight.pdf"),
 
 
 
-
-# Additional checks with mean ranks (recreating Figure 7)
-
-dt2 <- dt %>%
-  rename(
-    party = ch.party,
-    religion = ch.religion,
-    gender = ch.gender,
-    race = ch.race
-  )
-
-## no weight
-mrank <- lm_robust(party ~ 1, dt2) %>% tidy()
-mrank <- rbind(mrank, lm_robust(religion ~ 1, dt2) %>% tidy())
-mrank <- rbind(mrank, lm_robust(gender ~ 1, dt2) %>% tidy())
-mrank <- rbind(mrank, lm_robust(race ~ 1, dt2) %>% tidy())
-
-
-## with weight
-mrank2 <- lm_robust(party ~ 1, dt2,
+# Below, Yuki is exploring how to modify Clarify to accomodate PL
+# Predictions of Multinomial Choice Probabilities
+m3 <- mlogit(
+  ch ~ 1 | ideo7, # Y ~ X_item | X_resp
+  mdat, # Data
+  reflevel = "gender", # Base category
   weight = bias_weight
-) %>% tidy()
-mrank2 <- rbind(mrank2, lm_robust(religion ~ 1, dt2,
-  weight = bias_weight
-) %>% tidy())
-mrank2 <- rbind(mrank2, lm_robust(gender ~ 1, dt2,
-  weight = bias_weight
-) %>% tidy())
-mrank2 <- rbind(mrank2, lm_robust(race ~ 1, dt2,
-  weight = bias_weight
-) %>% tidy())
-
-mrank$Type <- "raw data"
-mrank2$Type <- "de-biased"
-
-ggdt <- rbind(mrank, mrank2) %>%
-  rename(
-    low = conf.low,
-    up = conf.high,
-    est = estimate
-  )
-ggdt$outcome <- factor(ggdt$outcome,
-  levels = c("gender", "religion", "race", "party")
-)
-J <- 4
-color_list <- c("#b0015a", "#999999")
-
-
-ggplot(ggdt, aes(
-  x = fct_rev(outcome),
-  y = est, color = Type
-)) +
-  geom_point(
-    aes(shape = Type),
-    size = 2,
-    position = position_dodge(width = 0.5)
-  ) +
-  # Reorder by point estimate
-  geom_linerange(
-    aes(ymin = low, ymax = up),
-    lwd = 1, position = position_dodge(width = 0.5)
-  ) +
-  scale_color_manual(values = color_list) +
-  theme_bw() +
-  coord_flip() +
-  xlab("") +
-  ylab("") +
-  scale_y_continuous(limits = c(1, J), breaks = seq(J)) +
-  geom_hline(yintercept = (J + 1) / 2, linetype = "dashed") +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_blank(),
-    legend.margin = margin(-0.5, 0, 0, 0, unit = "cm"),
-    legend.spacing.x = unit(0, "cm"),
-    legend.spacing.y = unit(0, "cm"),
-    plot.title = element_text(face = "bold")
-  ) +
-  ggtitle("Recreation of Figure 7 via Weighting")
-
-ggsave(here::here("fig", "weighting_check.pdf"),
-  width = 6.5, height = 4
 )
 
+# investigating why clarify does not support mlogit
+## https://github.com/IQSS/clarify/blob/main/R/sim_setx.R
+summary(m3)
+set.seed(123)
+sim <- sim(m3)
 
-# Try Placket-Luce Package does not allow covariates
-library(PlackettLuce)
-out <- PlackettLuce(dt[, 1:4])
-coef(out, log = FALSE)
+#party <- sim_setx(sim_coefs, 
+#                  x = list(ideo7 = 4),
+#                     outcome = "party")
+# won't work
+
+
+check_sim_apply_wrapper_ready(sim) # works
+is_misim <- inherits(sim, "clarify_misim") # works
+dat <- {
+  if (is_misim)
+    do.call("rbind", lapply(sim$fit, insight::get_predictors, verbose = FALSE))
+  else
+    insight::get_predictors(sim$fit, verbose = FALSE)
+} # works
+
+x = list(ideo7 = 4) # works
+newdata <- process_x(x, dat, "x") # NOT working, I can't find process_x() anywhere
+
+
+args <- list(x, newdata = newdata, vcov = FALSE, type = NULL)
+
+p <- try(do.call(marginaleffects::get_predict, args))
+(length(p) == 0L || is_error(p))
+# I know that this part is stopping the function
+    
+
+
+# Yuki commented out below, 11/12/2023
+# # Additional checks with mean ranks (recreating Figure 7)
+# 
+# dt2 <- dt %>%
+#   rename(
+#     party = ch.party,
+#     religion = ch.religion,
+#     gender = ch.gender,
+#     race = ch.race
+#   )
+# 
+# ## no weight
+# mrank <- lm_robust(party ~ 1, dt2) %>% tidy()
+# mrank <- rbind(mrank, lm_robust(religion ~ 1, dt2) %>% tidy())
+# mrank <- rbind(mrank, lm_robust(gender ~ 1, dt2) %>% tidy())
+# mrank <- rbind(mrank, lm_robust(race ~ 1, dt2) %>% tidy())
+# 
+# 
+# ## with weight
+# mrank2 <- lm_robust(party ~ 1, dt2,
+#   weight = bias_weight
+# ) %>% tidy()
+# mrank2 <- rbind(mrank2, lm_robust(religion ~ 1, dt2,
+#   weight = bias_weight
+# ) %>% tidy())
+# mrank2 <- rbind(mrank2, lm_robust(gender ~ 1, dt2,
+#   weight = bias_weight
+# ) %>% tidy())
+# mrank2 <- rbind(mrank2, lm_robust(race ~ 1, dt2,
+#   weight = bias_weight
+# ) %>% tidy())
+# 
+# mrank$Type <- "raw data"
+# mrank2$Type <- "de-biased"
+# 
+# ggdt <- rbind(mrank, mrank2) %>%
+#   rename(
+#     low = conf.low,
+#     up = conf.high,
+#     est = estimate
+#   )
+# ggdt$outcome <- factor(ggdt$outcome,
+#   levels = c("gender", "religion", "race", "party")
+# )
+# J <- 4
+# color_list <- c("#b0015a", "#999999")
+# 
+# 
+# ggplot(ggdt, aes(
+#   x = fct_rev(outcome),
+#   y = est, color = Type
+# )) +
+#   geom_point(
+#     aes(shape = Type),
+#     size = 2,
+#     position = position_dodge(width = 0.5)
+#   ) +
+#   # Reorder by point estimate
+#   geom_linerange(
+#     aes(ymin = low, ymax = up),
+#     lwd = 1, position = position_dodge(width = 0.5)
+#   ) +
+#   scale_color_manual(values = color_list) +
+#   theme_bw() +
+#   coord_flip() +
+#   xlab("") +
+#   ylab("") +
+#   scale_y_continuous(limits = c(1, J), breaks = seq(J)) +
+#   geom_hline(yintercept = (J + 1) / 2, linetype = "dashed") +
+#   theme(
+#     legend.position = "bottom",
+#     legend.title = element_blank(),
+#     legend.margin = margin(-0.5, 0, 0, 0, unit = "cm"),
+#     legend.spacing.x = unit(0, "cm"),
+#     legend.spacing.y = unit(0, "cm"),
+#     plot.title = element_text(face = "bold")
+#   ) +
+#   ggtitle("Recreation of Figure 7 via Weighting")
+# 
+# ggsave(here::here("fig", "weighting_check.pdf"),
+#   width = 6.5, height = 4
+# )
+# 
+# 
+# # Try Placket-Luce Package does not allow covariates
+# library(PlackettLuce)
+# out <- PlackettLuce(dt[, 1:4])
+# coef(out, log = FALSE)
