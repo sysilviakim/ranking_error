@@ -197,47 +197,50 @@ ggsave(here::here("fig", "placketluce_weight.pdf"),
 
 
 
-# Below, Yuki is exploring how to modify Clarify to accomodate PL
 # Predictions of Multinomial Choice Probabilities
 m3 <- mlogit(
-  ch ~ 1 | ideo7, # Y ~ X_item | X_resp
+  ch ~ 1 | pid7, # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender", # Base category
   weight = bias_weight
 )
+saveRDS(m3, file="m_pid.RData") # save mlogit object for checking
 
 
 
-# investigating why clarify does not support mlogit
-## https://github.com/IQSS/clarify/blob/main/R/sim_setx.R
-summary(m3)
-set.seed(123)
-sim <- sim(m3)
-
-#party <- sim_setx(sim_coefs, 
-#                  x = list(ideo7 = 4),
-#                     outcome = "party")
-# won't work
+# Below, Yuki is exploring how to modify Clarify to accomodate PL
 
 
-check_sim_apply_wrapper_ready(sim) # works
-is_misim <- inherits(sim, "clarify_misim") # works
-dat <- {
-  if (is_misim)
-    do.call("rbind", lapply(sim$fit, insight::get_predictors, verbose = FALSE))
-  else
-    insight::get_predictors(sim$fit, verbose = FALSE)
-} # works
-
-x = list(ideo7 = 4) # works
-newdata <- process_x(x, dat, "x") # NOT working, I can't find process_x() anywhere
-
-
-args <- list(x, newdata = newdata, vcov = FALSE, type = NULL)
-
-p <- try(do.call(marginaleffects::get_predict, args))
-(length(p) == 0L || is_error(p))
-# I know that this part is stopping the function
+# # investigating why clarify does not support mlogit
+# ## https://github.com/IQSS/clarify/blob/main/R/sim_setx.R
+# summary(m3)
+# set.seed(123)
+# sim <- sim(m3)
+# 
+# #party <- sim_setx(sim_coefs, 
+# #                  x = list(ideo7 = 4),
+# #                     outcome = "party")
+# # won't work
+# 
+# 
+# check_sim_apply_wrapper_ready(sim) # works
+# is_misim <- inherits(sim, "clarify_misim") # works
+# dat <- {
+#   if (is_misim)
+#     do.call("rbind", lapply(sim$fit, insight::get_predictors, verbose = FALSE))
+#   else
+#     insight::get_predictors(sim$fit, verbose = FALSE)
+# } # works
+# 
+# x = list(ideo7 = 4) # works
+# newdata <- process_x(x, dat, "x") # NOT working, I can't find process_x() anywhere
+# 
+# 
+# args <- list(x, newdata = newdata, vcov = FALSE, type = NULL)
+# 
+# p <- try(do.call(marginaleffects::get_predict, args))
+# (length(p) == 0L || is_error(p))
+# # I know that this part is stopping the function
     
 
 
