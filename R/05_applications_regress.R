@@ -38,7 +38,7 @@ dt <- main %>%
     ch.race = app_identity_4
   ) %>%
   left_join(imp_w, by = "app_identity") %>%
-  select(starts_with("ch"), id, ideo7, pid7, race, bias_weight) %>%
+  select(starts_with("ch"), id, ideo7, pid7, educ, race, bias_weight) %>%
   drop_na()
 
 
@@ -134,8 +134,19 @@ m2 <- mlogit(
 summary(m2)
 
 
-saveRDS(m, file="m1.RData") # save mlogit object for checking
-saveRDS(m2, file="m2.RData") # save mlogit object for checking
+
+# Estimating parameters (with weight) with education
+m3 <- mlogit(
+  ch ~ 1 | educ, # Y ~ X_item | X_resp
+  mdat, # Data
+  reflevel = "gender", # Base category
+  weight = bias_weight
+)
+summary(m3)
+
+saveRDS(m, file=here::here("output", "m1.RData")) # save mlogit object for checking
+saveRDS(m2, file=here::here("output", "m2.RData")) # save mlogit object for checking
+saveRDS(m3, file=here::here("output", "m3.RData")) # save mlogit object for checking
 
 
 # Generate 1000 sets of parameters (parametric bootstrap)

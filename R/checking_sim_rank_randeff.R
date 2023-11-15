@@ -2,32 +2,46 @@ source(here::here("R", "utilities.R"))
 library(clarify)
 library(ranking)
 
-m1 <- readRDS(file = here("output", "m1.RData"))
-m2 <- readRDS(file = here("output", "m2.RData"))
+# library(devtools) cannot install, getting an error 
+# install_github("sysilviakim/ranking")
+
+m1 <- readRDS(file = here("output", "m1.RData")) # ideology (raw data)
+m2 <- readRDS(file = here("output", "m2.RData")) # ideology (corrected)
+m3 <- readRDS(file = here("output", "m3.RData")) # education (corrected)
 
 # Let's try all possible rankings
 tgt_ranking <- c("gender", "race", "party", "religion")
 all_rankings <- combinat::permn(tgt_ranking)
 out_vec_raw <- list()
 out_vec_correct <- list()
+out_vec_correct_edu <- list()
+
 
 for (i in 1:24) {
-  out_vec_raw[[i]] <- sim_rank_randeff(
-    m = m1,
+  # out_vec_raw[[i]] <- sim_rank_randeff(
+  #   m = m1,
+  #   permn = all_rankings[[i]],
+  #   random_var = "ideo7",
+  #   range_cont = 1:7,
+  #   seed = 123
+  # )
+  # 
+  # 
+  # out_vec_correct[[i]] <- sim_rank_randeff(
+  #   m = m2,
+  #   permn = all_rankings[[i]],
+  #   random_var = "ideo7",
+  #   range_cont = 1:7,
+  #   seed = 123
+  # )
+  # 
+  out_vec_correct_edu[[i]] <- sim_rank_randeff(
+    m = m3,
     permn = all_rankings[[i]],
-    random_var = "ideo7",
-    range_cont = 1:7,
+    random_var = "educ",
+    range_cont = 1:6,
     seed = 123
-  )
-
-
-  out_vec_correct[[i]] <- sim_rank_randeff(
-    m = m2,
-    permn = all_rankings[[i]],
-    random_var = "ideo7",
-    range_cont = 1:7,
-    seed = 123
-  )
+  )  
 }
 
 out_vec_raw
@@ -47,6 +61,13 @@ as.list(out_vec_correct) %>%
   summarize(sum_mean = sum(mean)) %>%
   print()
 
+
+as.list(out_vec_correct_edu) %>%
+  bind_rows() %>%
+  group_by(educ) %>%
+  summarize(sum_mean = sum(mean)) %>%
+  print()
+
 # Probs sum up to one!
 
 dt_raw <- as.list(out_vec_raw) %>%
@@ -54,6 +75,10 @@ dt_raw <- as.list(out_vec_raw) %>%
   mutate(Result = "Raw Data")
 
 dt_correct <- as.list(out_vec_correct) %>%
+  bind_rows() %>%
+  mutate(Result = "Bias Corrected")
+
+dt_edu <- as.list(out_vec_correct_edu) %>%
   bind_rows() %>%
   mutate(Result = "Bias Corrected")
 
@@ -79,6 +104,25 @@ ggsave(here::here("placketluce_weight.pdf"),
   width = 12, height = 7
 )
 
+
+# Visualize the results
+dt_edu %>%
+  ggplot(aes(x = educ, y = mean, color = Result)) +
+  geom_point(size = 0.3) +
+  geom_pointrange(aes(ymin = low, ymax = high), size = 0.3) +
+#  scale_color_manual(values = c("darkcyan", "darkred")) +
+  facet_wrap(~ranking) +
+  theme_bw() +
+  xlim(1, 7) +
+  xlab("Education") +
+  ylab("Predicted Probability") +
+  ggtitle("Effect of Education on Relative Partisanship") -> p
+
+p
+
+ggsave(here::here("placketluce_weight.pdf"),
+       width = 12, height = 7
+)
 
 # Save the most interesting results seperately
 ggdt_sub <- ggdt %>%
