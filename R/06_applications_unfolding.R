@@ -1,6 +1,5 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
-# remotes::install_github("sysilviakim/Kmisc")
 
 # Grab main data
 main <- df_list$main
@@ -12,8 +11,6 @@ main <- main %>%
   )
 
 # Reference set: (party, religion, gender, race)
-
-
 # Grab rankings and weights
 imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
   mutate(
@@ -58,7 +55,66 @@ rank_sample <- rank_sample %>%
   dplyr::select(-.)
 
 
-# Run Unfolding (there is no way to incorporate weights..., so I improvised)
+# Motivate Unfolding ===========================================================
+# Now, let's understand which items are similar (or dissimilar) to each other
+# The most intuitive analysis is to see a binariate relationship between a pair
+# of items
+
+# First, let's see the univariate distribution of each item separately
+par(mfrow = c(2,2))
+hist(rank_sample$party, main = "Party")
+hist(rank_sample$religion, main = "Religion")
+hist(rank_sample$gender, main = "Gender")
+hist(rank_sample$race_ethnicity, main = "Race/ethnicity")
+
+## This is very interesting in and itself. Religion has a non-single peaked pref
+
+# Second, let's see the bivariate relationship of each pair of items
+par(mfrow = c(2,3),
+    mar = c(4.5,4,3,2))
+plot(jitter(rank_sample$party), jitter(rank_sample$religion),
+     col = alpha("black", 0.8), pch = ".",
+     xlab = "Party", ylab = "Religion")
+abline(lm(religion ~ party, rank_sample), col = "darkred", lwd = 1.5)
+
+plot(jitter(rank_sample$party), jitter(rank_sample$gender),
+     col = alpha("black", 0.8), pch = ".",
+     xlab = "Party", ylab = "Gender")
+abline(lm(gender ~ party, rank_sample), col = "darkred", lwd = 1.5)
+
+plot(jitter(rank_sample$party), jitter(rank_sample$race_ethnicity),
+     col = alpha("black", 0.8), pch = ".",
+     xlab = "Party", ylab = "Race/ethnicity")
+abline(lm(race_ethnicity ~ party, rank_sample), col = "darkred", lwd = 1.5)
+
+
+plot(jitter(rank_sample$religion), jitter(rank_sample$gender),
+     col = alpha("black", 0.8), pch = ".",
+     xlab = "Religion", ylab = "Gender")
+abline(lm(gender ~ religion, rank_sample), col = "darkred", lwd = 1.5)
+
+plot(jitter(rank_sample$religion), jitter(rank_sample$race_ethnicity),
+     col = alpha("black", 0.8), pch = ".",
+     xlab = "Religion", ylab = "Race/ethnicity")
+abline(lm(race_ethnicity ~ religion, rank_sample), col = "darkred", lwd = 1.5)
+
+plot(jitter(rank_sample$gender), jitter(rank_sample$race_ethnicity),
+     col = alpha("black", 0.8), pch = ".",
+     xlab = "Gender", ylab = "Race/ethnicity")
+abline(lm(race_ethnicity ~ gender, rank_sample), col = "darkred", lwd = 1.5)
+
+# We can see that many items have negative correlations
+# Exceptions are party-gender and gender-race
+
+# Now, can we examine the tri-variate relations?
+# The answer is probably NO since we are running out of dimensions
+# Instead of creating 3-D plots, we seek to squash the dimensions and 
+# plot the results in a two-dimensional space
+# That's the main idea for unfolding (multidimensional scaling, PCA, all similar)
+
+
+# Run Unfolding ================================================================
+# (there is no way to incorporate weights..., so I improvised)
 library(smacof)
 
 set.seed(142)
