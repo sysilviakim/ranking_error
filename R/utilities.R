@@ -20,6 +20,8 @@ library(ggpubr)
 library(Kmisc) ## None-CRAN package. Will wean eventually
 library(lubridate)
 library(haven)
+## remotes::install_github("sysilviakim/ranking")
+library(ranking)
 
 # Read all functions
 source(here("R", "rpluce.R"))
