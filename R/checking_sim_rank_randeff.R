@@ -2,8 +2,8 @@ source(here::here("R", "utilities.R"))
 library(clarify)
 library(ranking)
 
-# library(devtools) cannot install, getting an error 
-# install_github("sysilviakim/ranking")
+library(devtools) 
+devtools::install_github("sysilviakim/ranking")
 
 m1 <- readRDS(file = here("output", "m1.RData")) # ideology (raw data)
 m2 <- readRDS(file = here("output", "m2.RData")) # ideology (corrected)
@@ -18,23 +18,23 @@ out_vec_correct_edu <- list()
 
 
 for (i in 1:24) {
-  # out_vec_raw[[i]] <- sim_rank_randeff(
-  #   m = m1,
-  #   permn = all_rankings[[i]],
-  #   random_var = "ideo7",
-  #   range_cont = 1:7,
-  #   seed = 123
-  # )
-  # 
-  # 
-  # out_vec_correct[[i]] <- sim_rank_randeff(
-  #   m = m2,
-  #   permn = all_rankings[[i]],
-  #   random_var = "ideo7",
-  #   range_cont = 1:7,
-  #   seed = 123
-  # )
-  # 
+  out_vec_raw[[i]] <- sim_rank_randeff(
+    m = m1,
+    permn = all_rankings[[i]],
+    random_var = "ideo7",
+    range_cont = 1:7,
+    seed = 123
+  )
+
+
+  out_vec_correct[[i]] <- sim_rank_randeff(
+    m = m2,
+    permn = all_rankings[[i]],
+    random_var = "ideo7",
+    range_cont = 1:7,
+    seed = 123
+  )
+
   out_vec_correct_edu[[i]] <- sim_rank_randeff(
     m = m3,
     permn = all_rankings[[i]],
@@ -129,16 +129,17 @@ ggdt_sub <- ggdt %>%
   filter(
     Result == "Bias Corrected",
     ranking %in% c(
-      "gender_party_race_religion",
+      "gender_race_religion_party",      
       "gender_race_party_religion",
-      "gender_race_religion_party",
-      "gender_religion_race_party",
-      "race_gender_party_religion",
       "religion_gender_race_party"
     )
-  )
+  ) %>%
+  mutate(ranking = case_when(ranking == "gender_race_religion_party" ~ "gender > race > religion > party",
+                             ranking == "gender_race_party_religion" ~ "gender > race > party > religion",
+                             ranking == "religion_gender_race_party" ~ "religion > gender > race > party"))
 
 ggdt_sub %>%
+  filter(ranking == "gender > race > religion > party") %>%
   ggplot(aes(x = ideo7, y = mean)) +
   geom_point(size = 0.3, color = "darkcyan") +
   geom_pointrange(
@@ -147,47 +148,19 @@ ggdt_sub %>%
   ) +
   facet_wrap(~ranking) +
   theme_bw() +
-  xlim(1, 7) +
-  ylim(0, 0.25) +
-  xlab("Ideology (liberal - conservative)") +
-  ylab("Predicted Probability") +
-  ggtitle("Effect of Ideology on Relative Partisanship") -> p_sub
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  ylim(0, 0.3) +
+  xlab("Ideology (1 = most liberal,  7 = most conservative)") +
+  ylab("Predicted Probability") -> p_sub
 
 p_sub
-ggsave(here::here("placketluce_ideology_sub.pdf"),
-  width = 8, height = 4
+ggsave(here::here('fig', "placketluce_ideology_sub1.pdf"),
+  width = 4, height = 3
 )
 
-
-# Study the effect of partisanship
-
-m_pid <- readRDS(file = "m_pid.RData")
-out_vec_correct <- list()
-
-for (i in 1:24) {
-  out_vec_correct[[i]] <- sim_rank_randeff(
-    m = m_pid,
-    permn = all_rankings[[i]],
-    random_var = "pid7",
-    range_cont = 1:7,
-    seed = 123
-  )
-}
-
-ggdt_pid <- as.list(out_vec_correct) %>%
-  bind_rows() %>%
-  filter(ranking %in% c(
-    "gender_party_race_religion",
-    "gender_race_party_religion",
-    "gender_race_religion_party",
-    "gender_religion_race_party",
-    "race_gender_party_religion",
-    "religion_gender_race_party"
-  ))
-
-
-ggdt_pid %>%
-  ggplot(aes(x = pid7, y = mean)) +
+ggdt_sub %>%
+  filter(ranking == "gender > race > party > religion") %>%
+  ggplot(aes(x = ideo7, y = mean)) +
   geom_point(size = 0.3, color = "darkcyan") +
   geom_pointrange(
     aes(ymin = low, ymax = high),
@@ -195,13 +168,34 @@ ggdt_pid %>%
   ) +
   facet_wrap(~ranking) +
   theme_bw() +
-  xlim(1, 7) +
-  ylim(0, 0.25) +
-  xlab("Party ID (Strong D to Strong R)") +
-  ylab("Predicted Probability") +
-  ggtitle("Effect of Party ID on Relative Partisanship") -> p_pid
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  ylim(0, 0.3) +
+  xlab("Ideology (1 = most liberal,  7 = most conservative)") +
+  ylab("Predicted Probability")  -> p_sub
 
-p_pid
-ggsave(here::here("placketluce_pid_sub.pdf"),
-  width = 8, height = 4
+
+p_sub
+ggsave(here::here('fig', "placketluce_ideology_sub2.pdf"),
+       width = 4, height = 3
 )
+ggdt_sub %>%
+  filter(ranking == "religion > gender > race > party") %>%
+  ggplot(aes(x = ideo7, y = mean)) +
+  geom_point(size = 0.3, color = "darkcyan") +
+  geom_pointrange(
+    aes(ymin = low, ymax = high),
+    size = 0.3, color = "darkcyan"
+  ) +
+  facet_wrap(~ranking) +
+  theme_bw() +
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  ylim(0, 0.3) +
+  xlab("Ideology (1 = most liberal,  7 = most conservative)") +
+  ylab("Predicted Probability")  -> p_sub
+
+
+p_sub
+ggsave(here::here('fig', "placketluce_ideology_sub3.pdf"),
+       width = 4, height = 3
+)
+

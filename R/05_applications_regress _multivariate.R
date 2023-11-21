@@ -1,6 +1,10 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 
+#devtools::install_github("sysilviakim/ranking", force = T)
+library(ranking)
+
+
 # Grab rankings and weights
 imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
   mutate(
@@ -98,5 +102,4 @@ summary(m2)
 
 saveRDS(m, file=here::here("output", "full_raw.RData")) # save mlogit object for checking
 saveRDS(m2, file=here::here("output", "full_correct.RData")) # save mlogit object for checking
-
 

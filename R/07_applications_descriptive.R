@@ -200,20 +200,50 @@ avg_gg <- rbind(avg_rank, avg_rank.w)
 avg_gg %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
                       x = estimate, group = dt, color = dt)) +
   geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
-  geom_point(aes(shape = dt), position = position_dodge(width = 1)) +
+  geom_point(aes(shape = dt), position = position_dodge(width = 0.5), size = 2) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
-                position = position_dodge(1)) +
+                position = position_dodge(0.5), size = 1.3) +
   scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
                                 "Raw Data" =  "dimgray")) +
-  geom_segment(aes(x = 1.6, y = 4, xend = 1.9, yend = 4),
-               arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
+  geom_segment(aes(x = 2, y = 3.4, xend = 2.4, yend = 3.4),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "darkred", alpha = 0.2, lwd = 0.5) +
+  geom_segment(aes(x = 2.1+0.9, y = 3.4, xend = 2.6, yend = 3.4),
+               arrow = arrow(length = unit(0.2, "cm")), 
+               color = "darkred", alpha = 0.2, linewidth = 0.5) +  
+  annotate("text", x = 2.2, y = 3.5, label = "bias", size = 2, color = "darkred") +
+  annotate("text", x = 1.8+1, y = 3.5, label = "bias", size = 2, color = "darkred") +  
+  annotate("text", x = 1.7, y = 3.7, label = "bias corrected", color = "darkcyan", size = 2) +    
+  annotate("text", x = 1.9, y = 3.9, label = "raw data", color = "dimgray", size = 2) +      
   xlim(1.5, 3.5) +
   ylab("") +
   xlab("") +
   theme_bw() +
   theme(legend.position = "none")
 
-ggsave(here::here("fig", "weight-avg-rank.pdf"), width = 5, height = 3)
+ggsave(here::here("fig", "weight-avg-rank.pdf"), width = 0.9*5, height = 0.9*3)
+
+
+
+avg_rank.w %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
+                      x = estimate, group = dt, color = dt)) +
+  geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
+  geom_point(aes(shape = dt), size = 3) +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
+                size = 1.5) +
+  scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
+                                "Raw Data" =  "dimgray")) +
+  annotate("text", x = 2.3, y = 4.3, label = "More important", 
+           size = 3, color = "darkred") +
+  geom_segment(aes(x = 1.8, y = 4.3, xend = 1.5, yend = 4.3),
+               arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +  
+  xlim(1.5, 3.5) +
+  ylab("") +
+  xlab("") +
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggsave(here::here("fig", "weight-avg-rank-talk.pdf"), width = 5, height = 3)
 
 
 # target <- "party"
