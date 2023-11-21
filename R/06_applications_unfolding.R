@@ -121,79 +121,62 @@ set.seed(142)
 out <- unfolding(dt[, 1:4], type = "ordinal", circle = "column")
 out_w <- unfolding(rank_sample, type = "ordinal", circle = "column")
 
-# Vector Model of Unfolding (Principal Component Analysis for Ranking Data)
-set.seed(142)
-pca <- vmu(dt[, 1:4])
-pca_w <- vmu(rank_sample)
+# Visualize via ggplot
+conf_items <- as.data.frame(out_w$conf.col)
+conf_persons <- as.data.frame(out_w$conf.row)
+p <- ggplot(conf_persons, aes(x = D1, y = D2)) 
+p + geom_jitter(size = 1.5, colour = "gray", alpha = 0.2, width = 0.1, height =  0.1) + 
+  coord_fixed() + 
+  geom_point(aes(x = D1, y = D2), conf_items, colour = "darkcyan", size = 3) + 
+  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+            conf_items, colour = "darkcyan", vjust = -0.8, hjust = 1) +
+  xlab("Dimension 1") +
+  ylab("Dimension 2") +
+  theme_bw() -> p
 
-
-pdf(here::here("fig", "weighting_unfolding.pdf"), width = 6, height = 6)
-par(mfrow = c(1, 1))
-plot(pca_w,
-     col = c("darkcyan", alpha("gray80", 0.1)),
-     cex = c(1, 0.7), xlim = c(-1.5, 1.5),
-     xlab = "Dimension 1",
-     ylab = "Dimension 2"
-)
-abline(v = 0, lty = 2, col = alpha("black", 0.4))
-abline(h = 0, lty = 2, col = alpha("black", 0.4))
-dev.off()
+ggsave(here::here("fig", "weighting_unfolding.pdf"), width = 4, height = 4)
 
 
 
+# Visualize via ggplot
+conf_items <- as.data.frame(out$conf.col)
+conf_persons <- as.data.frame(out$conf.row)
+p2 <- ggplot(conf_persons, aes(x = D1, y = D2)) 
+p2 + geom_jitter(size = 1.5, colour = "gray", alpha = 0.2, width = 0.1, height =  0.1) + 
+  coord_fixed() + 
+  geom_point(aes(x = D1, y = D2), conf_items, colour = "darkred", size = 3) + 
+  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+            conf_items, colour = "darkred", vjust = -0.8, hjust = 1) +
+  xlab("Dimension 1") +
+  ylab("Dimension 2") +
+  xlim(-1, 1) +
+  ylim(-0.6, 1) +
+  theme_bw() -> p2
+
+ggpubr::ggarrange(p + ggtitle("Bias Corrected") + 
+                    geom_vline(xintercept = 0, lty = 2, color = "dimgray") +
+                    geom_hline(yintercept = 0, lty = 2, color = "dimgray") +
+                    xlim(-1, 1) +
+                    ylim(-0.6, 1),  
+                  p2 + ggtitle("Raw Data") +
+                    geom_vline(xintercept = 0, lty = 2, color = "dimgray") +
+                    geom_hline(yintercept = 0, lty = 2, color = "dimgray"))
+
+ggsave(here::here("fig", "weighting_unfolding-compare.pdf"), width = 8, height = 4)
 
 
-pdf(here::here("fig", "weighting_unfolding.pdf"), width = 9.5, height = 10)
-par(mfrow = c(2, 2))
-plot(out,
-  ylim = c(-1, 1),
-  main = "Raw Data",
-  type = "p", pch = 16, col.columns = "darkred", cex = 1.5,
-  label.conf.columns = list(label = TRUE, pos = 3, col = "darkred", cex = 1.2),
-  col.rows = 8,
-  label.conf.rows = list(label = F, pos = 3, col = alpha("gray80", 0.4))
-)
-abline(v = 0, lty = 2, col = alpha("gray80", 0.4))
-abline(h = 0, lty = 2, col = alpha("gray80", 0.4))
-
-plot(out_w,
-  ylim = c(-1, 1),
-  main = "With Bias Correction",
-  type = "p", pch = 16, col.columns = "darkcyan", cex = 1.5,
-  label.conf.columns = list(label = TRUE, pos = 3, col = "darkcyan", cex = 1.2),
-  col.rows = 8,
-  label.conf.rows = list(label = F, pos = 3, col = alpha("gray80", 0.4))
-)
-abline(v = 0, lty = 2, col = alpha("gray80", 0.4))
-abline(h = 0, lty = 2, col = alpha("gray80", 0.4))
-
-
-plot(pca,
-  col = c("darkred", alpha("gray80", 0.1)),
-  cex = c(1, 0.7), xlim = c(-1.5, 1.5)
-)
-abline(v = 0, lty = 2, col = alpha("black", 0.4))
-abline(h = 0, lty = 2, col = alpha("black", 0.4))
-
-plot(pca_w,
-  col = c("darkcyan", alpha("gray80", 0.1)),
-  cex = c(1, 0.7), xlim = c(-1.5, 1.5)
-)
-abline(v = 0, lty = 2, col = alpha("black", 0.4))
-abline(h = 0, lty = 2, col = alpha("black", 0.4))
-text(x = 1.5, y = 1, labels = "White Man?")
-text(x = -1.5, y = 1, labels = "White Woman?")
-text(x = 1, y = -0.5, labels = "Minority Man?")
-text(x = -1, y = -0.5, labels = "Minority Woman?")
-
-dev.off()
-
-temp <- dt %>% filter(pid7 >= 5)
-temp2 <- dt %>% filter(pid7 <= 3)
-
-pca_temp <- vmu(temp[, 1:4])
-pca_temp2 <- vmu(temp2[, 1:4])
-
-par(mfrow = c(1, 2))
-plot(pca_temp, main = "Republicans", xlim = c(-2, 2), ylim = c(-2, 2))
-plot(pca_temp2, main = "Democrats", xlim = c(-2, 2), ylim = c(-2, 2))
+# # Vector Model of Unfolding (Principal Component Analysis for Ranking Data)
+# set.seed(142)
+# vmu <- vmu(dt[, 1:4])
+# vmu_w <- vmu(rank_sample)
+# pdf(here::here("fig", "weighting_unfolding.pdf"), width = 6, height = 6)
+# par(mfrow = c(1, 2))
+# plot(pca_w,
+#      col = c("darkcyan", alpha("gray80", 0.1)),
+#      cex = c(1, 0.7), xlim = c(-1.5, 1.5),
+#      xlab = "Dimension 1",
+#      ylab = "Dimension 2"
+# )
+# abline(v = 0, lty = 2, col = alpha("black", 0.4))
+# abline(h = 0, lty = 2, col = alpha("black", 0.4))
+# dev.off()
