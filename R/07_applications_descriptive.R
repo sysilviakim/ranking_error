@@ -180,96 +180,107 @@ avg_rank <- as.data.frame(NA)
 avg_rank <- lm_robust(party ~ 1, dt) %>% tidy()
 avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt) %>% tidy())
 avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(race ~ 1, dt) %>% tidy())
+avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt) %>% tidy())
 avg_rank$dt <- "Raw Data"
 
 avg_rank.w <- as.data.frame(NA)
 avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight) %>% tidy()
 avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight) %>% tidy())
 avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(race ~ 1, dt, bias_weight) %>% tidy())
+avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight) %>% tidy())
 avg_rank.w$dt <- "Bias Corrected"
 
 
 avg_gg <- rbind(avg_rank, avg_rank.w)
 
-avg_gg %>% ggplot(aes(y = outcome, x = estimate, group = dt)) +
-  geom_point(aes(shape = dt), position = position_dodge(width = 0.4)) +
-  xlim(0, 4) +
+
+avg_gg %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
+                      x = estimate, group = dt, color = dt)) +
+  geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
+  geom_point(aes(shape = dt), position = position_dodge(width = 1)) +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
+                position = position_dodge(1)) +
+  scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
+                                "Raw Data" =  "dimgray")) +
+  geom_segment(aes(x = 1.6, y = 4, xend = 1.9, yend = 4),
+               arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
+  xlim(1.5, 3.5) +
   ylab("") +
   xlab("") +
-  theme_bw()
+  theme_bw() +
+  theme(legend.position = "none")
+
+ggsave(here::here("fig", "weight-avg-rank.pdf"), width = 5, height = 3)
 
 
-
-target <- "party"
-others <- c("religion", "gender", "race_ethnicity")
-
-## Raw data
-viz_ranking(
-  dt,
-  target_item = target,
-  other_items = others
-) -> p
-
-
-## With bias correction
-viz_ranking(
-  dt,
-  target_item = target,
-  other_items = others,
-  weight = dt$bias_weight
-) -> p_w
-
-### Check
-ggarrange(
-  p + ggtitle("Raw Data"),
-  p_w + ggtitle("With Bias Correction"),
-  ncol = 2
-)
-
-ggsave(p_w, here::here("fig", "weight_descriptive.pdf"), width = 7, height = 4)
-
-
-## Results by Race
-dt_white <- dt %>% filter(race == 1)
-dt_black <- dt %>% filter(race == 2)
-dt_latino <- dt %>% filter(race == 3)
-dt_asian <- dt %>% filter(race == 4)
-
-
-p_white <- viz_ranking(
-  dt_white,
-  target_item = target,
-  other_items = others, weight = dt_white$bias_weight
-) +
-  ggtitle("Whites")
-
-p_black <- viz_ranking(
-  dt_black,
-  target_item = target,
-  other_items = others, weight = dt_black$bias_weight
-) +
-  ggtitle("Blacks")
-
-p_latino <- viz_ranking(
-  dt_latino,
-  target_item = target,
-  other_items = others, weight = dt_latino$bias_weight
-) +
-  ggtitle("Latinos")
-
-p_asian <- viz_ranking(
-  dt_asian,
-  target_item = target,
-  other_items = others, weight = dt_asian$bias_weight
-) +
-  ggtitle("Asians")
-
-### Check
-p_com <- ggarrange(p_white, p_black, p_latino, p_asian)
-ggsave(
-  here::here("fig", "weight_descriptive_race.pdf"),
-  p_com,
-  width = 12, height = 7
-)
+# target <- "party"
+# others <- c("religion", "gender", "race_ethnicity")
+# 
+# ## Raw data
+# viz_ranking(
+#   dt,
+#   target_item = target,
+#   other_items = others
+# ) -> p
+# 
+# 
+# ## With bias correction
+# viz_ranking(
+#   dt,
+#   target_item = target,
+#   other_items = others,
+#   weight = dt$bias_weight
+# ) -> p_w
+# 
+# ### Check
+# ggarrange(
+#   p + ggtitle("Raw Data"),
+#   p_w + ggtitle("With Bias Correction"),
+#   ncol = 2
+# )
+# 
+# ggsave(p_w, here::here("fig", "weight_descriptive.pdf"), width = 7, height = 4)
+# 
+# 
+# ## Results by Race
+# dt_white <- dt %>% filter(race == 1)
+# dt_black <- dt %>% filter(race == 2)
+# dt_latino <- dt %>% filter(race == 3)
+# dt_asian <- dt %>% filter(race == 4)
+# 
+# 
+# p_white <- viz_ranking(
+#   dt_white,
+#   target_item = target,
+#   other_items = others, weight = dt_white$bias_weight
+# ) +
+#   ggtitle("Whites")
+# 
+# p_black <- viz_ranking(
+#   dt_black,
+#   target_item = target,
+#   other_items = others, weight = dt_black$bias_weight
+# ) +
+#   ggtitle("Blacks")
+# 
+# p_latino <- viz_ranking(
+#   dt_latino,
+#   target_item = target,
+#   other_items = others, weight = dt_latino$bias_weight
+# ) +
+#   ggtitle("Latinos")
+# 
+# p_asian <- viz_ranking(
+#   dt_asian,
+#   target_item = target,
+#   other_items = others, weight = dt_asian$bias_weight
+# ) +
+#   ggtitle("Asians")
+# 
+# ### Check
+# p_com <- ggarrange(p_white, p_black, p_latino, p_asian)
+# ggsave(
+#   here::here("fig", "weight_descriptive_race.pdf"),
+#   p_com,
+#   width = 12, height = 7
+# )
