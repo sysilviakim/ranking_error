@@ -205,16 +205,16 @@ avg_gg %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean),
                 position = position_dodge(0.5), size = 1.3) +
   scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
                                 "Raw Data" =  "dimgray")) +
-  geom_segment(aes(x = 2, y = 3.4, xend = 2.4, yend = 3.4),
+  geom_segment(aes(x = 2, y = 1.4, xend = 2.4, yend = 1.4),
                arrow = arrow(length = unit(0.2, "cm")), 
-               color = "darkred", alpha = 0.2, lwd = 0.5) +
-  geom_segment(aes(x = 2.1+0.9, y = 3.4, xend = 2.6, yend = 3.4),
+               color = alpha("darkred", 0.2),lwd = 0.5) +
+  geom_segment(aes(x = 2.1+0.9, y = 1.4, xend = 2.6, yend = 1.4),
                arrow = arrow(length = unit(0.2, "cm")), 
-               color = "darkred", alpha = 0.2, linewidth = 0.5) +  
-  annotate("text", x = 2.2, y = 3.5, label = "bias", size = 2, color = "darkred") +
-  annotate("text", x = 1.8+1, y = 3.5, label = "bias", size = 2, color = "darkred") +  
-  annotate("text", x = 1.7, y = 3.7, label = "bias corrected", color = "darkcyan", size = 2) +    
-  annotate("text", x = 1.9, y = 3.9, label = "raw data", color = "dimgray", size = 2) +      
+               color = alpha("darkred", 0.2), linewidth = 0.5) +  
+  annotate("text", x = 2.2, y = 1.65, label = "bias", size = 3, color = "darkred") +
+  annotate("text", x = 1.8+1, y = 1.65, label = "bias", size = 3, color = "darkred") +  
+  annotate("text", x = 1.7, y = 3.6, label = "bias corrected", color = "darkcyan", size = 3) +    
+  annotate("text", x = 1.9, y = 4.4, label = "raw data", color = "dimgray", size = 3) +      
   xlim(1.5, 3.5) +
   ylab("") +
   xlab("") +
