@@ -121,6 +121,44 @@ set.seed(142)
 out <- unfolding(dt[, 1:4], type = "ordinal", circle = "column")
 out_w <- unfolding(rank_sample, type = "ordinal", circle = "column")
 
+# Goodness-of-fit
+out_w
+
+# Model:               Rectangular smacof 
+# Number of subjects:  1081 
+# Number of objects:   4 
+# Transformation:      ordinalp 
+# Conditionality:      matrix 
+# 
+# Stress-1 value:    0.30832 
+# Penalized Stress:  1.479971 
+# Number of iterations: 6843 
+
+## Permutation test
+test <- permtest(out_w)
+
+
+## Shepard plot
+plot(out_w, "Shepard")
+
+# If the MDS solution were perfect, then all open circles in the Shepard diagram in
+# Fig. 3.1 would lie on the monotonic regression line, because then all data would be
+# mapped into distances that are (weakly) ordered as the data. This is obviously not
+# true here. We can measure “how untrue” it is by considering the squared difference
+# of each disparity and its MDS distance.
+
+## Vector Methods of Unfolding (>83% explained)
+vmu_w <- vmu(rank_sample)
+vmu_w
+
+# Call: vmu(delta = rank_sample)
+# 
+# Number of subjects: 1081
+# Number of objects: 4
+# Number of dimensions: 2
+# Variance accounted for: 83.13%
+
+
 # Visualize via ggplot
 conf_items <- as.data.frame(out_w$conf.col)
 conf_persons <- as.data.frame(out_w$conf.row)
@@ -130,8 +168,8 @@ p + geom_jitter(size = 1.5, colour = "gray", alpha = 0.2, width = 0.1, height = 
   geom_point(aes(x = D1, y = D2), conf_items, colour = "darkcyan", size = 3) + 
   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
             conf_items, colour = "darkcyan", vjust = -0.8, hjust = 1) +
-  xlab("Dimension 1") +
-  ylab("Dimension 2") +
+  xlab("Primary Dimension") +
+  ylab("Secondary Dimension") +
   theme_bw() -> p
 
 ggsave(here::here("fig", "weighting_unfolding.pdf"), width = 4, height = 4)
