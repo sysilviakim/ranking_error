@@ -74,7 +74,7 @@ mdat <- dfidx::dfidx(
 head(mdat)
 
 bootstrapped_mdat <- bootstrap_list(
-  dt, dfidx = TRUE, shape = "wide", n = 200,
+  dt, dfidx = TRUE, shape = "wide", n = 1000, seed = 123,
   choice = "ch", varying = 1:4, ranked = TRUE
 )
 
@@ -86,7 +86,7 @@ mdat$ideo7 # explanatory variable
 
 # Estimating parameters (no weight)
 m <- mlogit(
-  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region,
+  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region + gender3,
   # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender" # Base category
@@ -94,7 +94,7 @@ m <- mlogit(
 
 # Estimating parameters (with weight)
 m2 <- mlogit(
-  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region,
+  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region + gender3,
   # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender", # Base category
