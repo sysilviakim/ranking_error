@@ -1,7 +1,7 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 
-#devtools::install_github("sysilviakim/ranking", force = T)
+# devtools::install_github("sysilviakim/ranking", force = T)
 library(ranking)
 
 
@@ -15,7 +15,6 @@ imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
 
 imp_w
 hist(imp_w$bias_weight, breaks = 20) # 6 rankings should not exist, thus  w = 0
-
 
 # Grab main data
 main <- df_list$main
@@ -43,10 +42,12 @@ dt <- main %>%
     ch.race = app_identity_4
   ) %>%
   left_join(imp_w, by = "app_identity") %>%
-  select(starts_with("ch"), id, 
-         ideo7, pid7, educ, race, 
-         age, partisan, region,
-         bias_weight) %>%
+  select(
+    starts_with("ch"), id,
+    ideo7, pid7, educ, race,
+    age, partisan, region,
+    bias_weight
+  ) %>%
   drop_na()
 
 
@@ -78,28 +79,26 @@ mdat$ideo7 # explanatory variable
 
 # Estimating parameters (no weight)
 m <- mlogit(
-  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region, # Y ~ X_item | X_resp
+  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region,
+  # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender" # Base category
 )
 
-
-
-
 # Estimating parameters (with weight)
 m2 <- mlogit(
-  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region, # Y ~ X_item | X_resp
+  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region,
+  # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender", # Base category
   weight = bias_weight
-  )
-
+)
 
 # Raw result
 summary(m)
 summary(m2)
 
-
-saveRDS(m, file=here::here("output", "full_raw.RData")) # save mlogit object for checking
-saveRDS(m2, file=here::here("output", "full_correct.RData")) # save mlogit object for checking
-
+# save mlogit object for checking
+saveRDS(m, file = here::here("output", "full_raw.RData"))
+# save mlogit object for checking
+saveRDS(m2, file = here::here("output", "full_correct.RData"))
