@@ -45,7 +45,7 @@ dt <- main %>%
   select(
     starts_with("ch"), id,
     ideo7, pid7, educ, race,
-    age, partisan, region,
+    age, partisan, region, gender3,
     bias_weight
   ) %>%
   drop_na()
@@ -61,6 +61,8 @@ library(mlogit)
 
 # Transform into mlogit format
 dt <- as.data.frame(dt)
+
+## Takes about 2 seconds
 mdat <- dfidx::dfidx(
   dt,
   shape = "wide",
@@ -70,6 +72,11 @@ mdat <- dfidx::dfidx(
 )
 # Check
 head(mdat)
+
+bootstrapped_mdat <- bootstrap_list(
+  dt, dfidx = TRUE, shape = "wide", n = 200,
+  choice = "ch", varying = 1:4, ranked = TRUE
+)
 
 mdat$ch # logical: TRUE if id2 was ranked idx1-th, by unit id1
 mdat$id # respondent id
