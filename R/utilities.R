@@ -24,7 +24,7 @@ library(haven)
 library(ranking)
 
 # Read all functions
-source(here("R", "rpluce.R"))
+## source(here("R", "rpluce.R"))
 source(here("R", "yougov_import.R"))
 source(here("R", "viz_ranking.R"))
 source(here("R", "imprr.R"))
@@ -309,30 +309,6 @@ unite_ranking <- function(x, remove = FALSE) {
   }
 
   return(x)
-}
-
-## Avg. rank compute
-avg_rank <- function(df, var, split_only = FALSE) {
-  ## What is the J?
-  J <- nchar(df[[var]][[1]])
-  v <- c("1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th")
-  out <- df %>%
-    select(!!as.name(var)) %>%
-    separate(!!as.name(var), sep = seq(9)[1:J], into = v[1:J])
-  if (split_only == FALSE) {
-    out <- out %>%
-      summarise(
-        across(
-          everything(),
-          ~ tibble(
-            mean = mean(as.numeric(.x)),
-            # sd = sd(as.numeric(.x)),
-            se = sd(as.numeric(.x)) / sqrt(nrow(out))
-          )
-        )
-      )
-  }
-  return(out)
 }
 
 avg_rank_bootstrap_quantile <- function(x) {
