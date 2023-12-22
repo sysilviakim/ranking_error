@@ -158,7 +158,8 @@ yougov_import <- function(fname) {
       # -ends_with("_ranking_rnd"),
       -ends_with("_order_q"),
       -ends_with("_ranking"),
-      -matches(yougov_meta %>% paste(collapse = "|")),
+      ## Otherwise, will kick gender3
+      -matches(setdiff(yougov_meta, "r3") %>% paste(collapse = "|")),
       -starts_with("p_implicit_page_"),
       -starts_with("rand_fact"),
       -ends_with("_order"),
