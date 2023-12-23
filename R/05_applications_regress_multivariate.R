@@ -165,4 +165,40 @@ pp_noweight <- predict(
 )
 
 load(here("output", "bootstrapped_mdat_1000.Rda"))
-load(here("output", "m_weighted_boot_race6.Rda"))
+
+## Simpler test
+m_weighted_boot <- bootstrapped_mdat %>%
+  map(
+    ~ mlogit(ch ~ 1 | pid7, .x, reflevel = "gender", weight = bias_weight)
+  )
+
+## Create all 24 permutations of party-religion-gender-race combinations
+## using combinat::permn
+all_permn <- c("party", "religion", "gender", "race") %>%
+  gtools::permutations(n = length(.), r = length(.), v = .)
+
+out <- seq(nrow(all_permn)) %>%
+  map(
+    function(x) m_weighted_boot %>%
+      map_dfr(
+        ~ sim_rank_randeff(
+          m = .x, 
+          permn = all_permn[x, ],
+          random_var = "pid7",
+          range_cont = seq(7),
+          seed = 123
+        ),
+        .id = "iter"
+      )
+  )
+
+out %>%
+  map(
+    ~ .x %>%
+      group_by(pid7, ranking) %>%
+      summarise(
+        mean = mean(mean),
+        low = quantile(mean, prob = (1 - 0.95) / 2),
+        high = quantile(mean, prob = 1 - (1 - 0.95) / 2)
+      )
+  )
