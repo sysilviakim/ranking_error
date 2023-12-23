@@ -5,7 +5,7 @@ load(here("data", "tidy", "df_list.Rda"))
 library(ranking)
 
 # Grab rankings and weights
-imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
+imp_w <- read_csv(here("data/tidy", "temp_weight.csv")) %>%
   mutate(
     app_identity = as.character(ranking),
     bias_weight = weight
@@ -81,10 +81,7 @@ bootstrapped_mdat <- bootstrap_list(
   dfidx = TRUE, shape = "wide", n = 1000, seed = 123,
   choice = "ch", varying = 1:4, ranked = TRUE
 )
-save(
-  bootstrapped_mdat,
-  file = here::here("output", "bootstrapped_mdat_1000.Rda")
-)
+save(bootstrapped_mdat, file = here("output", "bootstrapped_mdat_1000.Rda"))
 
 mdat$ch # logical: TRUE if id2 was ranked idx1-th, by unit id1
 mdat$id # respondent id
@@ -114,8 +111,8 @@ summary(m)
 summary(m2)
 
 # save mlogit object for checking
-save(m, file = here::here("output", "full_raw.Rda"))
-save(m2, file = here::here("output", "full_correct.Rda"))
+save(m, file = here("output", "full_raw.Rda"))
+save(m2, file = here("output", "full_correct.Rda"))
 
 # Bootstrapped version =========================================================
 # Estimating parameters (no weight)
@@ -143,7 +140,7 @@ m_noweight_boot <- bootstrapped_mdat %>%
       }
     )
   )
-save(m_noweight_boot, file = here::here("output", "m_noweight_boot_norace.Rda"))
+save(m_noweight_boot, file = here("output", "m_noweight_boot_race6.Rda"))
 
 # Estimating parameters (with weight)
 m_weighted_boot <- bootstrapped_mdat %>%
@@ -156,7 +153,7 @@ m_weighted_boot <- bootstrapped_mdat %>%
       weight = bias_weight
     )
   )
-save(m_weighted_boot, file = here::here("output", "m_weighted_boot_norace.Rda"))
+save(m_weighted_boot, file = here("output", "m_weighted_boot_race6.Rda"))
 
 # Compute predicted probabilities ==============================================
 # Compute predicted probabilities for any combinations of the explanatory vars
@@ -167,3 +164,5 @@ pp_noweight <- predict(
   type = "prob"
 )
 
+load(here("output", "bootstrapped_mdat_1000.Rda"))
+load(here("output", "m_weighted_boot_race6.Rda"))
