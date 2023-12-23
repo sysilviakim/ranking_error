@@ -94,7 +94,7 @@ mdat$ideo7 # explanatory variable
 # Run Rank-order logit model ===================================================
 # Estimating parameters (no weight)
 m <- mlogit(
-  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region + gender3,
+  ch ~ 1 | ideo7 + pid7 + partisan + gender3 + age + race6 + educ + region,
   # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender" # Base category
@@ -102,7 +102,7 @@ m <- mlogit(
 
 # Estimating parameters (with weight)
 m2 <- mlogit(
-  ch ~ 1 | ideo7 + pid7 + educ + race + age + partisan + region + gender3,
+  ch ~ 1 | ideo7 + pid7 + partisan + gender3 + age + race6 + educ + region,
   # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender", # Base category
@@ -115,7 +115,6 @@ summary(m2)
 
 # save mlogit object for checking
 save(m, file = here::here("output", "full_raw.Rda"))
-# save mlogit object for checking
 save(m2, file = here::here("output", "full_correct.Rda"))
 
 # Bootstrapped version =========================================================
@@ -126,17 +125,16 @@ m_noweight_boot <- bootstrapped_mdat %>%
       {
         out <- mlogit(
           ## https://cran.r-project.org/web/packages/mlogit/vignettes/c2.formula.data.html
-          ## ch ~ 1 | ideo7 + race + gender3, ---> error, worked fine if without race
-          ## ch ~ 1 | ideo7 + age + educ + partisan + gender3, ---> this works
-          ## If you exclude race, it works fine. Some bad combination?
-          ch ~ 1 | 
-            ideo7 + pid7 + educ + age + partisan + region + gender3,
+          ## If you exclude race, it works fine, so using race6 instead of race
+          ch ~ 1 |
+            ideo7 + pid7 + partisan + gender3 + age + race6 + educ + region,
           .x,
           reflevel = "gender"
         )
         return(out)
       },
       error = function(e) {
+        ## If race is included instead, it gives the following error:
         ## Error: Lapack routine dgesv: system is exactly singular: U[31,31] = 0
         ## 1, 5, 12, 18, 19, 20, 23, 26, 28, 33, ...
         message("Error: ", e$message)
@@ -151,11 +149,21 @@ save(m_noweight_boot, file = here::here("output", "m_noweight_boot_norace.Rda"))
 m_weighted_boot <- bootstrapped_mdat %>%
   map(
     ~ mlogit(
-      ## Excluded race
-      ch ~ 1 | ideo7 + pid7 + educ + age + partisan + region + gender3,
+      ch ~ 1 |
+        ideo7 + pid7 + partisan + gender3 + age + race6 + educ + region,
       .x,
       reflevel = "gender",
       weight = bias_weight
     )
   )
 save(m_weighted_boot, file = here::here("output", "m_weighted_boot_norace.Rda"))
+
+# Compute predicted probabilities ==============================================
+# Compute predicted probabilities for any combinations of the explanatory vars
+# Testing
+pp_noweight <- predict(
+  m_noweight_boot[[1]],
+  newdata = mdat,
+  type = "prob"
+)
+
