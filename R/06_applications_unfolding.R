@@ -203,6 +203,20 @@ ggpubr::ggarrange(p + ggtitle("Bias Corrected") +
 ggsave(here::here("fig", "weighting_unfolding-compare.pdf"), width = 8, height = 4)
 
 
+# Figures for Talks
+p2 + ggtitle("Raw Data") +
+  xlab("Primary Dimension") +
+  ylab("Secondary Dimension") +
+  xlim(-1, 1) + ylim(-0.7,1)
+ggsave(here::here("fig", "weighting_unfolding-raw.pdf"), width = 4, height = 4)
+
+p + ggtitle("Bias Corrected") +
+  xlab("Primary Dimension") +
+  ylab("Secondary Dimension") +
+  xlim(-1, 1) + ylim(-0.7,1)  
+ggsave(here::here("fig", "weighting_unfolding-corrected.pdf"), width = 4, height = 4)
+
+
 # # Vector Model of Unfolding (Principal Component Analysis for Ranking Data)
 # set.seed(142)
 # vmu <- vmu(dt[, 1:4])
