@@ -79,6 +79,25 @@ m <- mlogit(
 # Raw result
 summary(m)
 
+
+# Estimating parameters (with weight)
+m2 <- mlogit(
+  ch ~ 1 | ideo7, # Y ~ X_item | X_resp
+  mdat, # Data
+  reflevel = "gender", # Base category
+  weight = bias_weight
+)
+
+
+# Raw result
+summary(m2)
+
+
+
+###########################################################
+# Predicted Prob for Gender > Race > Party > Religion
+###########################################################
+
 # Generate 1000 sets of parameters (parametric bootstrap)
 library(clarify)
 set.seed(123)
@@ -104,10 +123,10 @@ for (i in 1:7) {
   # Prob (party, race, religion, gender)
   # Prob(party) * Prob(race) * Prob(religion) * Prob(gender)
   # This is multiplication of three multinomial choices
-  p <- e_XB_party / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
-    e_XB_race / (e_XB_race + e_XB_reli + e_XB_gen) *
-    e_XB_reli / (e_XB_reli + e_XB_gen) * 
-    e_XB_gen / e_XB_gen # prob(choosing gender out of gender)
+  p <- e_XB_gen / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
+    e_XB_race / (e_XB_race + e_XB_reli + e_XB_party) *
+    e_XB_party / (e_XB_reli + e_XB_party) * 
+    e_XB_reli / e_XB_reli # prob(choosing gender out of gender)
 
    # we want to generate 24 ps. They should sum up to one.
   
@@ -119,34 +138,18 @@ for (i in 1:7) {
 p_qoi
 
 
-
-
-# Estimating parameters (with weight)
-m2 <- mlogit(
-  ch ~ 1 | ideo7, # Y ~ X_item | X_resp
-  mdat, # Data
-  reflevel = "gender", # Base category
-  weight = bias_weight
-)
-
-
-# Raw result
-summary(m2)
-
-
-
-# Estimating parameters (with weight) with education
-m3 <- mlogit(
-  ch ~ 1 | educ, # Y ~ X_item | X_resp
-  mdat, # Data
-  reflevel = "gender", # Base category
-  weight = bias_weight
-)
-summary(m3)
-
-saveRDS(m, file=here::here("output", "m1.RData")) # save mlogit object for checking
-saveRDS(m2, file=here::here("output", "m2.RData")) # save mlogit object for checking
-saveRDS(m3, file=here::here("output", "m3.RData")) # save mlogit object for checking
+# # Estimating parameters (with weight) with education
+# m3 <- mlogit(
+#   ch ~ 1 | educ, # Y ~ X_item | X_resp
+#   mdat, # Data
+#   reflevel = "gender", # Base category
+#   weight = bias_weight
+# )
+# summary(m3)
+# 
+# saveRDS(m, file=here::here("output", "m1.RData")) # save mlogit object for checking
+# saveRDS(m2, file=here::here("output", "m2.RData")) # save mlogit object for checking
+# saveRDS(m3, file=here::here("output", "m3.RData")) # save mlogit object for checking
 
 
 # Generate 1000 sets of parameters (parametric bootstrap)
@@ -169,10 +172,10 @@ for (i in 1:7) {
   
   # Prob: party, race, religion, gender
   # Prob(party) * Prob(race) * Prob(religion)
-  p <- e_XB_party / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
-    e_XB_race / (e_XB_race + e_XB_reli + e_XB_gen) *
-    e_XB_reli / (e_XB_reli + e_XB_gen) * 
-    e_XB_gen / e_XB_gen # prob(choosing gender out of gender)
+  p <- e_XB_gen / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
+    e_XB_race / (e_XB_race + e_XB_reli + e_XB_party) *
+    e_XB_party / (e_XB_reli + e_XB_party) * 
+    e_XB_reli / e_XB_reli # prob(choosing gender out of gender)
   
 
   p_qoi2[i, 2] <- mean(p)
@@ -180,25 +183,24 @@ for (i in 1:7) {
   p_qoi2[i, 4] <- quantile(p, prob = 0.975)
 }
 
-
-
 p_qoi$results <- "raw data" # no weight
-p_qoi2$results <- "with bias correction" # with weight
+p_qoi2$results <- "our methods" # with weight
 
 
 ggdt <- rbind(p_qoi, p_qoi2)
 
 ggdt %>%
   ggplot(aes(x = ideology, y = mean, color = results)) +
-  geom_point() +
-  geom_pointrange(aes(ymin = low, ymax = up)) +
+  geom_point(position = position_dodge2(width = 0.4)) +
+  geom_pointrange(aes(ymin = low, ymax = up),
+                  position = position_dodge2(width = 0.4)) +
   scale_color_manual(values = c("darkcyan", "darkred")) +
   #  facet_wrap(~ type) +
   theme_bw() +
-  xlim(1, 7) +
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
   xlab("Ideology (liberal - conservative)") +
   ylab("Predicted Probability") +
-  ggtitle("Ranking 1423 (Party, Race, Religion, Gender)") -> p
+  ggtitle("Pr(gender > race > party > religion)") -> p
 
 p
 
@@ -207,15 +209,173 @@ ggsave(here::here("fig", "placketluce_weight.pdf"),
 )
 
 
+ggdt %>%
+  ggplot(aes(x = ideology, y = mean, color = results)) +
+  geom_point(position = position_dodge2(width = 0.4)) +
+  geom_pointrange(aes(ymin = low, ymax = up),
+                  position = position_dodge2(width = 0.4)) +
+  scale_color_manual(values = c(alpha("darkcyan", 0), "darkred")) +
+  #  facet_wrap(~ type) +
+  theme_bw() +
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  xlab("Ideology (liberal - conservative)") +
+  ylab("Predicted Probability") +
+  ggtitle("Pr(gender > race > religion > party)") -> p
 
-# Predictions of Multinomial Choice Probabilities
-m3 <- mlogit(
-  ch ~ 1 | pid7, # Y ~ X_item | X_resp
-  mdat, # Data
-  reflevel = "gender", # Base category
-  weight = bias_weight
+p
+
+ggsave(here::here("fig", "placketluce_weight_empty.pdf"),
+       width = 5, height = 3.5
 )
-saveRDS(m3, file="m_pid.RData") # save mlogit object for checking
+
+###########################################################
+# Predicted Prob for Religion > Gender > Race > Party
+###########################################################
+
+
+# Generate 1000 sets of parameters (parametric bootstrap)
+library(clarify)
+set.seed(123)
+sim_coefs <- sim(m)
+
+v <- sim_coefs$sim.coefs %>% as_tibble()
+
+p_qoi <- data.frame(
+  ideology = 1:7,
+  mean = NA,
+  low = NA,
+  up = NA
+)
+
+for (i in 1:7) {
+  
+  e_XB_party <- exp(v$`(Intercept):party` + v$`ideo7:party` * i)
+  e_XB_race <- exp(v$`(Intercept):race` + v$`ideo7:race` * i)
+  e_XB_reli <- exp(v$`(Intercept):religion` + v$`ideo7:religion` * i)
+  e_XB_gen <- 1
+  
+  # Here, we want to compute the probability for one unique ranking
+  # Prob (party, race, religion, gender)
+  # Prob(party) * Prob(race) * Prob(religion) * Prob(gender)
+  # This is multiplication of three multinomial choices
+  p <- e_XB_reli / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
+    e_XB_gen / (e_XB_race + e_XB_gen + e_XB_party) *
+    e_XB_race / (e_XB_race + e_XB_party) * 
+    e_XB_party / e_XB_party # prob(choosing gender out of gender)
+  
+  # we want to generate 24 ps. They should sum up to one.
+  
+  p_qoi[i, 2] <- mean(p)
+  p_qoi[i, 3] <- quantile(p, prob = 0.025) # if we bootstrap the whole thing, we don't need to save this
+  p_qoi[i, 4] <- quantile(p, prob = 0.975) # if we bootstrap the whole thing, we don't need to save this
+}
+
+p_qoi
+
+
+# # Estimating parameters (with weight) with education
+# m3 <- mlogit(
+#   ch ~ 1 | educ, # Y ~ X_item | X_resp
+#   mdat, # Data
+#   reflevel = "gender", # Base category
+#   weight = bias_weight
+# )
+# summary(m3)
+# 
+# saveRDS(m, file=here::here("output", "m1.RData")) # save mlogit object for checking
+# saveRDS(m2, file=here::here("output", "m2.RData")) # save mlogit object for checking
+# saveRDS(m3, file=here::here("output", "m3.RData")) # save mlogit object for checking
+
+
+# Generate 1000 sets of parameters (parametric bootstrap)
+set.seed(123)
+sim_coefs <- sim(m2)
+
+v <- sim_coefs$sim.coefs %>% as_tibble()
+
+p_qoi2 <- data.frame(
+  ideology = 1:7,
+  mean = NA,
+  low = NA,
+  up = NA
+)
+for (i in 1:7) {
+  e_XB_party <- exp(v$`(Intercept):party` + v$`ideo7:party` * i)
+  e_XB_race <- exp(v$`(Intercept):race` + v$`ideo7:race` * i)
+  e_XB_reli <- exp(v$`(Intercept):religion` + v$`ideo7:religion` * i)
+  e_XB_gender <- 1
+  
+  # Prob: party, race, religion, gender
+  # Prob(party) * Prob(race) * Prob(religion)
+  p <- e_XB_reli / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
+    e_XB_gen / (e_XB_race + e_XB_gen + e_XB_party) *
+    e_XB_race / (e_XB_race + e_XB_party) * 
+    e_XB_party / e_XB_party # prob(choosing gender out of gender)
+  
+  
+  p_qoi2[i, 2] <- mean(p)
+  p_qoi2[i, 3] <- quantile(p, prob = 0.025)
+  p_qoi2[i, 4] <- quantile(p, prob = 0.975)
+}
+
+p_qoi$results <- "raw data" # no weight
+p_qoi2$results <- "our methods" # with weight
+
+
+ggdt <- rbind(p_qoi, p_qoi2)
+
+ggdt %>%
+  ggplot(aes(x = ideology, y = mean, color = results)) +
+  geom_point(position = position_dodge2(width = 0.4)) +
+  geom_pointrange(aes(ymin = low, ymax = up),
+                  position = position_dodge2(width = 0.4)) +
+  scale_color_manual(values = c("darkcyan", "darkred")) +
+  #  facet_wrap(~ type) +
+  theme_bw() +
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  xlab("Ideology (liberal - conservative)") +
+  ylab("Predicted Probability") +
+  ggtitle("Pr(religion > gender > race > party)") -> p
+
+p
+
+ggsave(here::here("fig", "placketluce_weight2.pdf"),
+       width = 5, height = 3.5
+)
+
+
+
+ggdt %>%
+  ggplot(aes(x = ideology, y = mean, color = results)) +
+  geom_point(position = position_dodge2(width = 0.4)) +
+  geom_pointrange(aes(ymin = low, ymax = up),
+                  position = position_dodge2(width = 0.4)) +
+  scale_color_manual(values = c(alpha("darkcyan", 0), "darkred")) +
+  #  facet_wrap(~ type) +
+  theme_bw() +
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  xlab("Ideology (liberal - conservative)") +
+  ylab("Predicted Probability") +
+  ggtitle("Pr(religion > gender > race > party)") -> p
+
+p
+
+ggsave(here::here("fig", "placketluce_weight2_empty.pdf"),
+       width = 5, height = 3.5
+)
+
+
+
+
+
+# # Predictions of Multinomial Choice Probabilities
+# m3 <- mlogit(
+#   ch ~ 1 | pid7, # Y ~ X_item | X_resp
+#   mdat, # Data
+#   reflevel = "gender", # Base category
+#   weight = bias_weight
+# )
+# saveRDS(m3, file="m_pid.RData") # save mlogit object for checking
 
 
 
