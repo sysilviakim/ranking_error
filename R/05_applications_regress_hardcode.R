@@ -550,11 +550,11 @@ ggdt_all <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
 
 
 ggdt_all %>%
-  ggplot(aes(x = ideology, y = mean, color = results)) +
-  geom_point(position = position_dodge2(width = 0.4)) +
+  ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
+  geom_point(position = position_dodge2(width = 0.5)) +
   geom_pointrange(aes(ymin = low, ymax = up),
-                  position = position_dodge2(width = 0.4)) +
-  scale_color_manual(values = c("darkcyan", "darkred")) +
+                  position = position_dodge2(width = 0.5)) +
+  scale_color_manual(values = c("darkcyan", alpha("darkred", 0.3))) +
   facet_wrap(~ ranking, scales = "free") +
   theme_bw() +
   scale_x_continuous(breaks=seq(0, 7, 1)) +
