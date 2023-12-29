@@ -70,7 +70,7 @@ avg_rank.w <- avg_rank.w %>%
 
 
 avg_gg_all <- rbind(avg_rank, avg_rank.w) %>%
-  mutate(sample = "All Sample")
+  mutate(sample = "All Samples")
 
 
 # Whites Only
@@ -173,7 +173,7 @@ avg_gg_comb <- rbind(avg_gg_all,
                      avg_gg_asian)
 
 avg_gg_comb$sample <-  factor(avg_gg_comb$sample, 
-                              levels = c("All Sample", 
+                              levels = c("All Samples", 
                                          "Whites (n=797)", 
                                          "Blacks (n=116)", 
                                          "Latinos (n=87)",

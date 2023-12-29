@@ -228,6 +228,25 @@ ggsave(here::here("fig", "placketluce_weight_empty.pdf"),
        width = 5, height = 3.5
 )
 
+ggdt %>%
+  ggplot(aes(x = ideology, y = mean, color = results)) +
+  geom_point(position = position_dodge2(width = 0.4)) +
+  geom_pointrange(aes(ymin = low, ymax = up),
+                  position = position_dodge2(width = 0.4)) +
+  scale_color_manual(values = c(alpha("darkcyan", 0), alpha("darkred",0))) +
+  #  facet_wrap(~ type) +
+  theme_bw() +
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  xlab("Ideology (liberal - conservative)") +
+  ylab("Predicted Probability") +
+  ggtitle("Pr(gender > race > religion > party)") -> p
+
+p
+
+ggsave(here::here("fig", "placketluce_weight_empty0.pdf"),
+       width = 5, height = 3.5
+)
+
 ###########################################################
 # Predicted Prob for Religion > Gender > Race > Party
 ###########################################################
@@ -364,6 +383,25 @@ ggsave(here::here("fig", "placketluce_weight2_empty.pdf"),
        width = 5, height = 3.5
 )
 
+
+ggdt %>%
+  ggplot(aes(x = ideology, y = mean, color = results)) +
+  geom_point(position = position_dodge2(width = 0.4)) +
+  geom_pointrange(aes(ymin = low, ymax = up),
+                  position = position_dodge2(width = 0.4)) +
+  scale_color_manual(values = c(alpha("darkcyan", 0), alpha("darkred", 0))) +
+  #  facet_wrap(~ type) +
+  theme_bw() +
+  scale_x_continuous(breaks=seq(0, 7, 1)) +
+  xlab("Ideology (liberal - conservative)") +
+  ylab("Predicted Probability") +
+  ggtitle("Pr(religion > gender > race > party)") -> p
+
+p
+
+ggsave(here::here("fig", "placketluce_weight2_empty0.pdf"),
+       width = 5, height = 3.5
+)
 
 
 
