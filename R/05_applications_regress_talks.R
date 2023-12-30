@@ -222,11 +222,11 @@ p_qoi2$results <- "our methods" # with weight
 ggdt <- rbind(p_qoi, p_qoi2)
 
 ggdt %>%
-  ggplot(aes(x = ideology, y = mean, color = results)) +
+  ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
   geom_point(position = position_dodge2(width = 0.4)) +
   geom_pointrange(aes(ymin = low, ymax = up),
                   position = position_dodge2(width = 0.4)) +
-  scale_color_manual(values = c("darkcyan", "darkred")) +
+  scale_color_manual(values = c("darkcyan", alpha("darkred", 0.3))) +
   #  facet_wrap(~ type) +
   theme_bw() +
   scale_x_continuous(breaks=seq(0, 7, 1)) +
@@ -243,11 +243,11 @@ ggsave(here::here("fig", "placketluce_weight.pdf"),
 )
 
 ggdt %>%
-  ggplot(aes(x = ideology, y = mean, color = results)) +
+  ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
   geom_point(position = position_dodge2(width = 0.4)) +
   geom_pointrange(aes(ymin = low, ymax = up),
                   position = position_dodge2(width = 0.4)) +
-  scale_color_manual(values = c(alpha("darkcyan", 0), "darkred")) +
+  scale_color_manual(values = c(alpha("darkcyan", 0), alpha("darkred", 0.3))) +
   #  facet_wrap(~ type) +
   theme_bw() +
   scale_x_continuous(breaks=seq(0, 7, 1)) +
@@ -264,7 +264,7 @@ ggsave(here::here("fig", "placketluce_weight_empty.pdf"),
 )
 
 ggdt %>%
-  ggplot(aes(x = ideology, y = mean, color = results)) +
+  ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
   geom_point(position = position_dodge2(width = 0.4)) +
   geom_pointrange(aes(ymin = low, ymax = up),
                   position = position_dodge2(width = 0.4)) +
