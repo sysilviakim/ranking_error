@@ -283,6 +283,22 @@ avg_rank.w %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean),
 ggsave(here::here("fig", "weight-avg-rank-talk.pdf"), width = 5, height = 3)
 
 
+
+# Correlate with partisanship =============================================
+
+dt <- dt %>%
+  mutate(pid7_sq = pid7^2) %>%
+  filter(pid7 != 8)
+
+plot(jitter(dt$party) ~ jitter(dt$pid7))
+abline(lm(party ~ pid7, dt), col = "darkred")
+
+summary(lm(party ~ pid7, dt))
+summary(lm(party ~ pid7 + pid7_sq, dt))
+
+summary(lm(party ~ ideo7, dt))
+
+
 # target <- "party"
 # others <- c("religion", "gender", "race_ethnicity")
 # 
