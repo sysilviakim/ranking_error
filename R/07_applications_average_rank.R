@@ -181,122 +181,119 @@ avg_gg_comb$sample <-  factor(avg_gg_comb$sample,
 
 
 
-avg_gg_comb %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
+avg_gg_comb %>% 
+  ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
                       x = estimate, group = dt, color = dt)) +
-  geom_vline(xintercept = 2.5, lty = 1, color = alpha("darkred", 0.5)) +  
+  geom_rect(aes(fill = sample),
+            xmin = -Inf,xmax = Inf,
+            ymin = -Inf,ymax = Inf, alpha = 0.01,
+            show_guide = FALSE
+  ) +    
+  scale_fill_brewer(palette = "Accent") +
+  geom_vline(xintercept = 2.5, lty = 2, color = alpha("darkred", 0.5), linewidth = 0.3) +  
   geom_point(aes(shape = dt), position = position_dodge(width = 1.2), size = 1.5) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
                 position = position_dodge(1.2), size = 0.6) +
   scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
-                                "Raw Data" =  "gray")) +
+                                "Raw Data" =  alpha("dimgray", 0.5))) +
   geom_text(aes(x = conf.high + 0.1,
              label = round(estimate, 1.5)),
             position = position_dodge(width = 1.2),
             size = 1.5,
             color = "black") +
   facet_grid(sample ~ .) +
-  # geom_segment(aes(x = 2.4, y = 1.4, xend = 2, yend = 1.4),
-  #              arrow = arrow(length = unit(0.2, "cm")), 
-  #              color = alpha("darkcyan", 0.2),lwd = 0.5) +
-  # geom_segment(aes(x = 2.6, y = 1.4, xend = 2.1+0.9, yend = 1.4),
-  #              arrow = arrow(length = unit(0.2, "cm")), 
-  #              color = alpha("darkcyan", 0.2), linewidth = 0.5) +  
-  # annotate("text", x = 2.2, y = 1.65, label = "our methods", size = 3, color = "darkcyan") +
-  # annotate("text", x = 1.8+1, y = 1.65, label = "our methods", size = 3, color = "darkcyan") +  
-  # annotate("text", x = 1.7, y = 3.6, label = "bias corrected", color = "darkcyan", size = 3) +    
-  # annotate("text", x = 1.9, y = 4.4, label = "raw data", color = "dimgray", size = 3) +      
-  xlim(0.9, 4.1) +
+  xlim(1, 4.1) +
   ylab("") +
   xlab("") +
-  theme_minimal() +
-  theme(legend.position = c(0.1, 0.5),
+  theme_classic(base_rect_size = 11/44) +
+  theme(legend.position = "top",
         legend.title = element_blank(),
-        legend.text = element_text(size = 4),
+        legend.text = element_text(size = 6),
         axis.text.y = element_text(size = 6),
-        text = element_text(size = 8)) 
+        text = element_text(size = 8))
 
 ggsave(here::here("fig", "weight-avg-rank.pdf"), 
-       width = 4.5, height = 4)
+       width = 4.5, height = 4.5)
 
 
-
-
-# Figures for Talks
-avg_rank %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
-                      x = estimate, group = dt, color = dt)) +
-  geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
-  geom_point(aes(shape = dt), position = position_dodge(width = 0.5), size = 2) +
-  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
-                position = position_dodge(0.5), size = 1.3) +
-  scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
-                                "Raw Data" =  "dimgray")) +
-  annotate("text", x = 1.9, y = 4.4, label = "raw data", color = "dimgray", size = 3) +      
-  xlim(1.5, 3.5) +
-  ylab("") +
-  xlab("") +
-  theme_bw() +
-  theme(legend.position = "none")
-
-ggsave(here::here("fig", "weight-avg-rank_empty.pdf"), width = 0.9*5, height = 0.9*3)
-
-
-
-avg_gg %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
-                      x = estimate, group = dt, color = dt)) +
-  geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
-  geom_point(aes(shape = dt), position = position_dodge(width = 0.5), size = 2) +
-  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
-                position = position_dodge(0.5), size = 1.3) +
-  scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
-                                "Raw Data" =  "dimgray")) +
-  annotate("text", x = 1.7, y = 3.6, label = "bias corrected", color = "darkcyan", size = 3) +    
-  annotate("text", x = 1.9, y = 4.4, label = "raw data", color = "dimgray", size = 3) +      
-  xlim(1.5, 3.5) +
-  ylab("") +
-  xlab("") +
-  theme_bw() +
-  theme(legend.position = "none")
-
-ggsave(here::here("fig", "weight-avg-rank_notext.pdf"), width = 0.9*5, height = 0.9*3)
-
-
-
-
-avg_rank.w %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
-                      x = estimate, group = dt, color = dt)) +
-  geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
-  geom_point(aes(shape = dt), size = 3) +
-  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
-                size = 1.5) +
-  scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
-                                "Raw Data" =  "dimgray")) +
-  annotate("text", x = 2.3, y = 4.3, label = "More important", 
-           size = 3, color = "gray") +
-  geom_segment(aes(x = 1.8, y = 4.3, xend = 1.5, yend = 4.3),
-               arrow = arrow(length = unit(0.2, "cm")), color = "gray") +  
-  xlim(1.5, 3.5) +
-  ylab("") +
-  xlab("") +
-  theme_bw() +
-  theme(legend.position = "none")
-
-ggsave(here::here("fig", "weight-avg-rank-talk.pdf"), width = 5, height = 3)
-
-
-
-# Correlate with partisanship =============================================
-
-dt <- dt %>%
-  mutate(pid7_sq = pid7^2) %>%
-  filter(pid7 != 8)
-
-plot(jitter(dt$party) ~ jitter(dt$pid7))
-abline(lm(party ~ pid7, dt), col = "darkred")
-
-summary(lm(party ~ pid7, dt))
-summary(lm(party ~ pid7 + pid7_sq, dt))
-
-summary(lm(party ~ ideo7, dt))
+# 
+# 
+# # Figures for Talks
+# avg_rank %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
+#                       x = estimate, group = dt, color = dt)) +
+#   geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
+#   geom_point(aes(shape = dt), position = position_dodge(width = 0.5), size = 2) +
+#   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
+#                 position = position_dodge(0.5), size = 1.3) +
+#   scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
+#                                 "Raw Data" =  "dimgray")) +
+#   annotate("text", x = 1.9, y = 4.4, label = "raw data", color = "dimgray", size = 3) +      
+#   xlim(1.5, 3.5) +
+#   ylab("") +
+#   xlab("") +
+#   theme_bw() +
+#   theme(legend.position = "none")
+# 
+# ggsave(here::here("fig", "weight-avg-rank_empty.pdf"), width = 0.9*5, height = 0.9*3)
+# 
+# 
+# 
+# avg_gg %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
+#                       x = estimate, group = dt, color = dt)) +
+#   geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
+#   geom_point(aes(shape = dt), position = position_dodge(width = 0.5), size = 2) +
+#   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
+#                 position = position_dodge(0.5), size = 1.3) +
+#   scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
+#                                 "Raw Data" =  "dimgray")) +
+#   annotate("text", x = 1.7, y = 3.6, label = "bias corrected", color = "darkcyan", size = 3) +    
+#   annotate("text", x = 1.9, y = 4.4, label = "raw data", color = "dimgray", size = 3) +      
+#   xlim(1.5, 3.5) +
+#   ylab("") +
+#   xlab("") +
+#   theme_bw() +
+#   theme(legend.position = "none")
+# 
+# ggsave(here::here("fig", "weight-avg-rank_notext.pdf"), width = 0.9*5, height = 0.9*3)
+# 
+# 
+# 
+# 
+# avg_rank.w %>% ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
+#                       x = estimate, group = dt, color = dt)) +
+#   geom_vline(xintercept = 2.5, lty = 2, color = "gray") +  
+#   geom_point(aes(shape = dt), size = 3) +
+#   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
+#                 size = 1.5) +
+#   scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
+#                                 "Raw Data" =  "dimgray")) +
+#   annotate("text", x = 2.3, y = 4.3, label = "More important", 
+#            size = 3, color = "gray") +
+#   geom_segment(aes(x = 1.8, y = 4.3, xend = 1.5, yend = 4.3),
+#                arrow = arrow(length = unit(0.2, "cm")), color = "gray") +  
+#   xlim(1.5, 3.5) +
+#   ylab("") +
+#   xlab("") +
+#   theme_bw() +
+#   theme(legend.position = "none")
+# 
+# ggsave(here::here("fig", "weight-avg-rank-talk.pdf"), width = 5, height = 3)
+# 
+# 
+# 
+# # Correlate with partisanship =============================================
+# 
+# dt <- dt %>%
+#   mutate(pid7_sq = pid7^2) %>%
+#   filter(pid7 != 8)
+# 
+# plot(jitter(dt$party) ~ jitter(dt$pid7))
+# abline(lm(party ~ pid7, dt), col = "darkred")
+# 
+# summary(lm(party ~ pid7, dt))
+# summary(lm(party ~ pid7 + pid7_sq, dt))
+# 
+# summary(lm(party ~ ideo7, dt))
 
 
 # target <- "party"
