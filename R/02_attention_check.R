@@ -12,22 +12,45 @@ if (!file.exists(here("data", "tidy", "df_list.Rda"))) {
 main <- df_list$main
 
 # What are the raw proportion of passing the test? =============================
-prop(main, "ternovski_fail")                   ## 86.3%
-prop(main, "berinsky_fail")                    ## 85.5%
+prop(main, "ternovski_fail") ## 86.3%
+prop(main, "berinsky_fail") ## 85.5%
 
-prop(main, "random_tate")                      ## 67.9%
-prop(main, "random_identity")                  ## 69.7%
+prop(main, "random_tate") ## 67.9%
+prop(main, "random_identity") ## 69.7%
 prop(main, "random_id_alphabet", useNA = "no") ## 43.9%
-prop(main, "random_id_exact", useNA = "no")    ## 53.4%
-prop(main, "random_polar")                     ## 79.7%
-prop(main, "random_esystems")                  ## 56.3%
+prop(main, "random_id_exact", useNA = "no") ## 53.4%
+prop(main, "random_polar") ## 79.7%
+prop(main, "random_esystems") ## 56.3%
 prop(main, "random_es_alphabet", useNA = "no") ## 69.0%
 prop(main, "random_es_temporal", useNA = "no") ## 59.6%
 
-prop(main, "repeat_tate", useNA = "no")        ## 66.3%
-prop(main, "repeat_identity", useNA = "no")    ## 65.6%
-prop(main, "repeat_polar", useNA = "no")       ## 53.6%
-prop(main, "repeat_esystems", useNA = "no")    ## 36.5%
+prop(main, "repeat_tate", useNA = "no") ## 66.3%
+prop(main, "repeat_identity", useNA = "no") ## 65.6%
+prop(main, "repeat_polar", useNA = "no") ## 53.6%
+prop(main, "repeat_esystems", useNA = "no") ## 36.5%
+
+## Unbiased estimator for the proportion of non-random responses?
+## Proportion of random_tate == 1 compared to the rest
+## 18.5%(!)
+unbiased_prop(
+  sum(main$random_tate == 1) / sum(!is.na(main$random_tate)),
+  J = 3
+)
+## 27.3%
+unbiased_prop(
+  sum(main$random_identity == 1) / sum(!is.na(main$random_identity)),
+  J = 4
+)
+## 19.7%
+unbiased_prop(
+  sum(main$random_polar == 1) / sum(!is.na(main$random_polar)),
+  J = 5
+)
+## 43.6%
+unbiased_prop(
+  sum(main$random_esystems == 1) / sum(!is.na(main$random_esystems)),
+  J = 6
+)
 
 # Correlation between attention filters ========================================
 ## Between attention filters

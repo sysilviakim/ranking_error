@@ -70,6 +70,12 @@ option_crosswalk <- c(
 )
 
 # Functions ====================================================================
+unbiased_prop <- function(x, J) {
+  nominator <- x - 1 / factorial(J)
+  denominator <- 1 - 1 / factorial(J)
+  return(nominator / denominator)
+}
+
 ## Turn 1st, 2nd, and 3rd ranking columns into long data format
 pivot_sim <- function(x) {
   out <- x %>%
