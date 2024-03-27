@@ -70,10 +70,11 @@ option_crosswalk <- c(
 )
 
 # Functions ====================================================================
-unbiased_prop <- function(x, J) {
-  nominator <- x - 1 / factorial(J)
-  denominator <- 1 - 1 / factorial(J)
-  return(nominator / denominator)
+unbiased_prop <- function(mean_c, J) {
+  ## Average of correct answers
+  numerator <- mean_c - (1 / factorial(J))
+  denominator <- 1 - (1 / factorial(J))
+  return(numerator / denominator)
 }
 
 ## Turn 1st, 2nd, and 3rd ranking columns into long data format

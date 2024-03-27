@@ -15,6 +15,8 @@ main <- df_list$main
 prop(main, "ternovski_fail") ## 86.3%
 prop(main, "berinsky_fail") ## 85.5%
 
+## Pr(c = 1) (correct answer)
+## random_* variables 1 = random, 0 = non-random
 prop(main, "random_tate") ## 67.9%
 prop(main, "random_identity") ## 69.7%
 prop(main, "random_id_alphabet", useNA = "no") ## 43.9%
@@ -30,25 +32,24 @@ prop(main, "repeat_polar", useNA = "no") ## 53.6%
 prop(main, "repeat_esystems", useNA = "no") ## 36.5%
 
 ## Unbiased estimator for the proportion of non-random responses?
-## Proportion of random_tate == 1 compared to the rest
-## 18.5%(!)
+## 67.9% --> 61.5%
 unbiased_prop(
-  sum(main$random_tate == 1) / sum(!is.na(main$random_tate)),
+  sum(main$random_tate == 0) / sum(!is.na(main$random_tate)),
   J = 3
 )
-## 27.3%
+## 69.7% --> 68.4%
 unbiased_prop(
-  sum(main$random_identity == 1) / sum(!is.na(main$random_identity)),
+  sum(main$random_identity == 0) / sum(!is.na(main$random_identity)),
   J = 4
 )
-## 19.7%
+## 79.7% --> 79.5%
 unbiased_prop(
-  sum(main$random_polar == 1) / sum(!is.na(main$random_polar)),
+  sum(main$random_polar == 0) / sum(!is.na(main$random_polar)),
   J = 5
 )
-## 43.6%
+## 56.3% --> 56.2%
 unbiased_prop(
-  sum(main$random_esystems == 1) / sum(!is.na(main$random_esystems)),
+  sum(main$random_esystems == 0) / sum(!is.na(main$random_esystems)),
   J = 6
 )
 
