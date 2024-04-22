@@ -160,47 +160,67 @@ vmu_w
 
 
 # Visualize via ggplot
+covar <- main %>%
+  filter(!is.na(ideo7)) %>%
+  mutate(gender3labeled = case_when(gender3 == 1 ~ "male",
+                                    gender3 == 2 ~ "female",
+                                    TRUE ~ "others")) %>%
+  select(race4labeled, gender3, pid3final)
+
 conf_items <- as.data.frame(out_w$conf.col)
-conf_persons <- as.data.frame(out_w$conf.row)
-p <- ggplot(conf_persons, aes(x = D1, y = D2)) 
-p + geom_jitter(size = 1.5, colour = "gray", alpha = 0.2, width = 0.1, height =  0.1) + 
+conf_persons <- as.data.frame(out_w$conf.row) 
+conf_persons <- cbind(conf_persons, covar)
+
+
+
+ggplot(conf_persons, aes(x = D1, y = D2)) +
+  geom_jitter(aes(shape = pid3final, color = pid3final), 
+              size = 1.5, alpha = 0.3, width = 0.1, height =  0.1) + 
+  scale_color_manual(breaks = c("Democrat", "Independent", "Republican"),
+                     values=c("blue", "purple", "red")) +  
   coord_fixed() + 
-  geom_point(aes(x = D1, y = D2), conf_items, colour = "darkcyan", size = 3) + 
+  geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
-            conf_items, colour = "darkcyan", vjust = -0.8, hjust = 1) +
+            conf_items, colour = "black", vjust = -0.8, hjust = 1) +
   xlab("Primary Dimension") +
   ylab("Secondary Dimension") +
-  theme_bw() -> p
+  theme_bw() +
+  theme(legend.position = "top",
+        legend.title=element_blank())
 
-ggsave(here::here("fig", "weighting_unfolding.pdf"), width = 4, height = 4)
+ggsave(here::here("fig/sub", "sub_unfolding.pdf"), width = 4, height = 4)
+# --> No clear-cut relationship, relative partisanship offers something new
 
 
 
-# Visualize via ggplot
-conf_items <- as.data.frame(out$conf.col)
-conf_persons <- as.data.frame(out$conf.row)
-p2 <- ggplot(conf_persons, aes(x = D1, y = D2)) 
-p2 + geom_jitter(size = 1.5, colour = "gray", alpha = 0.2, width = 0.1, height =  0.1) + 
-  coord_fixed() + 
-  geom_point(aes(x = D1, y = D2), conf_items, colour = "darkred", size = 3) + 
-  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
-            conf_items, colour = "darkred", vjust = -0.8, hjust = 1) +
-  xlab("Dimension 1") +
-  ylab("Dimension 2") +
-  xlim(-1, 1) +
-  ylim(-0.6, 1) +
-  theme_bw() -> p2
+# 4/21/2024, Yuki hides the bias-corrected result because it does not allow us to 
+# plot covariates (e.g., race) in the plot
 
-ggpubr::ggarrange(p + ggtitle("Bias Corrected") + 
-                    geom_vline(xintercept = 0, lty = 2, color = "dimgray") +
-                    geom_hline(yintercept = 0, lty = 2, color = "dimgray") +
-                    xlim(-1, 1) +
-                    ylim(-0.6, 1),  
-                  p2 + ggtitle("Raw Data") +
-                    geom_vline(xintercept = 0, lty = 2, color = "dimgray") +
-                    geom_hline(yintercept = 0, lty = 2, color = "dimgray"))
-
-ggsave(here::here("fig", "weighting_unfolding-compare.pdf"), width = 8, height = 4)
+# # Visualize via ggplot
+# conf_items <- as.data.frame(out$conf.col)
+# conf_persons <- as.data.frame(out$conf.row)
+# p2 <- ggplot(conf_persons, aes(x = D1, y = D2)) 
+# p2 + geom_jitter(size = 1.5, colour = "gray", alpha = 0.2, width = 0.1, height =  0.1) + 
+#   coord_fixed() + 
+#   geom_point(aes(x = D1, y = D2), conf_items, colour = "darkred", size = 3) + 
+#   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+#             conf_items, colour = "darkred", vjust = -0.8, hjust = 1) +
+#   xlab("Dimension 1") +
+#   ylab("Dimension 2") +
+#   xlim(-1, 1) +
+#   ylim(-0.6, 1) +
+#   theme_bw() -> p2
+# 
+# ggpubr::ggarrange(p + ggtitle("Bias Corrected") + 
+#                     geom_vline(xintercept = 0, lty = 2, color = "dimgray") +
+#                     geom_hline(yintercept = 0, lty = 2, color = "dimgray") +
+#                     xlim(-1, 1) +
+#                     ylim(-0.6, 1),  
+#                   p2 + ggtitle("Raw Data") +
+#                     geom_vline(xintercept = 0, lty = 2, color = "dimgray") +
+#                     geom_hline(yintercept = 0, lty = 2, color = "dimgray"))
+# 
+# ggsave(here::here("fig", "weighting_unfolding-compare.pdf"), width = 8, height = 4)
 
 
 # Figures for Talks
