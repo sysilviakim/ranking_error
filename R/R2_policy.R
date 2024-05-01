@@ -130,6 +130,19 @@ annotate_figure(com, top = text_grob("Support for Police Reform(?)",
 ggsave(here::here("fig/sub", "sub_issue_police.pdf"), width = 5, height = 4)
 
 
+# Use rankings as categories
+library(lme4)
+m <- glmer(bn_police ~ 1 + (1 | app_identity),
+             data = dt_analysis, family = binomial, nAGQ=1)
+
+summary(m)
+
+pdf(here::here("fig/sub", "sub_issue_police_re.pdf"), width = 5, height = 4)
+lattice::dotplot(ranef(m, which = "app_identity", condVar = TRUE))
+dev.off()
+
+
+
 # Use D1-2 scores
 dt_analysis %>%
 ggplot(aes(x = D1, y = bn_police)) + geom_point() +
@@ -143,57 +156,60 @@ dt_analysis %>%
               method.args = list(family=binomial)) +
   theme_bw() -> b
 
-dt_analysis %>%
-  ggplot(aes(x = D1, y = bn_reform)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> c
+# dt_analysis %>%
+#   ggplot(aes(x = D1, y = bn_reform)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> c
+# 
+# dt_analysis %>%
+#   ggplot(aes(x = D2, y = bn_reform)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> d
+# 
+# dt_analysis %>%
+#   ggplot(aes(x = D1, y = bn_gun)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> e
+# 
+# dt_analysis %>%
+#   ggplot(aes(x = D2, y = bn_gun)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> f
+# 
+# 
+# dt_analysis %>%
+#   ggplot(aes(x = D1, y = bn_abortion)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> g
+# 
+# dt_analysis %>%
+#   ggplot(aes(x = D2, y = bn_abortion)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> h
+# 
+# 
+# dt_analysis %>%
+#   ggplot(aes(x = D1, y = bn_environment)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> i
+# 
+# dt_analysis %>%
+#   ggplot(aes(x = D2, y = bn_environment)) + geom_point() +
+#   stat_smooth(method="glm", color="darkcyan", se=T, 
+#               method.args = list(family=binomial)) +
+#   theme_bw() -> j
 
-dt_analysis %>%
-  ggplot(aes(x = D2, y = bn_reform)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> d
+ggpubr::ggarrange(a, b)
 
-dt_analysis %>%
-  ggplot(aes(x = D1, y = bn_gun)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> e
+ggsave(here::here("fig/sub", "sub_issue_police_unfold.pdf"), width = 5, height = 2.5)
 
-dt_analysis %>%
-  ggplot(aes(x = D2, y = bn_gun)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> f
-
-
-dt_analysis %>%
-  ggplot(aes(x = D1, y = bn_abortion)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> g
-
-dt_analysis %>%
-  ggplot(aes(x = D2, y = bn_abortion)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> h
-
-
-dt_analysis %>%
-  ggplot(aes(x = D1, y = bn_environment)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> i
-
-dt_analysis %>%
-  ggplot(aes(x = D2, y = bn_environment)) + geom_point() +
-  stat_smooth(method="glm", color="darkcyan", se=T, 
-              method.args = list(family=binomial)) +
-  theme_bw() -> j
-
-ggpubr::ggarrange(a, b, c, d, e, f, g, h, i, j)
 
 
 
