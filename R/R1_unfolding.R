@@ -24,15 +24,16 @@ imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
 dt <- main %>%
   mutate(id = 1:nrow(main)) %>%
   rename(
+    Rrace = race,
     party = app_identity_1,
     religion = app_identity_2,
     gender = app_identity_3,
-    race_ethnicity = app_identity_4
+    race = app_identity_4
   ) %>%
   left_join(imp_w, by = "app_identity") %>%
   rename(bias_weight = est.x.adj) %>%
   dplyr::select(
-    party, religion, gender, race_ethnicity, id, ideo7, bias_weight
+    party, religion, gender, race, id, ideo7, bias_weight
   ) %>%
   filter(!is.na(ideo7))
 
@@ -50,7 +51,7 @@ rank_sample <- rank_sample %>%
     party = as.integer(substr(., 1, 1)),
     religion = as.integer(substr(., 2, 2)),
     gender = as.integer(substr(., 3, 3)),
-    race_ethnicity = as.integer(substr(., 4, 4))
+    race = as.integer(substr(., 4, 4))
   ) %>%
   dplyr::select(-.)
 
@@ -65,7 +66,7 @@ par(mfrow = c(2,2))
 hist(rank_sample$party, main = "Party")
 hist(rank_sample$religion, main = "Religion")
 hist(rank_sample$gender, main = "Gender")
-hist(rank_sample$race_ethnicity, main = "Race/ethnicity")
+hist(rank_sample$race, main = "Race/ethnicity")
 
 ## This is very interesting in and itself. Religion has a non-single peaked pref
 
@@ -82,10 +83,10 @@ plot(jitter(rank_sample$party), jitter(rank_sample$gender),
      xlab = "Party", ylab = "Gender")
 abline(lm(gender ~ party, rank_sample), col = "darkred", lwd = 1.5)
 
-plot(jitter(rank_sample$party), jitter(rank_sample$race_ethnicity),
+plot(jitter(rank_sample$party), jitter(rank_sample$race),
      col = alpha("black", 0.8), pch = ".",
      xlab = "Party", ylab = "Race/ethnicity")
-abline(lm(race_ethnicity ~ party, rank_sample), col = "darkred", lwd = 1.5)
+abline(lm(race ~ party, rank_sample), col = "darkred", lwd = 1.5)
 
 
 plot(jitter(rank_sample$religion), jitter(rank_sample$gender),
@@ -93,15 +94,15 @@ plot(jitter(rank_sample$religion), jitter(rank_sample$gender),
      xlab = "Religion", ylab = "Gender")
 abline(lm(gender ~ religion, rank_sample), col = "darkred", lwd = 1.5)
 
-plot(jitter(rank_sample$religion), jitter(rank_sample$race_ethnicity),
+plot(jitter(rank_sample$religion), jitter(rank_sample$race),
      col = alpha("black", 0.8), pch = ".",
      xlab = "Religion", ylab = "Race/ethnicity")
-abline(lm(race_ethnicity ~ religion, rank_sample), col = "darkred", lwd = 1.5)
+abline(lm(race ~ religion, rank_sample), col = "darkred", lwd = 1.5)
 
-plot(jitter(rank_sample$gender), jitter(rank_sample$race_ethnicity),
+plot(jitter(rank_sample$gender), jitter(rank_sample$race),
      col = alpha("black", 0.8), pch = ".",
      xlab = "Gender", ylab = "Race/ethnicity")
-abline(lm(race_ethnicity ~ gender, rank_sample), col = "darkred", lwd = 1.5)
+abline(lm(race ~ gender, rank_sample), col = "darkred", lwd = 1.5)
 
 # We can see that many items have negative correlations
 # Exceptions are party-gender and gender-race
@@ -169,26 +170,57 @@ covar <- main %>%
 
 conf_items <- as.data.frame(out_w$conf.col)
 conf_persons <- as.data.frame(out_w$conf.row) 
-conf_persons <- cbind(conf_persons, covar)
 
 
+dt_unfold <- cbind(conf_persons, covar) %>%
+  select(D1, D2, pid3final) %>%
+  group_by(pid3final) %>%
+  mutate(n_within_party = n()) %>%
+  ungroup() %>%
+  group_by(D1, D2, pid3final) %>%
+  mutate(n_unique_rank = n(),
+         p_unique_within_party = n_unique_rank/n_within_party) %>%
+  ungroup() %>%
+  arrange(D1, D2, pid3final) %>%
+  distinct(D1, D2, pid3final, p_unique_within_party)
 
-ggplot(conf_persons, aes(x = D1, y = D2)) +
-  geom_jitter(aes(shape = pid3final, color = pid3final), 
-              size = 1.5, alpha = 0.3, width = 0.1, height =  0.1) + 
+
+# For annotation
+anno <- dt_unfold %>%
+  filter(D1 > 0 & D1 < 0.25 & D2 > -0.25 & D2 < 0.25)
+
+library(ggrepel)
+
+
+ggplot(dt_unfold, aes(x = D1, y = D2)) +
+  geom_point(aes(shape = pid3final, color = pid3final, size = p_unique_within_party), 
+             alpha = 0.5, position = position_dodge(width = 0.15)) + 
   scale_color_manual(breaks = c("Democrat", "Independent", "Republican"),
-                     values=c("blue", "purple", "red")) +  
+                     values=c("darkcyan", "purple4", "deeppink4")) +  
+  scale_shape_manual(breaks = c("Democrat", "Independent", "Republican"),
+                     values = c(1, 2, 0)
+  ) +  
   coord_fixed() + 
   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
-            conf_items, colour = "black", vjust = -0.8, hjust = 1) +
-  xlab("Primary Dimension") +
-  ylab("Secondary Dimension") +
+            conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +
+  annotate("text", 
+           x = unique(anno$D1)-0.1, 
+           y = (unique(anno$D2)+0.05), label = "Dem", col = "darkcyan", size = 2) +  
+  annotate("text", 
+           x = unique(anno$D1), 
+           y = (unique(anno$D2)-0.05), label = "Ind", col = "purple4", size = 2) +  
+  annotate("text", 
+           x = unique(anno$D1)+0.1, 
+           y = (unique(anno$D2)+0.05), label = "Rep", col = "deeppink4", size = 2) +    
+  xlab("Primary dimension") +
+  ylab("Secondary dimension") +
+  xlim(-1, 1) +
   theme_bw() +
-  theme(legend.position = "top",
+  theme(legend.position = "none",
         legend.title=element_blank())
 
-ggsave(here::here("fig/sub", "sub_unfolding.pdf"), width = 4, height = 4)
+ggsave(here::here("fig/sub", "sub_unfolding.pdf"), width = 5, height = 5)
 # --> No clear-cut relationship, relative partisanship offers something new
 
 
