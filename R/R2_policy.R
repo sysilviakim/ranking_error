@@ -84,6 +84,10 @@ main <- main %>%
          rank_religion = app_identity_2,
          rank_gender = app_identity_3,
          rank_race_ethnicity = app_identity_4,
+         top1 = case_when(rank_party == 1 ~ "party",
+                          rank_religion == 1 ~ "religion",
+                          rank_gender == 1 ~ "gender",
+                          rank_race_ethnicity == 1 ~ "race"),
          ordering = case_when(app_identity == 1234 ~ "Party-Religion-Gender-Race",
                               app_identity == 1243 ~ "Party-Religion-Race-Gender",
                               app_identity == 1324 ~ "Party-Gender-Religion-Race",
@@ -118,9 +122,34 @@ table(dt_analysis$bn_gun, useNA = "always")
 table(dt_analysis$bn_abortion, useNA = "always")
 table(dt_analysis$bn_environment, useNA = "always")
 
+# Descriptive statistics
+dt_analysis %>%
+  select(rank_party, rank_gender, rank_race_ethnicity, rank_religion) %>%
+  summarise_all(mean) %>%
+  xtable()
+
+
+prop.table(table(dt_analysis$ordering)) %>%
+   as.data.frame() %>%
+   arrange(desc(Freq)) %>%
+   xtable()
+
+# pmf_com <- prop.table(table(dt_analysis$ordering)) %>%
+#   as.data.frame()
+
+# library(RColorBrewer)  
+# ggplot(pmf_com, aes(x = fct_reorder(Var1, Freq), y = Freq)) +
+#   geom_bar(stat = "identity") +
+#   scale_fill_manual(values = brewer.pal(n = 4, name = 'Set2')) +
+#   ylab("Proportion of Unique Ranking Profiles") +
+#   xlab("") +
+#   theme_bw() +
+#   theme(legend.position = "none") +
+#   coord_flip()
+
+
 # Use marginal rank (naive approach #1)
 # Problem: each item shows some relationship, but not as an entire ranking
-
 
 
 m1 <- glm(bn_abortion ~ rank_party + 
@@ -312,62 +341,200 @@ ggsave(here::here("fig/sub", "sub_issue_abortion.pdf"), width = 10, height = 6)
 
 
 
-# Use rankings as categories
+# Use top-1 choice as categories
 library(lme4)
 
 # Issue outcomes
 m1 <- glmer(bn_police ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint + as.factor(region)  + 
-              (1 | ordering),
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew) + as.factor(region)  + 
+              (1 | top1),
              data = dt_analysis, family = binomial, nAGQ=1)
 
 m2 <- glmer(bn_reform ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+m3 <- glmer(bn_gun ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region) + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+m4 <- glmer(bn_abortion ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+m5 <- glmer(bn_environment ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+
+# Behavioral outcomes
+m6 <- glmer(bn_turnout20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+m7 <- glmer(bn_turnout22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+m8 <- glmer(bn_presvote20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+m9 <- glmer(bn_housevote22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+
+m10 <- glmer(bn_regist ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              (1 | top1),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+
+
+df1 <- ranef(m1, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "police")
+
+df2 <- ranef(m2, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "reform")
+
+df3 <- ranef(m3, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "gun")
+
+df4 <- ranef(m4, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "abortion")
+
+df5 <- ranef(m5, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "environment")
+
+df6 <- ranef(m6, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "turnout 2020")
+
+df7 <- ranef(m7, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "turnout 2022")
+
+df8 <- ranef(m8, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "pres vote 2020")
+
+df9 <- ranef(m9, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "house vote 2022")
+
+df10 <- ranef(m10, which = "top1", condVar = TRUE) %>%
+  as.data.frame() %>%
+  mutate(issue = "registration 2020")
+
+
+alpha <- 0.05
+
+gg <- rbind(df1, df2, df3, df4, df5,
+            df6, df7, df8, df9, df10) %>%
+  mutate(est = condval,
+         lower = est - qnorm(1-alpha/2)*condsd,
+         upper = est + qnorm(1-alpha/2)*condsd,
+         color = case_when(lower > 0 ~ "positive",
+                           upper < 0 ~ "negative",
+                           TRUE ~ "not-significant"))
+
+gg$issue <- factor(gg$issue, 
+                   levels=c('abortion', 'environment', 'gun', 'police', 'reform',
+                            'registration 2020', 'turnout 2020', 'turnout 2022', 
+                            'pres vote 2020', 'house vote 2022'))
+
+
+# I don't know how to reorder "grp" by the values of "est" for "abortion" only
+gg %>%
+  ggplot(aes(x = est, y = fct_reorder(grp, est))) +
+  geom_point(aes(color = color)) +
+  geom_errorbar(aes(xmin=lower, xmax=upper, color = color), width=0) + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  facet_wrap(~ issue, ncol = 5, nrow = 2) +
+  scale_color_brewer(palette="Set1") +
+  theme_bw() +
+  xlab("Random Effects") +
+  ylab("") +
+  theme(legend.position = "top")
+
+ggsave(here::here("fig/sub", "sub_random_effects_top1.pdf"), width = 10, height = 5)
+
+
+# pdf(here::here("fig/sub", "sub_issue_police_re.pdf"), width = 9, height = 6)
+# lattice::dotplot(ranef(m, which = "ordering", condVar = TRUE))
+# dev.off()
+
+
+
+
+
+# Issue outcomes
+m1 <- glmer(bn_police ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew) + as.factor(region)  + 
+              (1 | ordering),
+            data = dt_analysis, family = binomial, nAGQ=1)
+
+m2 <- glmer(bn_reform ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 m3 <- glmer(bn_gun ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region) + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region) + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 m4 <- glmer(bn_abortion ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 m5 <- glmer(bn_environment ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 
 # Behavioral outcomes
 m6 <- glmer(bn_turnout20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 m7 <- glmer(bn_turnout22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 m8 <- glmer(bn_presvote20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 m9 <- glmer(bn_housevote22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+              educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | ordering),
             data = dt_analysis, family = binomial, nAGQ=1)
 
 
 m10 <- glmer(bn_regist ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
-              educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
-              (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+               educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+               (1 | ordering),
+             data = dt_analysis, family = binomial, nAGQ=1)
 
 
 
@@ -445,9 +612,6 @@ gg %>%
 ggsave(here::here("fig/sub", "sub_random_effects.pdf"), width = 10, height = 9)
 
 
-# pdf(here::here("fig/sub", "sub_issue_police_re.pdf"), width = 9, height = 6)
-# lattice::dotplot(ranef(m, which = "ordering", condVar = TRUE))
-# dev.off()
 
 
 
