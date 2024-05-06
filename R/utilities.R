@@ -212,7 +212,7 @@ plot_dist_ranking <- function(x, ylim = 0.315) {
     ggplot(aes(x = ranking, y = prop, fill = "1")) +
     geom_col() +
     scale_fill_manual(values = "firebrick4") +
-    xlab("Recorded Rankings") +
+    xlab("Recorded Responses") +
     ylab("") +
     scale_y_continuous(labels = scales::percent, limits = c(0, ylim)) +
     geom_hline(yintercept = 1 / factorial(J)) +
