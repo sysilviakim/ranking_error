@@ -74,20 +74,21 @@ main <- main %>%
          bn_gun = ifelse(gun == 1 , 1, 0),                  # issue
          bn_abortion = ifelse(abortion == 1, 1, 0),         # issue
          bn_environment = ifelse(environment == 1, 1, 0),   # issue
-         bn_turnout20 = ifelse(turnout20post == 2, 1, 0),     # behavior
-         bn_turnout22 = ifelse(turnout22post == 2, 1, 0),     # behavior
+         bn_turnout20 = ifelse(turnout20post == 1, 1, 0),     # behavior
+         bn_turnout22 = ifelse(turnout22post == 1, 1, 0),     # behavior
          bn_presvote20 = ifelse(presvote20post == 1, 1, 0),   # behavior
          bn_housevote22 = ifelse(housevote22post == 1, 1, 0), # behavior
          bn_regist = ifelse(votereg2 == 2, 1, 0),             # behavior
          age_sq = age^2,
+         party_intense = abs(pid7 - 4),
          rank_party = app_identity_1,
          rank_religion = app_identity_2,
          rank_gender = app_identity_3,
-         rank_race_ethnicity = app_identity_4,
+         rank_race = app_identity_4,
          top1 = case_when(rank_party == 1 ~ "party",
                           rank_religion == 1 ~ "religion",
                           rank_gender == 1 ~ "gender",
-                          rank_race_ethnicity == 1 ~ "race"),
+                          rank_race == 1 ~ "race"),
          ordering = case_when(app_identity == 1234 ~ "Party-Religion-Gender-Race",
                               app_identity == 1243 ~ "Party-Religion-Race-Gender",
                               app_identity == 1324 ~ "Party-Gender-Religion-Race",
@@ -114,27 +115,27 @@ main <- main %>%
                               app_identity == 4321 ~ "Race-Gender-Religion-Party"),
          ordering = tolower(ordering))
 
-dt_analysis <- cbind(conf_persons, main)
+dt <- cbind(conf_persons, main)
 
-table(dt_analysis$bn_police, useNA = "always")
-table(dt_analysis$bn_reform, useNA = "always")
-table(dt_analysis$bn_gun, useNA = "always")
-table(dt_analysis$bn_abortion, useNA = "always")
-table(dt_analysis$bn_environment, useNA = "always")
+table(dt$bn_police, useNA = "always")
+table(dt$bn_reform, useNA = "always")
+table(dt$bn_gun, useNA = "always")
+table(dt$bn_abortion, useNA = "always")
+table(dt$bn_environment, useNA = "always")
 
 # Descriptive statistics
-dt_analysis %>%
-  select(rank_party, rank_gender, rank_race_ethnicity, rank_religion) %>%
+dt %>%
+  select(rank_party, rank_gender, rank_race, rank_religion) %>%
   summarise_all(mean) %>%
   xtable()
 
 
-prop.table(table(dt_analysis$ordering)) %>%
+prop.table(table(dt$ordering)) %>%
    as.data.frame() %>%
    arrange(desc(Freq)) %>%
    xtable()
 
-# pmf_com <- prop.table(table(dt_analysis$ordering)) %>%
+# pmf_com <- prop.table(table(dt$ordering)) %>%
 #   as.data.frame()
 
 # library(RColorBrewer)  
@@ -152,160 +153,124 @@ prop.table(table(dt_analysis$ordering)) %>%
 # Problem: each item shows some relationship, but not as an entire ranking
 
 
-m1 <- glm(bn_abortion ~ rank_party + 
-            age + age_sq + as.factor(gender3) + as.factor(race4) + 
-            educ4 + pid7 + ideo7 + newsint + as.factor(region), 
-          dt_analysis, family = binomial)
-m2 <- glm(bn_abortion ~ rank_gender + 
-            age + age_sq + as.factor(gender3) + as.factor(race4) + 
-            educ4 + pid7 + ideo7 + newsint + as.factor(region), 
-          dt_analysis, family = binomial)
-m3 <- glm(bn_abortion ~ rank_religion + 
-            age + age_sq + as.factor(gender3) + as.factor(race4) + 
-            educ4 + pid7 + ideo7 + newsint + as.factor(region), 
-          dt_analysis, family = binomial)
-m4 <- glm(bn_abortion ~ rank_race_ethnicity + 
-            age + age_sq + as.factor(gender3) + as.factor(race4) + 
-            educ4 + pid7 + ideo7 + newsint + as.factor(region), 
-          dt_analysis, family = binomial)
-
-# Include all marginal ranks
-m5 <- glm(bn_abortion ~ rank_party + rank_gender + rank_religion +
-            age + age_sq + as.factor(gender3) + as.factor(race4) + 
-            educ4 + pid7 + ideo7 + as.factor(region), 
-          dt_analysis, family = binomial)
-
-
-summary(m1)
-summary(m2)
-summary(m3)
-summary(m4)
-
-summary(m5)
-
+library(stats)
 library(clarify)
+
+mr_effect <- function(outcome,
+                      iv,
+                      dt,
+                      title){
+
+  
+dt$iv <- dt[,iv]  
+  
+# Prep a list of control variables  
+var_cont <- "age_sq + educ4 + pid7 + party_intense + ideo7 + newsint + 
+             as.factor(gender3) + as.factor(race4) + as.factor(region) +
+             as.factor(faminc_new) + as.factor(religpew)"  
+  
+# Creating a formula using reformulate()
+formula <- reformulate(c("iv", var_cont), 
+                       response = outcome)
+  
+# Fitting a logistic regression model
+m <- glm(formula,
+         data = dt, 
+         family = binomial)    
+
+# Generate predicted probabilities
 set.seed(123)
-sim_coefs <- sim(m1)
+sim_coefs <- sim(m)
 sim_est <- sim_setx(sim_coefs, 
-                    x = list(rank_party = 1:4,
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region))
-                    )
+                    x = list(iv = 1:4,
+                             gender3 = median(dt$gender3),
+                             race4 = median(dt$race4),
+                             region = median(dt$region),
+                             faminc_new = median(dt$faminc_new),
+                             religpew = median(dt$religpew)
+                             ))
 
-plot(sim_est) +
-  ylim(0.25, 1) +
-  ylab("Probability") +
-  xlab("Marginal Rank (Party)") +
-  ggtitle("Without Other Items") -> a
-
-
-
-sim_coefs <- sim(m2)
-sim_est <- sim_setx(sim_coefs, 
-                    x = list(rank_gender = 1:4,
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
+p <- plot(sim_est) +
+  ylim(0, 1) +
+  ylab("") +
+  xlab(paste0(iv))+
+  ggtitle(title) 
+  
+return(p)
+}
 
 
-plot(sim_est) +
-  ylim(0.25, 1) +
-  ylab("Probability") +
-  xlab("Marginal Rank (Gender)") +
-  ggtitle("Without Other Items") -> b
+# Issues
+
+m1 <- mr_effect("bn_abortion", "rank_party", dt, "abortion")
+m2 <- mr_effect("bn_abortion", "rank_gender", dt, "abortion")
+m3 <- mr_effect("bn_abortion", "rank_race", dt, "abortion")
+m4 <- mr_effect("bn_abortion", "rank_religion", dt, "abortion")
+m5 <- mr_effect("bn_police", "rank_party", dt, "police defunding")
+m6 <- mr_effect("bn_police", "rank_gender", dt, "police defunding")
+m7 <- mr_effect("bn_police", "rank_race", dt, "police defunding")
+m8 <- mr_effect("bn_police", "rank_religion", dt, "police defunding")
+m9 <- mr_effect("bn_gun", "rank_party", dt, "ban assault rifles")
+m10 <- mr_effect("bn_gun", "rank_gender", dt, "ban assault rifles")
+m11 <- mr_effect("bn_gun", "rank_race", dt, "ban asault rifles")
+m12 <- mr_effect("bn_gun", "rank_religion", dt, "ban assault rifles")
+m13 <- mr_effect("bn_reform", "rank_party", dt, "election reforms")
+m14 <- mr_effect("bn_reform", "rank_gender", dt, "election reforms")
+m15 <- mr_effect("bn_reform", "rank_race", dt, "election reforms")
+m16 <- mr_effect("bn_reform", "rank_religion", dt, "election reforms")
+m17 <- mr_effect("bn_environment", "rank_party", dt, "strength EPA")
+m18 <- mr_effect("bn_environment", "rank_gender", dt, "strength EPA")
+m19 <- mr_effect("bn_environment", "rank_race", dt, "strength EPA")
+m20 <- mr_effect("bn_environment", "rank_religion", dt, "strength EPA")
 
 
-sim_coefs <- sim(m3)
-sim_est <- sim_setx(sim_coefs, 
-                    x = list(rank_religion = 1:4,
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
+ggpubr::ggarrange(m1, m2, m3, m4,
+                  m9, m10, m11, m12,
+                  m13, m14, m15, m16,                  
+                  m5, m6, m7, m8,
+                  m17, m18, m19, m20,
+                  ncol = 4, nrow = 5) 
+
+ggsave(here::here("fig/sub", "sub_issues.pdf"), width = 8, height = 10)
 
 
-plot(sim_est) +
-  ylim(0.25, 1) +
-  ylab("Probability") +
-  xlab("Marginal Rank (Religion)") +
-  ggtitle("Without Other Items") -> c
+# Behavior
+
+m1 <- mr_effect("bn_regist", "rank_party", dt, "registration")
+m2 <- mr_effect("bn_regist", "rank_gender", dt, "registration")
+m3 <- mr_effect("bn_regist", "rank_race", dt, "registration")
+m4 <- mr_effect("bn_regist", "rank_religion", dt, "registration")
+m5 <- mr_effect("bn_turnout20", "rank_party", dt, "vote 2020")
+m6 <- mr_effect("bn_turnout20", "rank_gender", dt, "vote 2020")
+m7 <- mr_effect("bn_turnout20", "rank_race", dt, "vote 2020")
+m8 <- mr_effect("bn_turnout20", "rank_religion", dt, "vote 2020")
+m9 <- mr_effect("bn_turnout22", "rank_party", dt, "vote 2022")
+m10 <- mr_effect("bn_turnout22", "rank_gender", dt, "vote 2022")
+m11 <- mr_effect("bn_turnout22", "rank_race", dt, "vote 2022")
+m12 <- mr_effect("bn_turnout22", "rank_religion", dt, "vote 2022")
+m13 <- mr_effect("bn_presvote20", "rank_party", dt, "pres Biden 2020")
+m14 <- mr_effect("bn_presvote20", "rank_gender", dt, "pres Biden 2020")
+m15 <- mr_effect("bn_presvote20", "rank_race", dt, "pres Biden 2020")
+m16 <- mr_effect("bn_presvote20", "rank_religion", dt, "pres Biden 2020")
+m17 <- mr_effect("bn_housevote22", "rank_party", dt, "house Dem 2022")
+m18 <- mr_effect("bn_housevote22", "rank_gender", dt, "house Dem 2022")
+m19 <- mr_effect("bn_housevote22", "rank_race", dt, "house Dem 2022")
+m20 <- mr_effect("bn_housevote22", "rank_religion", dt, "house Dem 2022")
 
 
-sim_coefs <- sim(m4)
-sim_est <- sim_setx(sim_coefs, 
-                    x = list(rank_race_ethnicity = 1:4,
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region))
-                    )
+ggpubr::ggarrange(m1, m2, m3, m4,
+                  m5, m6, m7, m8,
+                  m9, m10, m11, m12,
+                  m13, m14, m15, m16,                  
+                  m17, m18, m19, m20,
+                  ncol = 4, nrow = 5) 
 
-
-plot(sim_est) +
-  ylim(0.25, 1) +
-  ylab("Probability") +
-  xlab("Marginal Rank (Race)") +
-  ggtitle("Without Other Items") -> d
-
-
-
-sim_coefs <- sim(m5)
-sim_est <- sim_setx(sim_coefs, 
-                    x = list(rank_party = 1:4,
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
-
-
-plot(sim_est) +
-  ylim(0.25, 1) +
-  ylab("Probability") +
-  xlab("Marginal Rank (Party)") +
-  ggtitle("With Other Items") -> a2
-
-
-sim_est <- sim_setx(sim_coefs, 
-                    x = list(rank_gender = 1:4,
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
-
-
-plot(sim_est) +
-  ylim(0.25, 1) +
-  ylab("Probability") +
-  xlab("Marginal Rank (Gender)") +
-  ggtitle("With Other Items") -> b2
-
-
-
-sim_est <- sim_setx(sim_coefs, 
-                    x = list(rank_religion = 1:4,
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
-
-
-plot(sim_est) +
-  ylim(0.25, 1) +
-  ylab("Probability") +
-  xlab("Marginal Rank (Religion)") +
-  ggtitle("With Other Items") -> c2
-
-
-ggpubr::ggarrange(a, b, c, d,
-                  a2, b2, c2,
-                  ncol = 4, nrow = 2) -> com
-
-annotate_figure(com, top = text_grob("Support for Abortion", 
-                                     face = "bold", size = 15))
-
-ggsave(here::here("fig/sub", "sub_issue_abortion.pdf"), width = 10, height = 6)
+ggsave(here::here("fig/sub", "sub_behaviors.pdf"), width = 8, height = 10)
 
 
 
 
-
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = rank_party, y = bn_police)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial, formula = bn_police ~ rank_party)) +
@@ -313,7 +278,7 @@ ggsave(here::here("fig/sub", "sub_issue_abortion.pdf"), width = 10, height = 6)
 #   xlab("party (marginal rank)") +
 #   theme_bw() -> a
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = rank_religion, y = bn_police)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
@@ -321,7 +286,7 @@ ggsave(here::here("fig/sub", "sub_issue_abortion.pdf"), width = 10, height = 6)
 #   xlab("religion (marginal rank)") +  
 #   theme_bw() -> b
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = rank_gender, y = bn_police)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
@@ -329,8 +294,8 @@ ggsave(here::here("fig/sub", "sub_issue_abortion.pdf"), width = 10, height = 6)
 #   xlab("gender (marginal rank)") +    
 #   theme_bw() -> c
 # 
-# dt_analysis %>%
-#   ggplot(aes(x = rank_race_ethnicity, y = bn_police)) + geom_point() +
+# dt %>%
+#   ggplot(aes(x = rank_race, y = bn_police)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   ylab("") +
@@ -348,55 +313,55 @@ library(lme4)
 m1 <- glmer(bn_police ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew) + as.factor(region)  + 
               (1 | top1),
-             data = dt_analysis, family = binomial, nAGQ=1)
+             data = dt, family = binomial, nAGQ=1)
 
 m2 <- glmer(bn_reform ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m3 <- glmer(bn_gun ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region) + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m4 <- glmer(bn_abortion ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m5 <- glmer(bn_environment ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 
 # Behavioral outcomes
 m6 <- glmer(bn_turnout20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m7 <- glmer(bn_turnout22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m8 <- glmer(bn_presvote20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m9 <- glmer(bn_housevote22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 
 m10 <- glmer(bn_regist ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               (1 | top1),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 
 
@@ -485,56 +450,66 @@ ggsave(here::here("fig/sub", "sub_random_effects_top1.pdf"), width = 10, height 
 # Issue outcomes
 m1 <- glmer(bn_police ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew) + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m2 <- glmer(bn_reform ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m3 <- glmer(bn_gun ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region) + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m4 <- glmer(bn_abortion ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m5 <- glmer(bn_environment ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 
 # Behavioral outcomes
 m6 <- glmer(bn_turnout20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m7 <- glmer(bn_turnout22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m8 <- glmer(bn_presvote20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 m9 <- glmer(bn_housevote22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
+              as.factor(faminc_new) + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt_analysis, family = binomial, nAGQ=1)
+            data = dt, family = binomial, nAGQ=1)
 
 
 m10 <- glmer(bn_regist ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
                educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
+               as.factor(faminc_new) + as.factor(religpew) + party_intense +               
                (1 | ordering),
-             data = dt_analysis, family = binomial, nAGQ=1)
+             data = dt, family = binomial, nAGQ=1)
 
 
 
@@ -620,30 +595,30 @@ ggsave(here::here("fig/sub", "sub_random_effects.pdf"), width = 10, height = 9)
 d1 <- glm(bn_abortion ~ D1 + 
             age + age_sq + as.factor(gender3) + as.factor(race4) + 
             educ4 + pid7 + ideo7 + newsint + as.factor(region), 
-          dt_analysis, family = binomial)
+          dt, family = binomial)
 
 d2 <- glm(bn_abortion ~ D2 + 
             age + age_sq + as.factor(gender3) + as.factor(race4) + 
             educ4 + pid7 + ideo7 + newsint + as.factor(region), 
-          dt_analysis, family = binomial)
+          dt, family = binomial)
 
 d3 <- glm(bn_abortion ~ D1 + D2 + 
             age + age_sq + as.factor(gender3) + as.factor(race4) + 
             educ4 + pid7 + ideo7 + newsint + as.factor(region), 
-          dt_analysis, family = binomial)
+          dt, family = binomial)
 
 
-# min(dt_analysis$D1) # -0.7602498
-# max(dt_analysis$D1) # 0.6493996
-# min(dt_analysis$D2) # -0.2835745
-# max(dt_analysis$D2) # 0.9388381 
+# min(dt$D1) # -0.7602498
+# max(dt$D1) # 0.6493996
+# min(dt$D2) # -0.2835745
+# max(dt$D2) # 0.9388381 
 
 sim_coefs <- sim(d1)
 sim_est <- sim_setx(sim_coefs, 
                     x = list(D1 = seq(from = -0.8, to = 0.8, by = 0.01),
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
+                             gender3 = median(dt$gender3),
+                             race4 = median(dt$race4),
+                             region = median(dt$region)))
 
 plot(sim_est) +
   ylim(0.25, 1) +
@@ -655,9 +630,9 @@ plot(sim_est) +
 sim_coefs <- sim(d2)
 sim_est <- sim_setx(sim_coefs, 
                     x = list(D2 = seq(from = -0.3, to = 1, by = 0.01),
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
+                             gender3 = median(dt$gender3),
+                             race4 = median(dt$race4),
+                             region = median(dt$region)))
 
 plot(sim_est) +
   ylim(0.25, 1) +
@@ -669,9 +644,9 @@ plot(sim_est) +
 sim_coefs <- sim(d3)
 sim_est <- sim_setx(sim_coefs, 
                     x = list(D1 = seq(from = -0.8, to = 0.8, by = 0.01),
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
+                             gender3 = median(dt$gender3),
+                             race4 = median(dt$race4),
+                             region = median(dt$region)))
 
 plot(sim_est) +
   ylim(0.25, 1) +
@@ -683,9 +658,9 @@ plot(sim_est) +
 
 sim_est <- sim_setx(sim_coefs, 
                     x = list(D2 = seq(from = -0.3, to = 1, by = 0.01),
-                             gender3 = median(dt_analysis$gender3),
-                             race4 = median(dt_analysis$race4),
-                             region = median(dt_analysis$region)))
+                             gender3 = median(dt$gender3),
+                             race4 = median(dt$race4),
+                             region = median(dt$region)))
 
 plot(sim_est) +
   ylim(0.25, 1) +
@@ -704,51 +679,51 @@ annotate_figure(com, top = text_grob("Support for Abortion",
 ggsave(here::here("fig/sub", "sub_issue_abortion_unfolding.pdf"), width = 10, height = 6)
 
 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D1, y = bn_reform)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   theme_bw() -> c
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D2, y = bn_reform)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   theme_bw() -> d
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D1, y = bn_gun)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   theme_bw() -> e
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D2, y = bn_gun)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   theme_bw() -> f
 # 
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D1, y = bn_abortion)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   theme_bw() -> g
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D2, y = bn_abortion)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   theme_bw() -> h
 # 
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D1, y = bn_environment)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
 #   theme_bw() -> i
 # 
-# dt_analysis %>%
+# dt %>%
 #   ggplot(aes(x = D2, y = bn_environment)) + geom_point() +
 #   stat_smooth(method="glm", color="darkcyan", se=T, 
 #               method.args = list(family=binomial)) +
@@ -762,7 +737,7 @@ ggsave(here::here("fig/sub", "sub_issue_police_unfold.pdf"), width = 5, height =
 
 
 # Comparison with PID7
-dt_analysis %>%
+dt %>%
   ggplot(aes(x = pid7, y = bn_abortion)) + geom_point() +
   stat_smooth(method="glm", color="darkcyan", se=T, 
               method.args = list(family=binomial)) +
