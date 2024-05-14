@@ -17,28 +17,27 @@ imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
     app_identity = as.character(ranking),
     bias_weight = weight
   ) %>%
-  dplyr::select(app_identity, est.x.adj)
+  dplyr::select(app_identity, bias_weight)
 
 
-# Add bias-corrected weights to raw data
-dt <- main %>%
-  mutate(id = 1:nrow(main)) %>%
-  rename(
-    party = app_identity_1,
-    religion = app_identity_2,
-    gender = app_identity_3,
-    race_ethnicity = app_identity_4
-  ) %>%
-  left_join(imp_w, by = "app_identity") %>%
-  rename(bias_weight = est.x.adj) %>%
-  dplyr::select(
-    party, religion, gender, race_ethnicity, id, ideo7, bias_weight
-  ) %>%
-  filter(!is.na(ideo7))
+# # Add bias-corrected weights to raw data
+# dt <- main %>%
+#   mutate(id = 1:nrow(main)) %>%
+#   rename(
+#     party = app_identity_1,
+#     religion = app_identity_2,
+#     gender = app_identity_3,
+#     race_ethnicity = app_identity_4
+#   ) %>%
+#   left_join(imp_w, by = "app_identity") %>%
+#   dplyr::select(
+#     party, religion, gender, race_ethnicity, id, ideo7, bias_weight
+#   ) %>%
+#   filter(!is.na(ideo7))
 
 
 # Generate few variables =====================================================
-conf_persons <- as.data.frame(out_w$conf.row) 
+
 main <- main %>%
   filter(!is.na(ideo7)) %>%
   mutate(bn_police = ifelse(police == 1, 1, 0),             # issue
@@ -86,10 +85,14 @@ main <- main %>%
                               app_identity == 4312 ~ "Gender-Race-Religion-Party",
                               app_identity == 4321 ~ "Race-Gender-Religion-Party"),
          ordering = tolower(ordering)) %>%
-  left_join(imp_w, by = "app_identity") %>%
-  rename(bias_weight = est.x.adj)
+  left_join(imp_w, by = "app_identity") 
 
-dt <- cbind(conf_persons, main)
+# check
+par(mfrow=c(2,1))
+hist(imp_w$bias_weight, breaks = 20)
+hist(main$bias_weight, breaks = 20)
+
+dt <- main
 
 table(dt$bn_police, useNA = "always")
 table(dt$bn_reform, useNA = "always")
@@ -153,22 +156,17 @@ mr_effect <- function(outcome,
                       dt,
                       title){
 
-  
-dt$iv <- dt[,iv]  
+new_var <-  dt[,iv] %>% pull()   
+dt$iv <- new_var
+
   
 # Prep a list of control variables  
-var_cont <- "age_sq + educ4 + pid7 + party_intense + ideo7 + newsint + 
+var_cont <- "age + age_sq + educ4 + pid7 + party_intense + ideo7 + newsint + 
              as.factor(gender3) + as.factor(race4) + as.factor(region) +
              as.factor(faminc_new) + as.factor(religpew)"  
 
-# try the reduced model for checking
-var_cont <- "age_sq + educ4 + pid7 + party_intense + ideo7" 
-
-
-#############################################             
-# 5/13/Yuki
-# investigate why SE explores with weights
-#############################################
+# # try the reduced model for checking
+# var_cont <- "age + age_sq + educ4 + pid7 + party_intense + ideo7" 
 
 
 # Creating a formula using reformulate()
@@ -275,6 +273,7 @@ ggpubr::ggarrange(m1, m2, m3, m4,
                   ncol = 4, nrow = 5) 
 
 ggsave(here::here("fig/sub", "sub_behaviors.pdf"), width = 8, height = 10)
+ggsave(here::here("fig/sub", "sub_behaviors_w.pdf"), width = 8, height = 10)
 
 
 
