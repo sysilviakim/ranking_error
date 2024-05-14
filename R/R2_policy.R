@@ -49,7 +49,7 @@ main <- main %>%
          bn_turnout22 = ifelse(turnout22post == 1, 1, 0),     # behavior
          bn_presvote20 = ifelse(presvote20post == 1, 1, 0),   # behavior
          bn_housevote22 = ifelse(housevote22post == 1, 1, 0), # behavior
-         bn_regist = ifelse(votereg2 == 2, 1, 0),             # behavior
+         bn_regist = ifelse(votereg2 == 1, 1, 0),             # behavior
          age_sq = age^2,
          party_intense = abs(pid7 - 4),
          rank_party = app_identity_1,
@@ -87,12 +87,14 @@ main <- main %>%
          ordering = tolower(ordering)) %>%
   left_join(imp_w, by = "app_identity") 
 
+dt <- main
+
+
 # check
 par(mfrow=c(2,1))
 hist(imp_w$bias_weight, breaks = 20)
 hist(main$bias_weight, breaks = 20)
 
-dt <- main
 
 table(dt$bn_police, useNA = "always")
 table(dt$bn_reform, useNA = "always")
@@ -165,9 +167,6 @@ var_cont <- "age + age_sq + educ4 + pid7 + party_intense + ideo7 + newsint +
              as.factor(gender3) + as.factor(race4) + as.factor(region) +
              as.factor(faminc_new) + as.factor(religpew)"  
 
-# # try the reduced model for checking
-# var_cont <- "age + age_sq + educ4 + pid7 + party_intense + ideo7" 
-
 
 # Creating a formula using reformulate()
 formula <- reformulate(c("iv", var_cont), 
@@ -224,10 +223,10 @@ m13 <- mr_effect("bn_reform", "rank_party", dt, "election reforms")
 m14 <- mr_effect("bn_reform", "rank_gender", dt, "election reforms")
 m15 <- mr_effect("bn_reform", "rank_race", dt, "election reforms")
 m16 <- mr_effect("bn_reform", "rank_religion", dt, "election reforms")
-m17 <- mr_effect("bn_environment", "rank_party", dt, "strength EPA")
-m18 <- mr_effect("bn_environment", "rank_gender", dt, "strength EPA")
-m19 <- mr_effect("bn_environment", "rank_race", dt, "strength EPA")
-m20 <- mr_effect("bn_environment", "rank_religion", dt, "strength EPA")
+m17 <- mr_effect("bn_environment", "rank_party", dt, "strengthen EPA")
+m18 <- mr_effect("bn_environment", "rank_gender", dt, "strengthen EPA")
+m19 <- mr_effect("bn_environment", "rank_race", dt, "strengthen EPA")
+m20 <- mr_effect("bn_environment", "rank_religion", dt, "strengthen EPA")
 
 
 ggpubr::ggarrange(m1, m2, m3, m4,
@@ -455,36 +454,38 @@ library(lme4)
 
 # Use ranking profiles as a categorical independent variable
 
+library(lme4)
+
 # Issue outcomes
 m1 <- glmer(bn_police ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew) + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 m2 <- glmer(bn_reform ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 m3 <- glmer(bn_gun ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region) + 
               faminc_new + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 m4 <- glmer(bn_abortion ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 m5 <- glmer(bn_environment ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 
 # Behavioral outcomes
@@ -492,32 +493,32 @@ m6 <- glmer(bn_turnout20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 m7 <- glmer(bn_turnout22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 m8 <- glmer(bn_presvote20 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 m9 <- glmer(bn_housevote22 ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
               educ4 + pid7 + ideo7 + newsint + as.factor(religpew)  + as.factor(region)  + 
               faminc_new + as.factor(religpew) + party_intense +              
               (1 | ordering),
-            data = dt, family = binomial, nAGQ=1)
+            data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 
 m10 <- glmer(bn_regist ~ age + age_sq + as.factor(gender3) + as.factor(race4) + 
                educ4 + pid7 + ideo7 + newsint  + as.factor(region)  + 
                faminc_new + as.factor(religpew) + party_intense +               
                (1 | ordering),
-             data = dt, family = binomial, nAGQ=1)
+             data = dt, family = binomial, weights = bias_weight, nAGQ=1)
 
 
 
