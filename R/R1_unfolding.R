@@ -172,57 +172,125 @@ conf_items <- as.data.frame(out_w$conf.col)
 conf_persons <- as.data.frame(out_w$conf.row) 
 
 
-dt_unfold <- cbind(conf_persons, covar) %>%
-  select(D1, D2, pid3final) %>%
-  group_by(pid3final) %>%
-  mutate(n_within_party = n()) %>%
-  ungroup() %>%
-  group_by(D1, D2, pid3final) %>%
-  mutate(n_unique_rank = n(),
-         p_unique_within_party = n_unique_rank/n_within_party) %>%
-  ungroup() %>%
-  arrange(D1, D2, pid3final) %>%
-  distinct(D1, D2, pid3final, p_unique_within_party)
+dt_unfold <- cbind(conf_persons, covar) 
+
+# %>%
+#   select(D1, D2, pid3final) %>%
+#   group_by(pid3final) %>%
+#   mutate(n_within_party = n()) %>%
+#   ungroup() %>%
+#   group_by(D1, D2, pid3final) %>%
+#   mutate(n_unique_rank = n(),
+#          p_unique_within_party = n_unique_rank/n_within_party) %>%
+#   ungroup() %>%
+#   arrange(D1, D2, pid3final) %>%
+#   distinct(D1, D2, pid3final, p_unique_within_party)
 
 
-# For annotation
-anno <- dt_unfold %>%
-  filter(D1 > 0 & D1 < 0.25 & D2 > -0.25 & D2 < 0.25)
+set.seed(24)
 
-library(ggrepel)
-
-
-ggplot(dt_unfold, aes(x = D1, y = D2)) +
-  geom_point(aes(shape = pid3final, color = pid3final, size = p_unique_within_party), 
-             alpha = 0.5, position = position_dodge(width = 0.15)) + 
-  scale_color_manual(breaks = c("Democrat", "Independent", "Republican"),
-                     values=c("darkcyan", "purple4", "deeppink4")) +  
-  scale_shape_manual(breaks = c("Democrat", "Independent", "Republican"),
-                     values = c(1, 2, 0)
-  ) +  
-  coord_fixed() + 
+dt_unfold %>%
+  filter(pid3final == "Democrat") %>%
+  ggplot(aes(x = D1, y = D2)) +
+  geom_jitter(width = 0.1, height = 0.1,
+             shape = 1, 
+             color ="darkcyan", 
+             alpha = 0.3) + 
   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
-            conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +
-  annotate("text", 
-           x = unique(anno$D1)-0.1, 
-           y = (unique(anno$D2)+0.05), label = "Dem", col = "darkcyan", size = 2) +  
-  annotate("text", 
-           x = unique(anno$D1), 
-           y = (unique(anno$D2)-0.05), label = "Ind", col = "purple4", size = 2) +  
-  annotate("text", 
-           x = unique(anno$D1)+0.1, 
-           y = (unique(anno$D2)+0.05), label = "Rep", col = "deeppink4", size = 2) +    
+            conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
+  xlab("Primary dimension") +
+  ylab("Secondary dimension") +
+  xlim(-1, 1) +
+  ggtitle("Democrat") +
+  theme_bw() +
+  theme(legend.position = "none",
+        legend.title = element_blank()) -> dem
+
+
+dt_unfold %>%
+  filter(pid3final == "Independent") %>%
+  ggplot(aes(x = D1, y = D2)) +
+  geom_jitter(width = 0.1, height = 0.1,
+              shape = 1, 
+              color ="purple4", 
+              alpha = 0.3) + 
+  geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
+  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+            conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
   xlab("Primary dimension") +
   ylab("Secondary dimension") +
   xlim(-1, 1) +
   theme_bw() +
+  ggtitle("Independent") +  
   theme(legend.position = "none",
-        legend.title=element_blank())
+        legend.title = element_blank()) -> ind
 
-ggsave(here::here("fig/sub", "sub_unfolding.pdf"), width = 5, height = 5)
-# --> No clear-cut relationship, relative partisanship offers something new
 
+dt_unfold %>%
+  filter(pid3final == "Republican") %>%
+  ggplot(aes(x = D1, y = D2)) +
+  geom_jitter(width = 0.1, height = 0.1,
+              shape = 1, 
+              color ="deeppink4", 
+              alpha = 0.3) + 
+  geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
+  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+            conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
+  xlab("Primary dimension") +
+  ylab("Secondary dimension") +
+  xlim(-1, 1) +
+  theme_bw() +
+  ggtitle("Republican") +
+  theme(legend.position = "none",
+        legend.title = element_blank()) -> rep
+
+
+ggpubr::ggarrange(dem, ind, rep, ncol = 3)
+
+ggsave(here::here("fig/sub", "sub_unfolding.pdf"), 
+       width = 9, height = 3)
+
+
+
+# # Old visualization
+# library(ggrepel)
+# # For annotation
+# anno <- dt_unfold %>%
+#   filter(D1 > 0 & D1 < 0.25 & D2 > -0.25 & D2 < 0.25)
+# 
+# 
+# ggplot(dt_unfold, aes(x = D1, y = D2)) +
+#   geom_point(aes(shape = pid3final, color = pid3final, size = p_unique_within_party), 
+#              alpha = 0.5, position = position_dodge(width = 0.15)) + 
+#   scale_color_manual(breaks = c("Democrat", "Independent", "Republican"),
+#                      values=c("darkcyan", "purple4", "deeppink4")) +  
+#   scale_shape_manual(breaks = c("Democrat", "Independent", "Republican"),
+#                      values = c(1, 2, 0)
+#   ) +  
+#   coord_fixed() + 
+#   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
+#   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+#             conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +
+#   annotate("text", 
+#            x = unique(anno$D1)-0.1, 
+#            y = (unique(anno$D2)+0.05), label = "Dem", col = "darkcyan", size = 2) +  
+#   annotate("text", 
+#            x = unique(anno$D1), 
+#            y = (unique(anno$D2)-0.05), label = "Ind", col = "purple4", size = 2) +  
+#   annotate("text", 
+#            x = unique(anno$D1)+0.1, 
+#            y = (unique(anno$D2)+0.05), label = "Rep", col = "deeppink4", size = 2) +    
+#   xlab("Primary dimension") +
+#   ylab("Secondary dimension") +
+#   xlim(-1, 1) +
+#   theme_bw() +
+#   theme(legend.position = "none",
+#         legend.title=element_blank())
+# 
+# ggsave(here::here("fig/sub", "sub_unfolding.pdf"), width = 5, height = 5)
+# # --> No clear-cut relationship, relative partisanship offers something new
+# 
 
 
 # 4/21/2024, Yuki hides the bias-corrected result because it does not allow us to 
