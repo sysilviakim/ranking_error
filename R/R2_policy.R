@@ -60,6 +60,9 @@ main <- main %>%
                           rank_religion == 1 ~ "religion",
                           rank_gender == 1 ~ "gender",
                           rank_race == 1 ~ "race"),
+         pid7 = ifelse(pid7 == 8, 4, pid7), # not sure into indep
+         gender3 = ifelse(gender3 == 4, 3, gender3), # prefer not to say into other
+         religpew = ifelse(religpew %in% c(3,4,6,7,8), 12, religpew), # several into something else
          ordering = case_when(app_identity == 1234 ~ "Party-Religion-Gender-Race",
                               app_identity == 1243 ~ "Party-Religion-Race-Gender",
                               app_identity == 1324 ~ "Party-Gender-Religion-Race",
@@ -90,10 +93,10 @@ main <- main %>%
 dt <- main
 
 
-# check
-par(mfrow=c(2,1))
-hist(imp_w$bias_weight, breaks = 20)
-hist(main$bias_weight, breaks = 20)
+# # check
+# par(mfrow=c(2,1))
+# hist(imp_w$bias_weight, breaks = 20)
+# hist(main$bias_weight, breaks = 20)
 
 
 table(dt$bn_police, useNA = "always")
@@ -103,23 +106,6 @@ table(dt$bn_abortion, useNA = "always")
 table(dt$bn_environment, useNA = "always")
 
 # Descriptive statistics
-# Bias-corrected
-dt %>%
-  select(rank_party, rank_gender, rank_race, rank_religion, 
-         bias_weight) %>%
-  summarise(wm_party = weighted.mean(rank_party, bias_weight),
-            wm_gender = weighted.mean(rank_gender, bias_weight),
-            wm_race = weighted.mean(rank_race, bias_weight),
-            wm_religion = weighted.mean(rank_religion, bias_weight)) %>%
-  xtable()
-
-# Raw data
-dt %>%
-  select(rank_party, rank_gender, rank_race, rank_religion) %>%
-  summarise_all(mean) %>%
-  xtable()
-
-
 # Bias-corrected PMF
 library(questionr)
 wtd.table(x = dt$ordering, 
@@ -143,6 +129,85 @@ sum(r.pmf$pmf)
 w.pmf[,-2] %>%
   xtable(digits = 3)
 
+# Average ranks
+## Raw data
+dt %>%
+  select(rank_party, rank_gender, rank_race, rank_religion) %>%
+  summarise_all(mean) %>%
+  xtable()
+
+## Bias-corrected
+dt %>%
+  select(rank_party, rank_gender, rank_race, rank_religion, 
+         bias_weight) %>%
+  summarise(wm_gender = weighted.mean(rank_gender, bias_weight),
+            wm_race = weighted.mean(rank_race, bias_weight),
+            wm_religion = weighted.mean(rank_religion, bias_weight),
+            wm_party = weighted.mean(rank_party, bias_weight)) %>%
+  xtable()
+
+# By partisanship
+dt %>%
+  group_by(pid3final) %>%
+  select(rank_party, rank_gender, rank_race, rank_religion, 
+         bias_weight) %>%
+  summarise(wm_gender = weighted.mean(rank_gender, bias_weight),
+            wm_race = weighted.mean(rank_race, bias_weight),
+            wm_religion = weighted.mean(rank_religion, bias_weight),
+            wm_party = weighted.mean(rank_party, bias_weight))
+
+dt %>%
+  group_by(race4) %>%
+  select(rank_party, rank_gender, rank_race, rank_religion, 
+         bias_weight) %>%
+  summarise(wm_gender = weighted.mean(rank_gender, bias_weight),
+            wm_race = weighted.mean(rank_race, bias_weight),
+            wm_religion = weighted.mean(rank_religion, bias_weight),
+            wm_party = weighted.mean(rank_party, bias_weight))
+
+# 1 = White
+# 2 = Black
+# 3 = Latino
+# 4 = Other
+
+# By gender
+dt %>%
+  group_by(gender3) %>%
+  select(rank_party, rank_gender, rank_race, rank_religion, 
+         bias_weight) %>%
+  summarise(wm_gender = weighted.mean(rank_gender, bias_weight),
+            wm_race = weighted.mean(rank_race, bias_weight),
+            wm_religion = weighted.mean(rank_religion, bias_weight),
+            wm_party = weighted.mean(rank_party, bias_weight))
+
+# 1 = Man
+# 2 = Woman
+# 3 = Other/Prefer not to say
+
+# By religion
+dt %>%
+  group_by(religpew) %>%
+  select(rank_party, rank_gender, rank_race, rank_religion, 
+         bias_weight) %>%
+  summarise(wm_gender = weighted.mean(rank_gender, bias_weight),
+            wm_race = weighted.mean(rank_race, bias_weight),
+            wm_religion = weighted.mean(rank_religion, bias_weight),
+            wm_party = weighted.mean(rank_party, bias_weight))
+
+# 1 = Protestant
+# 2 = Roman Catholic
+# 5 = Jewish
+# 9 = Atheist 
+# 10 = Agnostic
+# 11 = Nothing in particular
+# 12 = Something else
+
+
+dt %>%
+  ggplot(aes(x = pid7, y = rank_party)) +
+  geom_jitter()
+
+
 ##################################################################
 # Predicting issue preference and behavioral outcomes
 ##################################################################
@@ -163,7 +228,7 @@ dt$iv <- new_var
 
   
 # Prep a list of control variables  
-var_cont <- "age + age_sq + educ4 + pid7 + party_intense + ideo7 + newsint + 
+var_cont <- "age + age_sq + educ4 + pid3final + party_intense + ideo7 + newsint + 
              as.factor(gender3) + as.factor(race4) + as.factor(region) +
              as.factor(faminc_new) + as.factor(religpew)"  
 
@@ -188,6 +253,9 @@ set.seed(123)
 sim_coefs <- sim(m)
 sim_est <- sim_setx(sim_coefs, 
                     x = list(iv = 1:4,
+                             pid3final = c("Democrat",
+                                           "Independent",
+                                           "Republican"),
                              gender3 = median(dt$gender3),
                              race4 = median(dt$race4),
                              region = median(dt$region),
@@ -198,7 +266,10 @@ sim_est <- sim_setx(sim_coefs,
 p <- plot(sim_est) +
   ylim(0, 1) +
   ylab("") +
-  xlab(paste0(iv))+
+  xlab(paste0(iv)) +
+  scale_color_manual(breaks = c("Democrat", "Independent", "Republican"),
+                     values=c("darkcyan", "purple4", "deeppink4")) +  
+  theme(legend.position = "none") +
   ggtitle(title) 
   
 return(p)
