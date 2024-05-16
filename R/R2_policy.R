@@ -61,6 +61,7 @@ main <- main %>%
                           rank_gender == 1 ~ "gender",
                           rank_race == 1 ~ "race"),
          pid7 = ifelse(pid7 == 8, 4, pid7), # not sure into indep
+         ideo7 = ifelse(ideo7 == 8, 4, ideo7), # not sure into moderate         
          gender3 = ifelse(gender3 == 4, 3, gender3), # prefer not to say into other
          religpew = ifelse(religpew %in% c(3,4,6,7,8), 12, religpew), # several into something else
          ordering = case_when(app_identity == 1234 ~ "Party-Religion-Gender-Race",
@@ -156,6 +157,8 @@ dt %>%
             wm_religion = weighted.mean(rank_religion, bias_weight),
             wm_party = weighted.mean(rank_party, bias_weight))
 
+table(dt$pid3final)
+
 dt %>%
   group_by(race4) %>%
   select(rank_party, rank_gender, rank_race, rank_religion, 
@@ -164,6 +167,8 @@ dt %>%
             wm_race = weighted.mean(rank_race, bias_weight),
             wm_religion = weighted.mean(rank_religion, bias_weight),
             wm_party = weighted.mean(rank_party, bias_weight))
+
+table(dt$race4)
 
 # 1 = White
 # 2 = Black
@@ -180,6 +185,8 @@ dt %>%
             wm_religion = weighted.mean(rank_religion, bias_weight),
             wm_party = weighted.mean(rank_party, bias_weight))
 
+table(dt$gender3)
+
 # 1 = Man
 # 2 = Woman
 # 3 = Other/Prefer not to say
@@ -194,6 +201,8 @@ dt %>%
             wm_religion = weighted.mean(rank_religion, bias_weight),
             wm_party = weighted.mean(rank_party, bias_weight))
 
+table(dt$religpew)
+
 # 1 = Protestant
 # 2 = Roman Catholic
 # 5 = Jewish
@@ -203,9 +212,35 @@ dt %>%
 # 12 = Something else
 
 
+# The relationship between party and PID and Ideology
+
+set.seed(413)
 dt %>%
   ggplot(aes(x = pid7, y = rank_party)) +
-  geom_jitter()
+  geom_jitter(width = 0.2, height = 0.2, 
+              color = "gray50", alpha = 0.5, pch = 1) +
+  geom_smooth(method = "loess", color = "maroon") +
+  scale_x_continuous(breaks=seq(1, 7, 1)) +
+  theme_bw() +
+  xlab("Party identification") +
+  ylab("Marginal rank of party") -> a
+
+
+set.seed(413)
+dt %>%
+  ggplot(aes(x = ideo7, y = rank_party)) +
+  geom_jitter(width = 0.2, height = 0.2, 
+              color = "gray50", alpha = 0.5, pch = 1) +
+  geom_smooth(method = "loess", color = "maroon") +
+  scale_x_continuous(breaks=seq(1, 7, 1)) +
+  theme_bw() +
+  xlab("Ideology") +
+  ylab("Marginal rank of party") -> b
+
+ggpubr::ggarrange(a, b)
+
+ggsave("fig/sub/sub_marginal_party.pdf",
+       width = 6, height = 3)
 
 
 ##################################################################
