@@ -198,26 +198,6 @@ recover_recorded_rankings <- function(presented_order, true_order, df = NULL) {
   }
 }
 
-## Plot the distribution of recorded values (over permutation space)
-plot_dist_ranking <- function(x, ylim = 0.315) {
-  J <- nchar(as.character(x$ranking[[1]]))
-  x %>%
-    ggplot(aes(x = ranking, y = prop, fill = "1")) +
-    geom_col() +
-    scale_fill_manual(values = "firebrick4") +
-    xlab("Recorded Responses") +
-    ylab("") +
-    scale_y_continuous(labels = scales::percent, limits = c(0, ylim)) +
-    geom_hline(yintercept = 1 / factorial(J)) +
-    geom_text(
-      aes(
-        label = paste0(round(prop * 100, digits = 1), "%"),
-        family = "CM Roman"
-      ),
-      vjust = -0.5, size = 3
-    )
-}
-
 ## Print effect size and power
 chisq_power <- function(tab, power = 0.95) {
   ## Chi-square test
@@ -236,32 +216,6 @@ chisq_power <- function(tab, power = 0.95) {
       pwr.chisq.test(w = ES.w1(P0, P1), df = (length(tab) - 1), power = power)
     )
   }
-}
-
-## Turn ranking dist. summary table to a tibble
-table_to_tibble <- function(tab) {
-  enframe(tab, name = "ranking", value = "freq") %>%
-    mutate(
-      ranking = factor(ranking),
-      freq = as.numeric(freq),
-      prop = freq / sum(freq)
-    )
-}
-
-## If necessary, supplement all possible permutation patterns
-## for a distribution table
-permn_augment <- function(tab, J = 4) {
-  out <- deframe(
-    enframe(tab) %>%
-      bind_rows(
-        ., tibble(name = permn(seq(J)) %>%
-          map(~ paste(.x, collapse = "")) %>%
-          unlist() %>%
-          setdiff(., names(tab)), value = as.table(0))
-      )
-  )
-  out <- out[sort(names(out))]
-  return(out)
 }
 
 ## Collapse into resulting ranking pattern in the permutation space
