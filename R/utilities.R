@@ -24,9 +24,7 @@ library(haven)
 library(ranking)
 
 # Read all functions
-## source(here("R", "rpluce.R"))
 source(here("R", "yougov_import.R"))
-source(here("R", "viz_ranking.R"))
 source(here("R", "imprr.R"))
 
 # Parameters/stored vectors ====================================================
