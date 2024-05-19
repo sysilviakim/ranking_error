@@ -18,18 +18,19 @@ pdf_short <- function(p) {
 
 crosswalk_short <- function(x, label) {
   x %>%
-    map(~.x) %>%
-    bind_rows(.id = "reference") %>%
+    bind_rows(.id = "topic") %>%
     rowwise() %>%
-    mutate(varname = paste0("app_", label, "_", substr(reference, 1, 1))) %>%
-    mutate(
-      crosswalk = names(option_crosswalk)[which(option_crosswalk == varname)]
+    mutate(varname = paste0("app_", label, "_", substr(name, 1, 1))) %>%
+    left_join(
+      ., tibble(item = names(option_crosswalk), varname = option_crosswalk)
     ) %>%
+    filter(grepl(topic, varname)) %>%
     ungroup() %>%
-    select(reference, varname, crosswalk, everything()) %>%
+    select(topic, varname, item, everything()) %>%
+    select(-name) %>%
     ## Must refactor code
     mutate(
-      name = crosswalk, 
+      name = item, 
       est = mean,
       low = mean - 1.96 * se,
       up = mean + 1.96 * se,
@@ -79,9 +80,10 @@ prep_list <- root_var %>%
 ## Quick summary
 prep_list %>%
   imap(
-    ~ avg_rank(.x$full, paste0("app_", .y)) %>%
-      map_dbl("mean") %>%
-      round(., digits = 1)
+    ~ avg_rank(.x$full, paste0("app_", .y))%>%
+      select(name, mean) %>%
+      ## transpose dataframe, with `name` column as column names
+      pivot_wider(names_from = name, values_from = mean)
   )
 
 # $tate
@@ -99,13 +101,6 @@ prep_list %>%
 # $esystems
 # 1st 2nd 3rd 4th 5th 6th
 # 2.7 2.7 4.1 4.1 4.3 3.1
-
-prep_list %>%
-  imap(
-    ~ avg_rank(.x$full, paste0("app_", .y)) %>%
-      crosswalk_short(., .y) %>%
-      select(-name, -est, -imp)
-  )
 
 # Avg., pair, top-k, and marginal rankings =====================================
 p1 <- viz_ranking(
@@ -186,10 +181,10 @@ corrected_avg_list_asymp %>%
 ## What is the proportion of random vs. nonrandom answers?
 corrected_avg_list_asymp %>% map("p_non_random") %>% bind_rows(.id = "app")
 #        app       est       low        up
-# 1     tate 0.5740763 0.5728997 0.5752529
-# 2 identity 0.6531275 0.6521123 0.6541427
-# 3    polar 0.7692743 0.7684214 0.7701272
-# 4 esystems 0.5366934 0.5356606 0.5377261
+# 1     tate 0.6148466 0.6137987 0.6158944
+# 2 identity 0.6846314 0.6837502 0.6855125
+# 3    polar 0.7953994 0.7946017 0.7961972
+# 4 esystems 0.5628818 0.5619383 0.5638253
 
 # Consistent-preference respondents subset =====================================
 corrected_avg_list_asymp_rational <- root_var %>%
