@@ -33,22 +33,22 @@ prop(main, "repeat_esystems", useNA = "no") ## 36.5%
 
 ## Unbiased estimator for the proportion of non-random responses?
 ## 67.9% --> 61.5%
-unbiased_prop(
+unbiased_correct_prop(
   sum(main$random_tate == 0) / sum(!is.na(main$random_tate)),
   J = 3
 )
 ## 69.7% --> 68.4%
-unbiased_prop(
+unbiased_correct_prop(
   sum(main$random_identity == 0) / sum(!is.na(main$random_identity)),
   J = 4
 )
 ## 79.7% --> 79.5%
-unbiased_prop(
+unbiased_correct_prop(
   sum(main$random_polar == 0) / sum(!is.na(main$random_polar)),
   J = 5
 )
 ## 56.3% --> 56.2%
-unbiased_prop(
+unbiased_correct_prop(
   sum(main$random_esystems == 0) / sum(!is.na(main$random_esystems)),
   J = 6
 )
