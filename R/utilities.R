@@ -110,9 +110,9 @@ loop_stated_rank_preference <- function(true_rank, choice) {
     vec_pref # Check
 
     # Alphabet unit i sees in each position
-    position1 <- choice[i, 1] %>% pull()
-    position2 <- choice[i, 2] %>% pull()
-    position3 <- choice[i, 3] %>% pull()
+    position1 <- choice[i, 1] ## %>% pull()
+    position2 <- choice[i, 2] ## %>% pull()
+    position3 <- choice[i, 3] ## %>% pull()
 
     # Assign a value (rank) for each position
     # given the alphabet unit i sees there

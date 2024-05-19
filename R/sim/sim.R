@@ -77,11 +77,7 @@ for (scenario in names(prob_vec_list)) {
 
   ## Generate true rankings ----------------------------------------------------
   ## Note: if (3, 2, 1), A corresponds to 3, B to 2, and C to 1.
-  true_rank <- PLMIX::rank_ord_switch(
-    data = true_pref, format_input = "ordering"
-  ) %>%
-    as_tibble() %>%
-    rename(a = Item_1, b = Item_2, c = Item_3)
+  true_rank <- item_to_rank(true_pref)
   true_rank
 
   ## True rank squashed into J! permutation pattern strings
@@ -94,7 +90,7 @@ for (scenario in names(prob_vec_list)) {
   # Survey's question choice order ---------------------------------------------
   ## Assumption 1: Natural order A-B-C, simply observe true permutation
   ## Assumption 2: Order of items randomized
-  random_choices <- rpluce(N = N, t = J, prob = rep(1 / J, J))
+  random_choices <- rpluce(n = N, t = J, prob = rep(1 / J, J))
   head(random_choices)
 
   ## Check the uniformity: proportions + pearson's chi-squared test
