@@ -50,7 +50,7 @@ names(obs_data_list) <- names(permn_list) <- names(chisq_list) <-
 # Loop: True and Observed Rankings =============================================
 for (scenario in names(prob_vec_list)) {
   prob_vec <- prob_vec_list[[scenario]]
-  true_pref <- rpluce(N = N, t = J, prob = prob_vec)
+  true_pref <- rpluce(n = N, t = J, prob = prob_vec)
 
   if (scenario == "homogeneous") {
     true_pref <- bind_rows(
@@ -58,9 +58,9 @@ for (scenario in names(prob_vec_list)) {
       ## and avoid problems in plotting (cheap workaround)
       true_pref %>% dedup(),
       tibble(
-        V1 = rep("c", N),
-        V2 = rep("b", N),
-        V3 = rep("a", N)
+        `1st` = rep("c", N),
+        `2nd` = rep("b", N),
+        `3rd` = rep("a", N)
       )
     ) %>%
       slice(1:N)
@@ -69,9 +69,9 @@ for (scenario in names(prob_vec_list)) {
   if (scenario == "anchor") {
     ## Creating the "correct" response in the anchor question: a-b-c
     true_pref <- tibble(
-      V1 = rep("a", N),
-      V2 = rep("b", N),
-      V3 = rep("c", N)
+      `1st` = rep("a", N),
+      `2nd` = rep("b", N),
+      `3rd` = rep("c", N)
     )
   }
 
