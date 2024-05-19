@@ -103,28 +103,33 @@ prep_list %>%
 # 2.7 2.7 4.1 4.1 4.3 3.1
 
 # Avg., pair, top-k, and marginal rankings =====================================
+extrafont::loadfonts()
 p1 <- viz_ranking(
   dat = prep_list$tate$full,
   target_item = "pork",
-  other_items = setdiff(prep_list$tate$labels, "pork")
+  other_items = setdiff(prep_list$tate$labels, "pork"),
+  font = "CM Roman"
 )
 
 p2 <- viz_ranking(
   dat = prep_list$identity$full,
   target_item = "party",
-  other_items = setdiff(prep_list$identity$labels, "party")
+  other_items = setdiff(prep_list$identity$labels, "party"),
+  font = "CM Roman"
 )
 
 p3 <- viz_ranking(
   dat = prep_list$polar$full,
   target_item = "social_media",
-  other_items = setdiff(prep_list$polar$labels, "social_media")
+  other_items = setdiff(prep_list$polar$labels, "social_media"),
+  font = "CM Roman"
 )
 
 p4 <- viz_ranking(
   dat = prep_list$esystems$full,
   target_item = "account_pol",
-  other_items = setdiff(prep_list$esystems$labels, "account_pol")
+  other_items = setdiff(prep_list$esystems$labels, "account_pol"),
+  font = "CM Roman"
 )
 
 print(p1)
@@ -665,4 +670,3 @@ root_var %>%
       )
     }
   )
-
