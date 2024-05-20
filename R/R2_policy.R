@@ -134,7 +134,7 @@ w.pmf[,-2] %>%
 ## Raw data
 dt %>%
   select(rank_party, rank_gender, rank_race, rank_religion) %>%
-  summarise_all(mean) %>%
+  summarise(across(everything(), mean)) %>%
   xtable()
 
 ## Bias-corrected
