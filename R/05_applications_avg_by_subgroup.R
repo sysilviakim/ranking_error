@@ -3,6 +3,31 @@ load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 load(here("data", "tidy", "prep_applications_list.Rda"))
 
+# Consistent-preference respondents subset =====================================
+corrected_avg_list_asymp_rational <- root_var %>%
+  imap(
+    ~ imprr(
+      dat = prep_list[[.y]]$rational,
+      main_q = paste0("app_", .y),
+      anchor_q = paste0("anc_", .y),
+      anc_correct = paste0("anc_correct_", .y),
+      main_labels = prep_list[[.y]]$labels
+    )
+  )
+save(
+  corrected_avg_list_asymp_rational,
+  file = here("output", "corrected_avg_list_asymp_rational.Rda")
+)
+
+corrected_avg_list_asymp_rational %>%
+  map("avg") %>%
+  imap(
+    ~ {
+      print(viz_avg_wrapper(.x))
+      ggsave_temp(paste0("corrected_avg_asymp_", .y, "_rational.pdf"))
+    }
+  )
+
 # By party =====================================================================
 corrected_avg_list_asymp_pid3 <- root_var %>%
   imap(

@@ -156,27 +156,5 @@ corrected_avg_list_asymp %>% map("p_non_random") %>% bind_rows(.id = "app")
 # 3    polar 0.7953994 0.7946017 0.7961972
 # 4 esystems 0.5628818 0.5619383 0.5638253
 
-# Consistent-preference respondents subset =====================================
-corrected_avg_list_asymp_rational <- root_var %>%
-  imap(
-    ~ imprr(
-      dat = prep_list[[.y]]$rational,
-      main_q = paste0("app_", .y),
-      anchor_q = paste0("anc_", .y),
-      anc_correct = paste0("anc_correct_", .y),
-      main_labels = prep_list[[.y]]$labels
-    )
-  )
-save(
-  corrected_avg_list_asymp_rational,
-  file = here("output", "corrected_avg_list_asymp_rational.Rda")
-)
-
-corrected_avg_list_asymp_rational %>%
-  map("avg") %>%
-  imap(
-    ~ {
-      print(viz_avg_wrapper(.x))
-      ggsave_temp(paste0("corrected_avg_asymp_", .y, "_rational.pdf"))
-    }
-  )
+# Save weights =================================================================
+corrected_avg_list_asymp$tate$PMF
