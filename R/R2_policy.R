@@ -62,6 +62,7 @@ main <- main %>%
                           rank_race == 1 ~ "race"),
          pid7 = ifelse(pid7 == 8, 4, pid7), # not sure into indep
          ideo7 = ifelse(ideo7 == 8, 4, ideo7), # not sure into moderate         
+         newsint = ifelse(newsint == 7, 4, newsint), # not sure into 4 (hardly),
          gender3 = ifelse(gender3 == 4, 3, gender3), # prefer not to say into other
          religpew = ifelse(religpew %in% c(3,4,6,7,8), 12, religpew), # several into something else
          ordering = case_when(app_identity == 1234 ~ "Party-Religion-Gender-Race",
@@ -240,7 +241,19 @@ dt %>%
   xlab("Ideology") +
   ylab("Marginal rank of party") -> b
 
-ggpubr::ggarrange(a, b)
+
+set.seed(413)
+dt %>%
+  ggplot(aes(x = newsint, y = rank_party)) +
+  geom_jitter(width = 0.2, height = 0.2, 
+              color = "gray50", alpha = 0.5, pch = 1) +
+  geom_smooth(method = "loess", color = "maroon") +
+  scale_x_continuous(breaks=seq(1, 7, 1)) +
+  theme_bw() +
+  xlab("Political Interest") +
+  ylab("Marginal rank of party") -> c
+
+ggpubr::ggarrange(a, b, c, ncol = 3)
 
 ggsave("fig/sub/sub_marginal_party.pdf",
        width = 6, height = 3)
