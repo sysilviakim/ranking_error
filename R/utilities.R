@@ -381,17 +381,64 @@ pattern_compare_pass_fail <- function(main, v, y_upper = .75, label = NULL,
   return(out)
 }
 
-viz_avg <- function(data, order = NULL, J = NULL,
-                    color_list = c("#b0015a", "#999999")) {
-  if (is.null(J)) {
-    J <- nrow(data) / 2
+## One-time functions ----------------------------------------------------------
+ggsave_temp <- function(x, width = 5.5, height = 3) {
+  ggsave(here("fig", x), width = width, height = height)
+}
+
+pdf_short <- function(p) {
+  pdf_default(p) +
+    theme(
+      plot.background = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_blank()
+    )
+}
+
+crosswalk_short <- function(x, label) {
+  x %>%
+    bind_rows(.id = "topic") %>%
+    rowwise() %>%
+    mutate(varname = paste0("app_", label, "_", substr(name, 1, 1))) %>%
+    left_join(
+      ., tibble(item = names(option_crosswalk), varname = option_crosswalk)
+    ) %>%
+    filter(grepl(topic, varname)) %>%
+    ungroup() %>%
+    select(topic, varname, item, everything()) %>%
+    select(-name) %>%
+    ## Must refactor code
+    mutate(
+      name = item, 
+      est = mean,
+      low = mean - 1.96 * se,
+      up = mean + 1.96 * se,
+      imp = ""
+    )
+}
+
+viz_avg_wrapper <- function(data, J = NULL) {
+  if (nrow(data) / 2 == 3) {
+    order <- c("Policy", "Pork", "Service")
+  } else if (nrow(data) / 2 == 4) {
+    order <- c("Gender", "Religion", "Race", "Party")
+  } else if (nrow(data) / 2 == 5) {
+    order <- c(
+      "Politicians", "Print Media and TV",
+      "Social Media", "Interest Groups", "Citizens"
+    )
+  } else if (nrow(data) / 2 == 6) {
+    order <- c(
+      "Accountability (Politicians)", "Accountability (Government)",
+      "Median Voter Policy", "Seat-Vote Unbiased", 
+      "Minority Representation", "Women's Representation"
+    )
+  } else {
+    stop("Invalid number of rows.")
   }
   data <- data %>%
     rowwise() %>%
-    mutate(
-      imp = simple_cap(imp),
-      imp = str_pad(imp, width = 15, side = "right")
-    ) %>%
     mutate(
       name = simple_cap(name),
       name = case_when(
@@ -405,97 +452,10 @@ viz_avg <- function(data, order = NULL, J = NULL,
         name == "Women" ~ "Women's Representation",
         name == "Minority" ~ "Minority Representation",
         TRUE ~ name
-      ),
-      name = str_pad(name, width = 28)
+      )
     ) %>%
-    ungroup() %>%
-    rename(Type = imp)
-
-  if (!is.null(order)) {
-    if (all(order == "est")) {
-      data <- data %>%
-        mutate(name = fct_reorder(name, est))
-    } else if (all(order == "fixed")) {
-      ## Hardcoded order; not great code, will fix later
-      if (J == 3) {
-        data <- data %>%
-          mutate(
-            name = factor(
-              name,
-              levels = str_pad(
-                c("Policy", "Pork", "Service"),
-                width = 28
-              )
-            )
-          )
-      } else if (J == 4) {
-        data <- data %>%
-          mutate(
-            name = factor(
-              name,
-              levels = str_pad(
-                c("Gender", "Religion", "Race", "Party"),
-                width = 28
-              )
-            )
-          )
-      } else if (J == 5) {
-        data <- data %>%
-          mutate(
-            name = factor(
-              name,
-              levels = str_pad(
-                c(
-                  "Politicians", "Print Media and TV",
-                  "Social Media", "Interest Groups", "Citizens"
-                ),
-                width = 28
-              )
-            )
-          )
-      } else if (J == 6) {
-        data <- data %>%
-          mutate(
-            name = factor(
-              name,
-              levels = str_pad(
-                c(
-                  "Accountability (Politicians)",
-                  "Accountability (Government)",
-                  "Median Voter Policy",
-                  "Seat-Vote Unbiased", 
-                  "Minority Representation",
-                  "Women's Representation"
-                ),
-                width = 28
-              )
-            )
-          )
-      }
-    } else {
-      data <- data %>%
-        mutate(name = factor(name, levels = str_pad(order, width = 28)))
-    }
-  }
-
-  p <- ggplot(data, aes(x = fct_rev(name), y = est, color = Type)) +
-    geom_point(
-      aes(shape = Type),
-      size = 2,
-      position = position_dodge(width = 0.5)
-    ) +
-    # Reorder by point estimate
-    geom_linerange(
-      aes(ymin = low, ymax = up),
-      lwd = 1, position = position_dodge(width = 0.5)
-    ) +
-    scale_color_manual(values = color_list) +
-    theme_bw() +
-    coord_flip() +
-    xlab("") +
-    ylab("") +
-    scale_y_continuous(limits = c(1, J), breaks = seq(J)) +
-    geom_hline(yintercept = (J + 1) / 2, linetype = "dashed")
+    ungroup()
+  p <- viz_avg_rank(data, order, J = J, label_pad_width = 28)
   return(
     pdf_default(p) +
       theme(

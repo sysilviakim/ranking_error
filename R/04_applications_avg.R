@@ -2,42 +2,6 @@ source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 
-ggsave_temp <- function(x, width = 5.5, height = 3) {
-  ggsave(here("fig", x), width = width, height = height)
-}
-
-pdf_short <- function(p) {
-  pdf_default(p) +
-    theme(
-      plot.background = element_blank(),
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.border = element_blank()
-    )
-}
-
-crosswalk_short <- function(x, label) {
-  x %>%
-    bind_rows(.id = "topic") %>%
-    rowwise() %>%
-    mutate(varname = paste0("app_", label, "_", substr(name, 1, 1))) %>%
-    left_join(
-      ., tibble(item = names(option_crosswalk), varname = option_crosswalk)
-    ) %>%
-    filter(grepl(topic, varname)) %>%
-    ungroup() %>%
-    select(topic, varname, item, everything()) %>%
-    select(-name) %>%
-    ## Must refactor code
-    mutate(
-      name = item, 
-      est = mean,
-      low = mean - 1.96 * se,
-      up = mean + 1.96 * se,
-      imp = ""
-    )
-}
-
 # Setup ========================================================================
 prep_list <- root_var %>%
   imap(
@@ -75,6 +39,7 @@ prep_list <- root_var %>%
       )
     }
   )
+save(prep_list, file = here("data", "tidy", "prep_applications_list.Rda"))
 
 # Average rankings =============================================================
 ## Quick summary
@@ -165,7 +130,7 @@ corrected_avg_list_asymp <- root_var %>%
       main_q = paste0("app_", .y),
       anchor_q = paste0("anc_", .y),
       anc_correct = paste0("anc_correct_", .y),
-      main_labels = prep_list[[.y]]$labels
+      main_labels = prep_list[[.y]]$labe-ls
     )
   )
 save(
@@ -178,7 +143,7 @@ corrected_avg_list_asymp %>%
   map("avg") %>%
   imap(
     ~ {
-      print(viz_avg(.x, order = "fixed"))
+      print(viz_avg_wrapper(.x))
       ggsave_temp(paste0("corrected_avg_asymp_", .y, ".pdf"))
     }
   )
@@ -211,7 +176,7 @@ corrected_avg_list_asymp_rational %>%
   map("avg") %>%
   imap(
     ~ {
-      print(viz_avg(.x, order = "est"))
+      print(viz_avg_wrapper(.x))
       ggsave_temp(paste0("corrected_avg_asymp_", .y, "_rational.pdf"))
     }
   )
@@ -245,7 +210,7 @@ corrected_avg_list_asymp_pid3 %>%
       map("avg") %>%
       imap(
         function(x, y) {
-          print(viz_avg(x, order = "est"))
+          print(viz_avg_wrapper(.x))
           ggsave_temp(
             paste0(
               "corrected_avg_asymp_", .y, "_pid3_", 
@@ -260,15 +225,9 @@ root_var %>%
   imap(
     ~ {
       p <- ggarrange(
-        viz_avg(
-          corrected_avg_list_asymp_pid3[[.y]]$Democrat$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_pid3[[.y]]$Democrat$avg) +
           ggtitle("Democrat"),
-        viz_avg(
-          corrected_avg_list_asymp_pid3[[.y]]$Republican$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_pid3[[.y]]$Republican$avg) +
           ggtitle("Republican"),
         ncol = 1
       )
@@ -310,7 +269,7 @@ corrected_avg_list_asymp_partisan %>%
       map("avg") %>%
       imap(
         function(x, y) {
-          print(viz_avg(x))
+          print(viz_avg_wrapper(x))
           ggsave_temp(
             paste0(
               "corrected_avg_asymp_", .y, "_partisan_", 
@@ -325,14 +284,12 @@ root_var %>%
   imap(
     ~ {
       p <- ggarrange(
-        viz_avg(
-          corrected_avg_list_asymp_partisan[[.y]]$`Strong Partisan`$avg,
-          order = "fixed"
+        viz_avg_wrapper(
+          corrected_avg_list_asymp_partisan[[.y]]$`Strong Partisan`$avg
         ) +
           ggtitle("Strong Partisan"),
-        viz_avg(
-          corrected_avg_list_asymp_partisan[[.y]]$`Weak Partisan`$avg,
-          order = "fixed"
+        viz_avg_wrapper(
+          corrected_avg_list_asymp_partisan[[.y]]$`Weak Partisan`$avg
         ) +
           ggtitle("Weak Partisan"),
         ncol = 1
@@ -374,7 +331,7 @@ corrected_avg_list_asymp_race %>%
       map("avg") %>%
       imap(
         function(x, y) {
-          print(viz_avg(x))
+          print(viz_avg_wrapper(x))
           ggsave_temp(
             paste0(
               "corrected_avg_asymp_", .y, "_race_", 
@@ -389,25 +346,13 @@ root_var %>%
   imap(
     ~ {
       p <- ggarrange(
-        viz_avg(
-          corrected_avg_list_asymp_race[[.y]]$White$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_race[[.y]]$White$avg) +
           ggtitle("White"),
-        viz_avg(
-          corrected_avg_list_asymp_race[[.y]]$Black$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_race[[.y]]$Black$avg) +
           ggtitle("Black"),
-        viz_avg(
-          corrected_avg_list_asymp_race[[.y]]$Hispanic$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_race[[.y]]$Hispanic$avg) +
           ggtitle("Hispanic"),
-        viz_avg(
-          corrected_avg_list_asymp_race[[.y]]$Asian$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_race[[.y]]$Asian$avg) +
           ggtitle("Asian"),
         ncol = 2, nrow = 2
       )
@@ -448,7 +393,7 @@ corrected_avg_list_asymp_race2 %>%
       map("avg") %>%
       imap(
         function(x, y) {
-          print(viz_avg(x))
+          print(viz_avg_wrapper(x))
           ggsave_temp(
             paste0(
               "corrected_avg_asymp_", .y, "_race2_", 
@@ -463,15 +408,9 @@ root_var %>%
   imap(
     ~ {
       p <- ggarrange(
-        viz_avg(
-          corrected_avg_list_asymp_race2[[.y]]$White$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_race2[[.y]]$White$avg) +
           ggtitle("White"),
-        viz_avg(
-          corrected_avg_list_asymp_race2[[.y]]$`None-white`$avg,
-          order = "fixed"
-        ) +
+        viz_avg_wrapper(corrected_avg_list_asymp_race2[[.y]]$`None-white`$avg) +
           ggtitle("None-white"),
         ncol = 1
       )
@@ -491,7 +430,7 @@ id_alphabet <- imprr(
   anc_correct = "anc_correct_id_alphabet",
   main_labels = prep_list$identity$labels
 )
-viz_avg(id_alphabet$avg, order = "fixed")
+viz_avg_wrapper(id_alphabet$avg)
 
 id_exact <- imprr(
   dat = prep_list$identity$full %>% filter(!is.na(anc_id_exact)),
@@ -500,7 +439,7 @@ id_exact <- imprr(
   anc_correct = "anc_correct_id_exact",
   main_labels = prep_list$identity$labels
 )
-viz_avg(id_exact$avg, order = "fixed") ## religion
+viz_avg_wrapper(id_exact$avg)
 
 es_alphabet <- imprr(
   dat = prep_list$esystems$full %>% filter(!is.na(anc_es_alphabet)),
@@ -509,7 +448,7 @@ es_alphabet <- imprr(
   anc_correct = "anc_correct_es_alphabet",
   main_labels = prep_list$esystems$labels
 )
-viz_avg(es_alphabet$avg, order = "fixed")
+viz_avg_wrapper(es_alphabet$avg)
 
 es_temporal <- imprr(
   dat = prep_list$esystems$full %>% filter(!is.na(anc_es_temporal)),
@@ -518,7 +457,7 @@ es_temporal <- imprr(
   anc_correct = "anc_correct_es_temporal",
   main_labels = prep_list$esystems$labels
 )
-viz_avg(es_temporal$avg, order = "fixed")
+viz_avg_wrapper(es_temporal$avg)
 
 # By attention checks ==========================================================
 corrected_avg_list_asymp_berinsky_fail <- root_var %>%
@@ -547,14 +486,12 @@ root_var %>%
   imap(
     ~ {
       p <- ggarrange(
-        viz_avg(
-          corrected_avg_list_asymp_berinsky_fail[[.y]]$Failed$avg,
-          order = "fixed"
+        viz_avg_wrapper(
+          corrected_avg_list_asymp_berinsky_fail[[.y]]$Failed$avg
         ) +
           ggtitle("Failed"),
-        viz_avg(
-          corrected_avg_list_asymp_berinsky_fail[[.y]]$Passed$avg,
-          order = "fixed"
+        viz_avg_wrapper(
+          corrected_avg_list_asymp_berinsky_fail[[.y]]$Passed$avg
         ) +
           ggtitle("Passed"),
         ncol = 1
@@ -593,14 +530,12 @@ root_var %>%
   imap(
     ~ {
       p <- ggarrange(
-        viz_avg(
-          corrected_avg_list_asymp_ternovski_fail[[.y]]$Failed$avg,
-          order = "fixed"
+        viz_avg_wrapper(
+          corrected_avg_list_asymp_ternovski_fail[[.y]]$Failed$avg
         ) +
           ggtitle("Failed"),
-        viz_avg(
-          corrected_avg_list_asymp_ternovski_fail[[.y]]$Passed$avg,
-          order = "fixed"
+        viz_avg_wrapper(
+          corrected_avg_list_asymp_ternovski_fail[[.y]]$Passed$avg
         ) +
           ggtitle("Passed"),
         ncol = 1
@@ -615,58 +550,58 @@ root_var %>%
 
 # By anchor passes =============================================================
 ## Uncorrected versions; raw
-avg_list_anchor_fail <- root_var %>%
-  imap(
-    ~ {
-      out <- prep_list[[.y]]$full %>%
-        mutate(
-          !!as.name(paste0("anc_correct_", .y)) := case_when(
-            !!as.name(paste0("anc_correct_", .y)) == 1 ~ "Passed",
-            TRUE ~ "Failed"
-          )
-        ) %>%
-        group_split(!!as.name(paste0("anc_correct_", .y)), .keep = TRUE) %>%
-        `names<-`(
-          {.} %>% 
-            map(
-              function(x, y) x[[paste0("anc_correct_", .y)]][[1]]
-            ) %>% 
-            unlist()
-        )
-      
-      list(
-        Passed = avg_rank(out$Passed, paste0("app_", .y)) %>%
-          crosswalk_short(., .y),
-        Failed = avg_rank(out$Failed, paste0("app_", .y)) %>%
-          crosswalk_short(., .y)
-      )
-    }
-  )
-
-root_var %>%
-  imap(
-    ~ {
-      p <- ggarrange(
-        plot_nolegend(
-          viz_avg(
-            avg_list_anchor_fail[[.y]]$Passed,
-            order = "fixed", J = nrow(avg_list_anchor_fail[[.y]]$Passed$avg)
-          ) +
-            ggtitle("Passed")
-        ),
-        plot_nolegend(
-          viz_avg(
-            avg_list_anchor_fail[[.y]]$Failed,
-            order = "fixed", J = nrow(avg_list_anchor_fail[[.y]]$Failed$avg)
-          ) +
-            ggtitle("Failed")
-        ),
-        ncol = 1
-      )
-      pdf_short(p)
-      ggsave_temp(
-        paste0("avg_list_", .y, "_anchor_fail.pdf"),
-        height = 6
-      )
-    }
-  )
+# avg_list_anchor_fail <- root_var %>%
+#   imap(
+#     ~ {
+#       out <- prep_list[[.y]]$full %>%
+#         mutate(
+#           !!as.name(paste0("anc_correct_", .y)) := case_when(
+#             !!as.name(paste0("anc_correct_", .y)) == 1 ~ "Passed",
+#             TRUE ~ "Failed"
+#           )
+#         ) %>%
+#         group_split(!!as.name(paste0("anc_correct_", .y)), .keep = TRUE) %>%
+#         `names<-`(
+#           {.} %>% 
+#             map(
+#               function(x, y) x[[paste0("anc_correct_", .y)]][[1]]
+#             ) %>% 
+#             unlist()
+#         )
+#       
+#       list(
+#         Passed = avg_rank(out$Passed, paste0("app_", .y)) %>%
+#           crosswalk_short(., .y),
+#         Failed = avg_rank(out$Failed, paste0("app_", .y)) %>%
+#           crosswalk_short(., .y)
+#       )
+#     }
+#   )
+# 
+# root_var %>%
+#   imap(
+#     ~ {
+#       p <- ggarrange(
+#         plot_nolegend(
+#           viz_avg_wrapper(
+#             avg_list_anchor_fail[[.y]]$Passed,
+#             J = nrow(avg_list_anchor_fail[[.y]]$Passed$avg)
+#           ) +
+#             ggtitle("Passed")
+#         ),
+#         plot_nolegend(
+#           viz_avg_wrapper(
+#             avg_list_anchor_fail[[.y]]$Failed,
+#             J = nrow(avg_list_anchor_fail[[.y]]$Failed$avg)
+#           ) +
+#             ggtitle("Failed")
+#         ),
+#         ncol = 1
+#       )
+#       pdf_short(p)
+#       ggsave_temp(
+#         paste0("avg_list_", .y, "_anchor_fail.pdf"),
+#         height = 6
+#       )
+#     }
+#   )
