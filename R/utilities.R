@@ -143,59 +143,6 @@ pivot_join <- function(x, y) {
   return(pivot_sim(left_join(y, x)) %>% select(id, obs_rank, item, rank))
 }
 
-## Recover the reference (true) ranking
-## with respect to the reference item set (here: {abc})
-recover_recorded_rankings <- function(presented_order, true_order, df = NULL) {
-  if (is.null(df)) {
-    ## Expect as inputs simple strings such as "312" "321"
-    presented_order <- strsplit(presented_order, "")[[1]]
-    true_order <- strsplit(true_order, "")[[1]]
-    recovered_order <- vector("character", length = length(true_order))
-
-    # Iterate through each character in the respondent's response string
-    for (i in seq(length(presented_order))) {
-      recovered_order[i] <- true_order[[as.numeric(presented_order[i])]]
-    }
-
-    # Concatenate the characters
-    # to form a string representing the recovered order
-    return(paste(recovered_order, collapse = ""))
-  } else {
-    if (!(presented_order %in% names(df))) {
-      stop("Presented order variable is not in the dataframe.")
-    }
-    if (!(true_order %in% names(df))) {
-      stop("Response order variable is not in the dataframe.")
-    }
-
-    variable_name <- gsub("_row_rnd", "_recorded", presented_order)
-    presented_order <- df[[presented_order]] %>%
-      map(~ strsplit(.x, "")[[1]])
-    true_order <- df[[true_order]] %>%
-      map(~ strsplit(.x, "")[[1]])
-
-    recovered_order <- seq(length(true_order)) %>%
-      map(
-        ~ {
-          out <- vector("character", length = length(true_order[[.x]]))
-          if (any(is.na(true_order[[.x]]))) {
-            out <- NA
-            return(out)
-          } else {
-            for (i in seq(length(presented_order[[.x]]))) {
-              out[i] <- true_order[[.x]][[as.numeric(presented_order[[.x]][i])]]
-            }
-            return(paste(out, collapse = ""))
-          }
-        }
-      ) %>%
-      unlist()
-
-    df[[variable_name]] <- recovered_order
-    return(df)
-  }
-}
-
 ## Print effect size and power
 chisq_power <- function(tab, power = 0.95) {
   ## Chi-square test
