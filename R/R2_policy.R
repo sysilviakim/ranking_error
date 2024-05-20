@@ -137,6 +137,9 @@ dt %>%
   summarise(across(everything(), mean)) %>%
   xtable()
 
+## Unweighted (working on weight-adding function)
+avg_rank(dt, "app_identity", items = c("Party", "Religion", "Gender", "Race"))
+
 ## Bias-corrected
 dt %>%
   select(rank_party, rank_gender, rank_race, rank_religion, 
