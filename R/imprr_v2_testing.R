@@ -18,7 +18,7 @@ test <- imprr(
   main_q = "app_identity",
   anchor_q =  "anc_identity",
   anc_correct = "anc_correct_identity",
-  n_bootstrap = 500
+  n_bootstrap = 200
 )
 
 
@@ -67,3 +67,8 @@ ggplot(g, aes(x = mean, y = item)) +
                 position = position_dodge(width = 0.5)) +
   theme_bw()
 
+ggsave(here::here("fig", "testing_imprr_v2.pdf"), width = 9, height = 2)
+
+
+qoi <- test$qoi
+head(qoi, n = 20)
