@@ -4,9 +4,9 @@ load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 
 data <- df_list$main %>%
-  select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
-         anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
-         anc_correct_identity)
+  select(app_polar_1, app_polar_2, app_polar_3, app_polar_4, app_polar_5,
+         anc_polar_1, anc_polar_2, anc_polar_3, anc_polar_4, anc_polar_5,
+         anc_correct_polar)
 
 
 # Test the function ============================================================
@@ -14,11 +14,11 @@ source(here::here("R", "imprr_v2.R"))
 
 test <- imprr(
   data = data,
-  J = 4,
-  main_q = "app_identity",
-  anchor_q =  "anc_identity",
-  anc_correct = "anc_correct_identity",
-  n_bootstrap = 200
+  J = 5,
+  main_q = "app_polar",
+  anchor_q =  "anc_polar",
+  anc_correct = "anc_correct_polar",
+  n_bootstrap = 10
 )
 
 
@@ -28,15 +28,16 @@ test <- imprr(
 
 # Based on IPW estimator
 dt_w <- main %>%
-  mutate(ranking = app_identity) %>%
-  select(app_identity_1, app_identity_2, app_identity_3, app_identity_4, 
+  mutate(ranking = app_polar) %>%
+  select(app_polar_1, app_polar_2, app_polar_3, app_polar_4, app_polar_5,
          ranking) %>%
-  left_join(test$weights, by = "ranking") 
+  left_join(test$weights, by = "ranking")
 
-id1 <- lm_robust(app_identity_1 ~ 1, dt_w, weights = w) %>% tidy()
-id2 <- lm_robust(app_identity_2 ~ 1, dt_w, weights = w) %>% tidy()
-id3 <- lm_robust(app_identity_3 ~ 1, dt_w, weights = w) %>% tidy()
-id4 <- lm_robust(app_identity_4 ~ 1, dt_w, weights = w) %>% tidy()
+id1 <- lm_robust(app_polar_1 ~ 1, dt_w, weights = w) %>% tidy()
+id2 <- lm_robust(app_polar_2 ~ 1, dt_w, weights = w) %>% tidy()
+id3 <- lm_robust(app_polar_3 ~ 1, dt_w, weights = w) %>% tidy()
+id4 <- lm_robust(app_polar_4 ~ 1, dt_w, weights = w) %>% tidy()
+id5 <- lm_robust(app_polar_5 ~ 1, dt_w, weights = w) %>% tidy()
 
 rbind(id1, id2, id3, id4) %>%
   mutate(mean = round(estimate, d = 2),
@@ -46,6 +47,7 @@ rbind(id1, id2, id3, id4) %>%
          qoi = "average rank") %>%
   select(item, qoi, mean, lower, upper) %>%
   mutate(method = "IPW") -> result_ipw
+
 
 # Based on direct bias-correction
 test$qoi %>% filter(qoi == "average rank") %>% 
@@ -67,7 +69,6 @@ ggplot(g, aes(x = mean, y = item)) +
                 position = position_dodge(width = 0.5)) +
   theme_bw()
 
-ggsave(here::here("fig", "testing_imprr_v2.pdf"), width = 9, height = 2)
 
 
 qoi <- test$qoi
