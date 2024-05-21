@@ -26,9 +26,8 @@ dt_w <- main %>%
   mutate(ranking = app_identity) %>%
   select(app_identity_1, app_identity_2, app_identity_3, app_identity_4, 
          ranking) %>%
-  left_join(test$weights, by = "ranking") %>%
-  mutate(w_inv = 1/w,
-         w_inv = ifelse(w_inv == Inf, 0, w_inv))
+  left_join(test$weights, by = "ranking") 
+
 
 # Validity check via average ranks =============================================
 
@@ -49,7 +48,6 @@ rbind(id1, id2, id3, id4) %>%
 
 
 ## Based on IPW estimator =======================================================
-
 id1 <- lm_robust(app_identity_1 ~ 1, dt_w, weights = w) %>% tidy()
 id2 <- lm_robust(app_identity_2 ~ 1, dt_w, weights = w) %>% tidy()
 id3 <- lm_robust(app_identity_3 ~ 1, dt_w, weights = w) %>% tidy()
@@ -63,6 +61,39 @@ rbind(id1, id2, id3, id4) %>%
          qoi = "average rank") %>%
   select(item, qoi, mean, lower, upper) %>%
   mutate(method = "IPW") -> result_ipw
+
+
+# ## Fully bootstrapped IPW estimator ============================================
+# 
+# full_weights <- test$bootstrap_w
+# full_ipw <- list()
+# 
+# for(i in 1:length(test$bootstrap_w)){
+#   
+# dt_w <- dt_w %>%
+#   select(-w) %>%
+#   left_join(full_weights[[i]], by = "ranking") 
+#   
+# id1 <- lm_robust(app_identity_1 ~ 1, dt_w, weights = w) %>% tidy()
+# id2 <- lm_robust(app_identity_2 ~ 1, dt_w, weights = w) %>% tidy()
+# id3 <- lm_robust(app_identity_3 ~ 1, dt_w, weights = w) %>% tidy()
+# id4 <- lm_robust(app_identity_4 ~ 1, dt_w, weights = w) %>% tidy()
+# 
+# rbind(id1, id2, id3, id4) %>%
+#   mutate(mean = round(estimate, d = 2),
+#          item = outcome,
+#          qoi = "average rank") %>%
+#   mutate(method = "IPW - Fully BS") -> temp
+# 
+# full_ipw[[i]] <- temp
+# 
+# }
+# 
+# result_ipw_full <- do.call(rbind.data.frame, full_ipw) %>%
+#   group_by(item, qoi) %>%
+#   summarize(mean = mean(mean),
+#             lower = quantile(mean, 0.025),
+#             upper = quantile(mean, 0.975))
 
 
 ## Based on direct bias-correction =============================================

@@ -142,57 +142,58 @@ imprr <- function(data,
     ## This requires anchor questions and item order randomization
     p_non_random <- (mean(boostrap_dat[[anc_correct]]) - 1 / factorial(J)) /
       (1 - 1 / factorial(J))
-    # 
-    #    
-    # # Step 2: Get the distribution of random answers
-    # ## This requires item order randomization
-    # ## The reference is a uniform distribution
-    # U <- 1 / factorial(J) 
-    # 
-    # 
-    # # Step 3: Get the observed PMF based on raw data  
-    # ## Get raw counts of ranking profiles
-    #   D_PMF_0 <- loc_app %>%
-    #   unite(ranking, sep = "") %>%
-    #   group_by(ranking) %>%
-    #   count()
-    # 
-    # ## Create sample space to merge
-    # perm_j <- permn(1:J)
-    # perm_j <- do.call(rbind.data.frame, perm_j)
-    # colnames(perm_j) <- c(paste0("position_", 1:J))
-    # perm_j <- perm_j %>% unite(col = "ranking", sep = "")
-    # 
-    # ## We need this because some rankings may not appear in the data
-    # PMF_raw <- perm_j %>%
-    #   left_join(D_PMF_0, by = "ranking") %>%
-    #   mutate(
-    #     n = ifelse(is.na(n) == T, 0, n),
-    #     prop = n / sum(n),
-    #     prop = ifelse(is.na(prop), 0, prop)
-    #   )
-    # 
-    # 
-    # # Step 4: Get the bias-corrected PMF
-    # ## Apply Equation A.11
-    # imp_PMF_0 <- (PMF_raw$prop - (U * (1 - p_non_random))) / p_non_random
-    # 
-    # ## Recombine with ranking ID
-    # imp_PMF_1 <- perm_j %>%
-    #   mutate(n = imp_PMF_0)
-    # 
-    # 
-    # # Step 5: Re-normalize the PMF     
-    # ## The previous step may produce outside-the-bound values (negative proportions) 
-    # imp_PMF <- imp_PMF_1 %>%
-    #   mutate(n_adj = ifelse(n < 0, 0, n),
-    #          n_renormalized = n_adj / sum(n_adj))
-    # 
-    # # Step 6: Get the bias-correction weight vector
-    # df_w <- perm_j %>%
-    #   mutate(w = imp_PMF$n_renormalized / PMF_raw$prop,
-    #          w = ifelse(w == Inf, 0, w))
-    
+
+
+    # Step 2: Get the distribution of random answers
+    ## This requires item order randomization
+    ## The reference is a uniform distribution
+    U <- 1 / factorial(J)
+
+
+    # Step 3: Get the observed PMF based on raw data
+    ## Get raw counts of ranking profiles
+      D_PMF_0 <- loc_app %>%
+      unite(ranking, sep = "") %>%
+      group_by(ranking) %>%
+      count()
+
+    ## Create sample space to merge
+    perm_j <- permn(1:J)
+    perm_j <- do.call(rbind.data.frame, perm_j)
+    colnames(perm_j) <- c(paste0("position_", 1:J))
+    perm_j <- perm_j %>% unite(col = "ranking", sep = "") %>%
+      arrange(ranking)
+
+    ## We need this because some rankings may not appear in the data
+    PMF_raw <- perm_j %>%
+      left_join(D_PMF_0, by = "ranking") %>%
+      mutate(
+        n = ifelse(is.na(n) == T, 0, n),
+        prop = n / sum(n),
+        prop = ifelse(is.na(prop), 0, prop)
+      )
+
+
+    # Step 4: Get the bias-corrected PMF
+    ## Apply Equation A.11
+    imp_PMF_0 <- (PMF_raw$prop - (U * (1 - p_non_random))) / p_non_random
+
+    ## Recombine with ranking ID
+    imp_PMF_1 <- perm_j %>%
+      mutate(n = imp_PMF_0)
+
+
+    # Step 5: Re-normalize the PMF
+    ## The previous step may produce outside-the-bound values (negative proportions)
+    imp_PMF <- imp_PMF_1 %>%
+      mutate(n_adj = ifelse(n < 0, 0, n),
+             n_renormalized = n_adj / sum(n_adj))
+
+    # Step 6: Get the bias-correction weight vector
+    df_w <- perm_j %>%
+      mutate(w = imp_PMF$n_renormalized / PMF_raw$prop,
+             w = ifelse(w == Inf, 0, w))
+
 
     # Step 7: Directly apply bias correction to simple quantities
     
@@ -210,10 +211,6 @@ imprr <- function(data,
     # Step 7.1: Locally code a few quantities
     ## Marginal rank
     Y_rank_target <- boostrap_dat[target_item] %>% pull() 
-    # Y_rank_others <- list()
-    # for(k in 1:J_1){
-    #   Y_rank_others[[k]] <- data[other_items[k]]  %>% pull() 
-    # }
 
     ## Pairwise ranking indicator    
     Y_pairwise <- list()                
@@ -301,7 +298,7 @@ imprr <- function(data,
   
   # Step 8: Save results
   list_prop[[i]] <- 1 - p_non_random # Estimated prop of random responses
-#  list_weights[[i]] <- df_w          # Estimated weights
+  list_weights[[i]] <- df_w          # Estimated weights
   list_qoi[[i]] <- all_qoi_df        # Bias-corrected estimates of several QOIs  
         
     
@@ -398,7 +395,8 @@ imprr <- function(data,
 
   return(list(p_random = df_random_summary,
               qoi = df_qoi_summary,
-              weights = df_w)
+              weights = df_w,
+              bootstrap_w = list_weights)
   )
   
 }
