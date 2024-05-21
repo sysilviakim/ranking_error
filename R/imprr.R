@@ -110,7 +110,8 @@ imprr <- function(data,
     ## Directly apply bias correction to our QOIs
     A_avg <- loc_anc %>%
       summarise(across(everything(), ~ mean(as.numeric(.x))))
-    
+
+        
     if (asymptotics == FALSE) {
       ## We will fully learn from data including noise via sampling variability
       
