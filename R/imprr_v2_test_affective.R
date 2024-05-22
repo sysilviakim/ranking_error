@@ -18,7 +18,7 @@ test <- imprr(
   main_q = "app_polar",
   anchor_q =  "anc_polar",
   anc_correct = "anc_correct_polar",
-  n_bootstrap = 10
+  n_bootstrap = 500
 )
 
 
