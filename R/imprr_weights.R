@@ -35,20 +35,20 @@
 #' @param seed Seed for \text{set.seed} for reproducibility.
 #' 
 
-source(here::here("R", "utilities.R"))
-load(here("data", "tidy", "df_list.Rda"))
-
-data <- df_list$main %>%
-  select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
-         anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
-         anc_correct_identity)
-
-main_q <- "app_identity"
-anchor_q <- "anc_identity"
-anc_correct <- "anc_correct_identity"
-J <- 4
-n_bootstrap = 10
-seed = 123456
+# source(here::here("R", "utilities.R"))
+# load(here("data", "tidy", "df_list.Rda"))
+# 
+# data <- df_list$main %>%
+#   select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
+#          anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
+#          anc_correct_identity)
+# 
+# main_q <- "app_identity"
+# anchor_q <- "anc_identity"
+# anc_correct <- "anc_correct_identity"
+# J <- 4
+# n_bootstrap = 10
+# seed = 123456
 
 imprr_weights <- function(data,
                           J,
