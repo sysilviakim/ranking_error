@@ -1,6 +1,7 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 source(here::here("R", "imprr_weights.R"))
+source(here::here("R", "imprr_direct.R"))
 
 # Grab main data
 main <- df_list$main
@@ -93,13 +94,25 @@ sum(pmf$prop_renormalized) # must be one (check)
 
 # Get the corrected average ranks ==============================================
  
-## Merge weights
-dt <- dt %>%
-  left_join(w$weights, by = "ranking")
+## Corrected average ranks via direct correction
+direct <- imprr_direct(
+  data = data,
+  J = 4,
+  main_q = "app_identity",
+  anchor_q =  "anc_identity",
+  anc_correct = "anc_correct_identity",
+  n_bootstrap = 200
+)
 
+direct$qoi %>% filter(qoi == "average rank")
+  
 ## Unweighted (working on weight-adding function)
 avg_rank(dt, "app_identity", items = c("Party", "Religion", "Gender", "Race"))
 
+
+## Merge weights
+dt <- dt %>%
+  left_join(w$weights, by = "ranking")
 
 ## All sample
 dt %>%
@@ -109,6 +122,9 @@ dt %>%
             wm_race = weighted.mean(rank_race, w),
             wm_religion = weighted.mean(rank_religion, w),
             wm_party = weighted.mean(rank_party, w)) 
+
+## Compare
+direct$qoi %>% filter(qoi == "average rank")
 
 
 
@@ -185,4 +201,36 @@ dt %>%
   arrange(desc(wm_party))
 
 
+# Modal rankings (not really informative, need to think)
+
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+# 1 = Man
+# 2 = Woman
+# 3 = Other/Prefer not to say
+
+Mode(dt$ordering)
+Mode(dt$ordering[dt$gender3 == 1])
+Mode(dt$ordering[dt$gender3 == 2])
+Mode(dt$ordering[dt$gender3 == 3])
+
+Mode(dt$ordering[dt$race4 == 1])
+Mode(dt$ordering[dt$race4 == 2])
+Mode(dt$ordering[dt$race4 == 3])
+Mode(dt$ordering[dt$race4 == 4])
+
+Mode(dt$ordering[dt$religpew == 1])
+Mode(dt$ordering[dt$religpew == 2])
+Mode(dt$ordering[dt$religpew == 5])
+Mode(dt$ordering[dt$religpew == 9])
+Mode(dt$ordering[dt$religpew == 10])
+Mode(dt$ordering[dt$religpew == 11])
+Mode(dt$ordering[dt$religpew == 12])
+
+Mode(dt$ordering[dt$pid3 == 1])
+Mode(dt$ordering[dt$pid3 == 2])
+Mode(dt$ordering[dt$pid3 == 3])
 
