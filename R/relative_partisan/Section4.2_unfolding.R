@@ -1,5 +1,6 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
+source(here::here("R", "imprr_weights.R"))
 
 # Grab main data
 main <- df_list$main
@@ -12,12 +13,23 @@ main <- main %>%
 
 # Reference set: (party, religion, gender, race)
 # Grab rankings and weights
-imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
-  mutate(
-    app_identity = as.character(ranking),
-    bias_weight = weight
-  ) %>%
-  dplyr::select(app_identity, est.x.adj)
+
+# Get bias-correction weights ==================================================
+
+data <- main %>%
+  select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
+         anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
+         anc_correct_identity)
+
+w <- imprr_weights(
+  data = data,
+  J = 4,
+  main_q = "app_identity",
+  anchor_q =  "anc_identity",
+  anc_correct = "anc_correct_identity"
+)
+
+print(w)
 
 
 # Downsize data
@@ -28,90 +40,91 @@ dt <- main %>%
     party = app_identity_1,
     religion = app_identity_2,
     gender = app_identity_3,
-    race = app_identity_4
+    race = app_identity_4,
+    ranking = app_identity
   ) %>%
-  left_join(imp_w, by = "app_identity") %>%
-  rename(bias_weight = est.x.adj) %>%
+  left_join(w$weights, by = "ranking") %>%
   dplyr::select(
-    party, religion, gender, race, id, ideo7, bias_weight
+    party, religion, gender, race, id, ideo7, w
   ) %>%
   filter(!is.na(ideo7))
 
+
 # "sample" from correct PMF
-set.seed(142)
-rank_sample <- NA
-for (i in 1:1081) {
-  rank_sample[i] <-
-    imp_w$app_identity[rmultinom(1, size = 1, prob = imp_w$est.x.adj) == 1]
-}
-
-rank_sample <- rank_sample %>%
-  tibble() %>%
-  mutate(
-    party = as.integer(substr(., 1, 1)),
-    religion = as.integer(substr(., 2, 2)),
-    gender = as.integer(substr(., 3, 3)),
-    race = as.integer(substr(., 4, 4))
-  ) %>%
-  dplyr::select(-.)
-
-
-# Motivate Unfolding ===========================================================
-# Now, let's understand which items are similar (or dissimilar) to each other
-# The most intuitive analysis is to see a binariate relationship between a pair
-# of items
-
-# First, let's see the univariate distribution of each item separately
-par(mfrow = c(2,2))
-hist(rank_sample$party, main = "Party")
-hist(rank_sample$religion, main = "Religion")
-hist(rank_sample$gender, main = "Gender")
-hist(rank_sample$race, main = "Race/ethnicity")
-
-## This is very interesting in and itself. Religion has a non-single peaked pref
-
-# Second, let's see the bivariate relationship of each pair of items
-par(mfrow = c(2,3),
-    mar = c(4.5,4,3,2))
-plot(jitter(rank_sample$party), jitter(rank_sample$religion),
-     col = alpha("black", 0.8), pch = ".",
-     xlab = "Party", ylab = "Religion")
-abline(lm(religion ~ party, rank_sample), col = "darkred", lwd = 1.5)
-
-plot(jitter(rank_sample$party), jitter(rank_sample$gender),
-     col = alpha("black", 0.8), pch = ".",
-     xlab = "Party", ylab = "Gender")
-abline(lm(gender ~ party, rank_sample), col = "darkred", lwd = 1.5)
-
-plot(jitter(rank_sample$party), jitter(rank_sample$race),
-     col = alpha("black", 0.8), pch = ".",
-     xlab = "Party", ylab = "Race/ethnicity")
-abline(lm(race ~ party, rank_sample), col = "darkred", lwd = 1.5)
+# set.seed(142)
+# rank_sample <- NA
+# for (i in 1:1081) {
+#   rank_sample[i] <-
+#     w$weights$w[rmultinom(1, size = 1, prob = imp_w$est.x.adj) == 1]
+# }
+# 
+# rank_sample <- rank_sample %>%
+#   tibble() %>%
+#   mutate(
+#     party = as.integer(substr(., 1, 1)),
+#     religion = as.integer(substr(., 2, 2)),
+#     gender = as.integer(substr(., 3, 3)),
+#     race = as.integer(substr(., 4, 4))
+#   ) %>%
+#   dplyr::select(-.)
 
 
-plot(jitter(rank_sample$religion), jitter(rank_sample$gender),
-     col = alpha("black", 0.8), pch = ".",
-     xlab = "Religion", ylab = "Gender")
-abline(lm(gender ~ religion, rank_sample), col = "darkred", lwd = 1.5)
-
-plot(jitter(rank_sample$religion), jitter(rank_sample$race),
-     col = alpha("black", 0.8), pch = ".",
-     xlab = "Religion", ylab = "Race/ethnicity")
-abline(lm(race ~ religion, rank_sample), col = "darkred", lwd = 1.5)
-
-plot(jitter(rank_sample$gender), jitter(rank_sample$race),
-     col = alpha("black", 0.8), pch = ".",
-     xlab = "Gender", ylab = "Race/ethnicity")
-abline(lm(race ~ gender, rank_sample), col = "darkred", lwd = 1.5)
-
-# We can see that many items have negative correlations
-# Exceptions are party-gender and gender-race
-
-# Now, can we examine the tri-variate relations?
-# The answer is probably NO since we are running out of dimensions
-# Instead of creating 3-D plots, we seek to squash the dimensions and 
-# plot the results in a two-dimensional space
-# That's the main idea for unfolding (multidimensional scaling, PCA, all similar)
+# # Motivate Unfolding ===========================================================
+# # Now, let's understand which items are similar (or dissimilar) to each other
+# # The most intuitive analysis is to see a binariate relationship between a pair
+# # of items
+# 
+# # First, let's see the univariate distribution of each item separately
+# par(mfrow = c(2,2))
+# hist(rank_sample$party, main = "Party")
+# hist(rank_sample$religion, main = "Religion")
+# hist(rank_sample$gender, main = "Gender")
+# hist(rank_sample$race, main = "Race/ethnicity")
+# 
+# ## This is very interesting in and itself. Religion has a non-single peaked pref
+# 
+# # Second, let's see the bivariate relationship of each pair of items
+# par(mfrow = c(2,3),
+#     mar = c(4.5,4,3,2))
+# plot(jitter(rank_sample$party), jitter(rank_sample$religion),
+#      col = alpha("black", 0.8), pch = ".",
+#      xlab = "Party", ylab = "Religion")
+# abline(lm(religion ~ party, rank_sample), col = "darkred", lwd = 1.5)
+# 
+# plot(jitter(rank_sample$party), jitter(rank_sample$gender),
+#      col = alpha("black", 0.8), pch = ".",
+#      xlab = "Party", ylab = "Gender")
+# abline(lm(gender ~ party, rank_sample), col = "darkred", lwd = 1.5)
+# 
+# plot(jitter(rank_sample$party), jitter(rank_sample$race),
+#      col = alpha("black", 0.8), pch = ".",
+#      xlab = "Party", ylab = "Race/ethnicity")
+# abline(lm(race ~ party, rank_sample), col = "darkred", lwd = 1.5)
+# 
+# 
+# plot(jitter(rank_sample$religion), jitter(rank_sample$gender),
+#      col = alpha("black", 0.8), pch = ".",
+#      xlab = "Religion", ylab = "Gender")
+# abline(lm(gender ~ religion, rank_sample), col = "darkred", lwd = 1.5)
+# 
+# plot(jitter(rank_sample$religion), jitter(rank_sample$race),
+#      col = alpha("black", 0.8), pch = ".",
+#      xlab = "Religion", ylab = "Race/ethnicity")
+# abline(lm(race ~ religion, rank_sample), col = "darkred", lwd = 1.5)
+# 
+# plot(jitter(rank_sample$gender), jitter(rank_sample$race),
+#      col = alpha("black", 0.8), pch = ".",
+#      xlab = "Gender", ylab = "Race/ethnicity")
+# abline(lm(race ~ gender, rank_sample), col = "darkred", lwd = 1.5)
+# 
+# # We can see that many items have negative correlations
+# # Exceptions are party-gender and gender-race
+# 
+# # Now, can we examine the tri-variate relations?
+# # The answer is probably NO since we are running out of dimensions
+# # Instead of creating 3-D plots, we seek to squash the dimensions and 
+# # plot the results in a two-dimensional space
+# # That's the main idea for unfolding (multidimensional scaling, PCA, all similar)
 
 
 # Run Unfolding ================================================================
@@ -120,7 +133,7 @@ library(smacof)
 
 set.seed(142)
 out <- unfolding(dt[, 1:4], type = "ordinal", circle = "column")
-out_w <- unfolding(rank_sample, type = "ordinal", circle = "column")
+#out_w <- unfolding(rank_sample, type = "ordinal", circle = "column")
 
 # Goodness-of-fit
 out_w
@@ -159,61 +172,18 @@ vmu_w
 # Number of dimensions: 2
 # Variance accounted for: 83.13%
 
-
-# Visualize via ggplot
-covar <- main %>%
-  filter(!is.na(ideo7)) %>%
-  mutate(gender3labeled = case_when(gender3 == 1 ~ "male",
-                                    gender3 == 2 ~ "female",
-                                    TRUE ~ "others")) %>%
-  select(race4labeled, gender3, pid3final)
-
-conf_items <- as.data.frame(out_w$conf.col)
-conf_persons <- as.data.frame(out_w$conf.row) 
+conf_items <- as.data.frame(out$conf.col)
+conf_persons <- as.data.frame(out$conf.row) 
 
 
-dt_unfold <- cbind(conf_persons, covar) 
 
-# %>%
-#   select(D1, D2, pid3final) %>%
-#   group_by(pid3final) %>%
-#   mutate(n_within_party = n()) %>%
-#   ungroup() %>%
-#   group_by(D1, D2, pid3final) %>%
-#   mutate(n_unique_rank = n(),
-#          p_unique_within_party = n_unique_rank/n_within_party) %>%
-#   ungroup() %>%
-#   arrange(D1, D2, pid3final) %>%
-#   distinct(D1, D2, pid3final, p_unique_within_party)
-
-
+# Single graph
 set.seed(24)
-
-dt_unfold %>%
-  filter(pid3final == "Democrat") %>%
+conf_persons %>%
   ggplot(aes(x = D1, y = D2)) +
-  geom_jitter(width = 0.1, height = 0.1,
-             shape = 1, 
-             color ="darkcyan", 
-             alpha = 0.3) + 
-  geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
-  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
-            conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
-  xlab("Primary dimension") +
-  ylab("Secondary dimension") +
-  xlim(-1, 1) +
-  ggtitle("Democrat") +
-  theme_bw() +
-  theme(legend.position = "none",
-        legend.title = element_blank()) -> dem
-
-
-dt_unfold %>%
-  filter(pid3final == "Independent") %>%
-  ggplot(aes(x = D1, y = D2)) +
-  geom_jitter(width = 0.1, height = 0.1,
+  geom_jitter(width = 0.05, height = 0.05,
               shape = 1, 
-              color ="purple4", 
+              color ="darkcyan", 
               alpha = 0.3) + 
   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
@@ -222,36 +192,108 @@ dt_unfold %>%
   ylab("Secondary dimension") +
   xlim(-1, 1) +
   theme_bw() +
-  ggtitle("Independent") +  
   theme(legend.position = "none",
-        legend.title = element_blank()) -> ind
+        legend.title = element_blank())
 
-
-dt_unfold %>%
-  filter(pid3final == "Republican") %>%
-  ggplot(aes(x = D1, y = D2)) +
-  geom_jitter(width = 0.1, height = 0.1,
-              shape = 1, 
-              color ="deeppink4", 
-              alpha = 0.3) + 
-  geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
-  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
-            conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
-  xlab("Primary dimension") +
-  ylab("Secondary dimension") +
-  xlim(-1, 1) +
-  theme_bw() +
-  ggtitle("Republican") +
-  theme(legend.position = "none",
-        legend.title = element_blank()) -> rep
-
-
-ggpubr::ggarrange(dem, ind, rep, ncol = 3)
 
 ggsave(here::here("fig/sub", "sub_unfolding.pdf"), 
-       width = 9, height = 3)
+       width = 4.2, height = 4)
 
 
+# # Old visuzliation with subsets
+# 
+# # Visualize via ggplot
+# covar <- main %>%
+#   filter(!is.na(ideo7)) %>%
+#   mutate(gender3labeled = case_when(gender3 == 1 ~ "male",
+#                                     gender3 == 2 ~ "female",
+#                                     TRUE ~ "others")) %>%
+#   select(race4labeled, gender3, pid3final)
+# 
+# conf_items <- as.data.frame(out_w$conf.col)
+# conf_persons <- as.data.frame(out_w$conf.row) 
+# 
+# 
+# dt_unfold <- cbind(conf_persons, covar) 
+# 
+# # %>%
+# #   select(D1, D2, pid3final) %>%
+# #   group_by(pid3final) %>%
+# #   mutate(n_within_party = n()) %>%
+# #   ungroup() %>%
+# #   group_by(D1, D2, pid3final) %>%
+# #   mutate(n_unique_rank = n(),
+# #          p_unique_within_party = n_unique_rank/n_within_party) %>%
+# #   ungroup() %>%
+# #   arrange(D1, D2, pid3final) %>%
+# #   distinct(D1, D2, pid3final, p_unique_within_party)
+# 
+# 
+# set.seed(24)
+# 
+# dt_unfold %>%
+#   filter(pid3final == "Democrat") %>%
+#   ggplot(aes(x = D1, y = D2)) +
+#   geom_jitter(width = 0.1, height = 0.1,
+#              shape = 1, 
+#              color ="darkcyan", 
+#              alpha = 0.3) + 
+#   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
+#   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+#             conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
+#   xlab("Primary dimension") +
+#   ylab("Secondary dimension") +
+#   xlim(-1, 1) +
+#   ggtitle("Democrat") +
+#   theme_bw() +
+#   theme(legend.position = "none",
+#         legend.title = element_blank()) -> dem
+# 
+# 
+# dt_unfold %>%
+#   filter(pid3final == "Independent") %>%
+#   ggplot(aes(x = D1, y = D2)) +
+#   geom_jitter(width = 0.1, height = 0.1,
+#               shape = 1, 
+#               color ="purple4", 
+#               alpha = 0.3) + 
+#   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
+#   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+#             conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
+#   xlab("Primary dimension") +
+#   ylab("Secondary dimension") +
+#   xlim(-1, 1) +
+#   theme_bw() +
+#   ggtitle("Independent") +  
+#   theme(legend.position = "none",
+#         legend.title = element_blank()) -> ind
+# 
+# 
+# dt_unfold %>%
+#   filter(pid3final == "Republican") %>%
+#   ggplot(aes(x = D1, y = D2)) +
+#   geom_jitter(width = 0.1, height = 0.1,
+#               shape = 1, 
+#               color ="deeppink4", 
+#               alpha = 0.3) + 
+#   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) + 
+#   geom_text(aes(x = D1, y = D2, label = rownames(conf_items)), 
+#             conf_items, colour = "black", vjust = -0.8, hjust = 0.5) +    
+#   xlab("Primary dimension") +
+#   ylab("Secondary dimension") +
+#   xlim(-1, 1) +
+#   theme_bw() +
+#   ggtitle("Republican") +
+#   theme(legend.position = "none",
+#         legend.title = element_blank()) -> rep
+# 
+# 
+# ggpubr::ggarrange(dem, ind, rep, ncol = 3)
+# 
+# ggsave(here::here("fig/sub", "sub_unfolding.pdf"), 
+#        width = 9, height = 3)
+# 
+# 
 
 # # Old visualization
 # library(ggrepel)
