@@ -1,38 +1,17 @@
 source(here::here("R", "utilities.R"))
-load(here("data", "tidy", "df_list.Rda"))
-main <- df_list$main
-item_list <- c(
-  "Politicians", "Print Media and TV", "Social Media",
-  "Interest Groups", "Citizens"
-)
 
-summ_avg_rank_by_group <- function(v = NULL, label = NULL) {
-  if (is.null(v) | is.null(label)) {
-    avg_rank(main, "app_polar", items = item_list) %>%
-      select(-se) %>%
-      pivot_wider(names_from = "name", values_from = "mean") %>%
-      select(
-        Politicians, `Print Media and TV`,
-        `Social Media`, `Interest Groups`, Citizens
-      )
-  } else {
-    unique(main[[v]]) %>%
-      set_names(., .) %>%
-      map(
-        ~ avg_rank(
-          main %>% filter(!!as.name(v) == .x), "app_polar",
-          items = item_list
-        )
-      ) %>%
-      bind_rows(.id = label) %>%
-      select(-se) %>%
-      pivot_wider(names_from = "name", values_from = "mean") %>%
-      select(
-        !!as.name(label), Politicians, `Print Media and TV`,
-        `Social Media`, `Interest Groups`, Citizens
-      )
-  }
-}
+# Setup and load saved .Rda files ==============================================  
+load(here("data", "tidy", "df_list.Rda"))
+load(here("data", "tidy", "prep_applications_list.Rda"))
+load(here("output", "corrected_avg_list_asymp.Rda"))
+main <- df_list$main
+item_list <- data.frame(
+  item = c(
+    "Politicians", "Print Media and TV", "Social Media",
+    "Interest Groups", "Citizens"
+  ),
+  variable = paste("app_polar", 1:5, sep = "_")
+)
 
 # Data processing ==============================================================
 main <- main %>%
@@ -102,19 +81,29 @@ main <- main %>%
 # Average rank calculations ====================================================
 ## By subgroups ----------------------------------------------------------------
 ## All sample
-avg_rank(main, "app_polar", items = item_list)
+avg_rank(main, "app_polar", items = item_list$item)
+avg_rank(dt_w, raw = FALSE, weight = "w", items = item_list, round = 2)
 
-## By partisanship
-summ_avg_rank_by_group("pid3final", "Partisanship")
-
-## By race
-summ_avg_rank_by_group("race4labeled", "Race")
-
-## By political interest
+## By partisanship: raw
 summ_avg_rank_by_group(
-  "newsint_labeled", 
-  "Follow Politics (Political Interest)"
+  main,
+  v = "pid3final", items = item_list$item, label = "Partisanship"
 )
+
+## By race: raw
+summ_avg_rank_by_group(
+  main,
+  v = "race4labeled", items = item_list$item, label = "Race"
+)
+
+## By political interest: raw
+summ_avg_rank_by_group(
+  main,
+  v = "newsint_labeled", items = item_list$item,
+  label = "Follow Politics (Political Interest)"
+)
+
+
 
 ## Export via xtable -----------------------------------------------------------
 tab <- xtable(summ_avg_rank_by_group(), digits = 2)
