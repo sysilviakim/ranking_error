@@ -8,6 +8,13 @@ data <- df_list$main %>%
          anc_polar_1, anc_polar_2, anc_polar_3, anc_polar_4, anc_polar_5,
          anc_correct_polar)
 
+item_list <- data.frame(
+  item = c(
+    "Politicians", "Print Media and TV", "Social Media",
+    "Interest Groups", "Citizens"
+  ),
+  variable = paste("app_polar", 1:5, sep = "_")
+)
 
 # Test the function ============================================================
 source(here::here("R", "imprr_v2.R"))
@@ -50,6 +57,9 @@ rbind(id1, id2, id3, id4, id5) %>%
   select(item, qoi, mean, lower, upper) %>%
   mutate(method = "Raw data") -> result_raw
 
+## Same as the following
+result_raw
+avg_rank(main, "app_polar", items = item_list$item)
 
 ## Based on IPW estimator =======================================================
 id1 <- lm_robust(app_polar_1 ~ 1, dt_w, weights = w) %>% tidy()
@@ -68,6 +78,8 @@ rbind(id1, id2, id3, id4, id5) %>%
   select(item, qoi, mean, lower, upper) %>%
   mutate(method = "IPW") -> result_ipw
 
+result_ipw
+avg_rank(dt_w, raw = FALSE, weight = "w", items = item_list, round = 2)
 
 ## Based on direct bias-correction =============================================
 test$qoi %>% filter(qoi == "average rank") %>% 
