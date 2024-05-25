@@ -3,7 +3,6 @@ source(here::here("R", "utilities.R"))
 # Setup and load saved .Rda files ==============================================  
 load(here("data", "tidy", "df_list.Rda"))
 load(here("data", "tidy", "prep_applications_list.Rda"))
-load(here("output", "corrected_avg_list_asymp.Rda"))
 main <- df_list$main
 item_list <- data.frame(
   item = c(
@@ -77,89 +76,3 @@ main <- main %>%
       rank_citizens == 1 ~ "citizens"
     )
   )
-
-# Average rank calculations ====================================================
-## By subgroups ----------------------------------------------------------------
-## All sample
-avg_rank(main, "app_polar", items = item_list$item)
-avg_rank(dt_w, raw = FALSE, weight = "w", items = item_list, round = 2)
-
-## By partisanship: raw
-summ_avg_rank_by_group(
-  main,
-  v = "pid3final", items = item_list$item, label = "Partisanship"
-)
-
-## By race: raw
-summ_avg_rank_by_group(
-  main,
-  v = "race4labeled", items = item_list$item, label = "Race"
-)
-
-## By political interest: raw
-summ_avg_rank_by_group(
-  main,
-  v = "newsint_labeled", items = item_list$item,
-  label = "Follow Politics (Political Interest)"
-)
-
-
-
-## Export via xtable -----------------------------------------------------------
-tab <- xtable(summ_avg_rank_by_group(), digits = 2)
-print(
-  tab, include.rownames = FALSE, booktabs = TRUE, floating = FALSE,
-  file = here("tab", "affpolar_avg_ranks.tex")
-)
-
-tab <- xtable(
-  summ_avg_rank_by_group("pid3final", "Partisanship") %>%
-    mutate(
-      Partisanship = factor(
-        Partisanship,
-        levels = c("Democrat", "Republican", "Independent")
-      )
-    ),
-  digits = 2
-)
-print(
-  tab, include.rownames = FALSE, booktabs = TRUE, floating = FALSE,
-  file = here("tab", "affpolar_avg_ranks_by_partisanship.tex")
-)
-
-tab <- xtable(
-  summ_avg_rank_by_group("race4labeled", "Race") %>%
-    mutate(
-      Race = factor(
-        Race,
-        levels = c("White", "Black", "Hispanic", "Other race"),
-        labels = c("White", "Black", "Hispanic/Latino", "Other race")
-      )
-    ),
-  digits = 2
-)
-print(
-  tab, include.rownames = FALSE, booktabs = TRUE, floating = FALSE,
-  file = here("tab", "affpolar_avg_ranks_by_race.tex")
-)
-
-tab <- xtable(
-  summ_avg_rank_by_group(
-    "newsint_labeled", 
-    "Follow Politics (Political Interest)"
-  ) %>%
-    mutate(
-      `Follow Politics (Political Interest)` = factor(
-        `Follow Politics (Political Interest)`,
-        levels = c(
-          "Most of the time", "Some of the time",
-          "Only now and then", "Hardly at all"
-        )
-      )
-    ),
-  digits = 2
-)
-print(
-  tab, include.rownames = FALSE, booktabs = TRUE, floating = FALSE,
-  file = here("tab", "affpolar_avg_ranks_by_political_interest.tex")
-)

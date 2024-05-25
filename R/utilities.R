@@ -25,7 +25,6 @@ library(ranking)
 
 # Read all functions
 source(here("R", "yougov_import.R"))
-source(here("R", "imprr_v2.R")) ## change this to individual fxns later
 
 # Parameters/stored vectors ====================================================
 bootstrap_n <- 1000
