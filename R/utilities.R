@@ -470,7 +470,7 @@ viz_avg_wrapper <- function(data, J = NULL) {
 
 summ_avg_rank_by_group <- function(data, items = NULL, 
                                    v = NULL, label = NULL, raw = TRUE,
-                                   weight = NULL, round = NULL) {
+                                   weight = NULL, round = 2) {
   if (is.null(v) | is.null(label)) {
     avg_rank(
       data, "app_polar", items = items,

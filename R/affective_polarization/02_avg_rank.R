@@ -7,43 +7,65 @@ data <- df_list$main %>%
   )
 
 # Bias-correction (direct + IPW) ===============================================
-direct_out <- imprr_direct(
-  data = data,
-  J = 5,
-  main_q = "app_polar",
-  anchor_q = "anc_polar",
-  anc_correct = "anc_correct_polar",
-  n_bootstrap = 500
-)
+fname <- here("output", "polar.Rda")
+if (!file.exists(fname)) {
+  direct_out <- imprr_direct(
+    data = data,
+    J = 5,
+    main_q = "app_polar",
+    anchor_q = "anc_polar",
+    anc_correct = "anc_correct_polar",
+    n_bootstrap = 1000
+  )
+  
+  ipw_out <- imprr_weights(
+    data = data,
+    J = 5,
+    main_q = "app_polar",
+    anchor_q = "anc_polar",
+    anc_correct = "anc_correct_polar",
+    n_bootstrap = 1000
+  )
 
-ipw_out <- imprr_weights(
-  data = data,
-  J = 5,
-  main_q = "app_polar",
-  anchor_q = "anc_polar",
-  anc_correct = "anc_correct_polar",
-  n_bootstrap = 500
-)
+  save(list = c("direct_out", "ipw_out"), file = fname)
+} else {
+  load(fname)
+}
+
 
 ## Join computed weights to main data
 dt_w <- main %>%
-  rename(ranking = app_polar) %>%
   select(
     app_polar_1, app_polar_2, app_polar_3, app_polar_4, app_polar_5,
-    ranking
+    app_polar, everything()
   ) %>%
-  left_join(ipw_out$weights)
+  left_join(ipw_out$weights, by = c("app_polar" = "ranking"))
 
 # Average rank calculations ====================================================
 ## By subgroups ----------------------------------------------------------------
-## All sample
+## All sample: raw and corrected
 avg_rank(main, "app_polar", items = item_list$item, round = 2)
-avg_rank(dt_w, raw = FALSE, weight = "w", items = item_list, round = 2)
+avg_rank(
+  dt_w %>%
+    select(app_polar_1, app_polar_2, app_polar_3, app_polar_4, app_polar_5, w), 
+  raw = FALSE, weight = "w", items = item_list, round = 2
+)
+# direct_out$qoi %>%
+#   filter(qoi == "average rank") %>%
+#   select(mean, lower, upper) %>%
+#   mutate(method = "Direct")
 
 ## By partisanship: raw
 summ_avg_rank_by_group(
   main,
   v = "pid3final", items = item_list$item, label = "Partisanship"
+)
+
+## By partisanship: raw
+summ_avg_rank_by_group(
+  dt_w,
+  v = "pid3final", items = item_list, label = "Partisanship",
+  raw = FALSE, weight = "w"
 )
 
 ## By race: raw
@@ -58,8 +80,6 @@ summ_avg_rank_by_group(
   v = "newsint_labeled", items = item_list$item,
   label = "Follow Politics (Political Interest)"
 )
-
-
 
 ## Export via xtable -----------------------------------------------------------
 tab <- xtable(summ_avg_rank_by_group(), digits = 2)
