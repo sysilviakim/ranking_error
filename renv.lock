@@ -520,13 +520,13 @@
     },
     "backports": {
       "Package": "backports",
-      "Version": "1.4.1",
+      "Version": "1.5.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R"
       ],
-      "Hash": "c39fbec8a30d23e721980b8afb31984c"
+      "Hash": "e1e1b9d75c37401117b636b7ae50827a"
     },
     "base64enc": {
       "Package": "base64enc",
@@ -1576,7 +1576,7 @@
     },
     "ggsci": {
       "Package": "ggsci",
-      "Version": "3.0.3",
+      "Version": "3.1.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1585,7 +1585,7 @@
         "grDevices",
         "scales"
       ],
-      "Hash": "3516e3ebb6dd31756844ab6bbcbe32cc"
+      "Hash": "0c811246e30e146acd92da02bfdbb22a"
     },
     "ggsignif": {
       "Package": "ggsignif",
@@ -2533,14 +2533,14 @@
     },
     "mvtnorm": {
       "Package": "mvtnorm",
-      "Version": "1.2-4",
+      "Version": "1.2-5",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "R",
         "stats"
       ],
-      "Hash": "17e96668f44a28aef0981d9e17c49b59"
+      "Hash": "4d1891e59ac7a12b4e7e8a69349125f1"
     },
     "nlme": {
       "Package": "nlme",
@@ -3165,7 +3165,7 @@
       "RemoteRepo": "ranking",
       "RemoteUsername": "sysilviakim",
       "RemoteRef": "HEAD",
-      "RemoteSha": "99cabfe0f3b52010c0a18de123cbda2b2cabb365",
+      "RemoteSha": "aff83f90ba2123c80cd580e2c021e701f96a4934",
       "Requirements": [
         "PLMIX",
         "R",
@@ -3187,7 +3187,7 @@
         "tidyr",
         "tidyselect"
       ],
-      "Hash": "370093d8a0ec4b72851fa46127ef4147"
+      "Hash": "14aabf3525f2187b77a2843ce5a2a4c9"
     },
     "rappdirs": {
       "Package": "rappdirs",

@@ -8,7 +8,8 @@ data <- df_list$main %>%
 
 # Bias-correction (direct + IPW) ===============================================
 direct_out <- imprr_direct(
-  data = main,
+  data = data,
+  J = 5,
   main_q = "app_polar",
   anchor_q = "anc_polar",
   anc_correct = "anc_correct_polar",
@@ -16,17 +17,27 @@ direct_out <- imprr_direct(
 )
 
 ipw_out <- imprr_weights(
-  data = main,
+  data = data,
+  J = 5,
   main_q = "app_polar",
   anchor_q = "anc_polar",
   anc_correct = "anc_correct_polar",
   n_bootstrap = 500
 )
 
+## Join computed weights to main data
+dt_w <- main %>%
+  rename(ranking = app_polar) %>%
+  select(
+    app_polar_1, app_polar_2, app_polar_3, app_polar_4, app_polar_5,
+    ranking
+  ) %>%
+  left_join(ipw_out$weights)
+
 # Average rank calculations ====================================================
 ## By subgroups ----------------------------------------------------------------
 ## All sample
-avg_rank(main, "app_polar", items = item_list$item)
+avg_rank(main, "app_polar", items = item_list$item, round = 2)
 avg_rank(dt_w, raw = FALSE, weight = "w", items = item_list, round = 2)
 
 ## By partisanship: raw
