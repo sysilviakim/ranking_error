@@ -25,7 +25,7 @@ library(ranking)
 
 # Read all functions
 source(here("R", "yougov_import.R"))
-source(here("R", "imprr.R"))
+source(here("R", "imprr_v2.R")) ## change this to individual fxns later
 
 # Parameters/stored vectors ====================================================
 bootstrap_n <- 1000
@@ -467,4 +467,37 @@ viz_avg_wrapper <- function(data, J = NULL) {
         plot.title = element_text(face = "bold")
       )
   )
+}
+
+summ_avg_rank_by_group <- function(data, items = NULL, 
+                                   v = NULL, label = NULL, raw = TRUE,
+                                   weight = NULL, round = NULL) {
+  if (is.null(v) | is.null(label)) {
+    avg_rank(
+      data, "app_polar", items = items,
+      raw = raw, weight = weight, round = round
+    ) %>%
+      select(-se) %>%
+      pivot_wider(names_from = "name", values_from = "mean") %>%
+      select(
+        Politicians, `Print Media and TV`,
+        `Social Media`, `Interest Groups`, Citizens
+      )
+  } else {
+    unique(data[[v]]) %>%
+      set_names(., .) %>%
+      map(
+        ~ avg_rank(
+          data %>% filter(!!as.name(v) == .x), "app_polar",
+          items = items, raw = raw, weight = weight, round = round
+        )
+      ) %>%
+      bind_rows(.id = label) %>%
+      select(-se, -qoi, -lower, -upper, -method) %>%
+      pivot_wider(names_from = "item", values_from = "mean") %>%
+      select(
+        !!as.name(label), Politicians, `Print Media and TV`,
+        `Social Media`, `Interest Groups`, Citizens
+      )
+  }
 }
