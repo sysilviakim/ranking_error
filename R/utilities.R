@@ -468,22 +468,32 @@ viz_avg_wrapper <- function(data, J = NULL) {
   )
 }
 
+## Must make it more general
 summ_avg_rank_by_group <- function(data, items = NULL, 
                                    v = NULL, label = NULL, raw = TRUE,
-                                   weight = NULL, round = 2) {
+                                   weight = NULL, round = 2,
+                                   mean_only = TRUE) {
   if (is.null(v) | is.null(label)) {
-    avg_rank(
+    out <- avg_rank(
       data, "app_polar", items = items,
       raw = raw, weight = weight, round = round
-    ) %>%
-      select(-se) %>%
-      pivot_wider(names_from = "name", values_from = "mean") %>%
-      select(
-        Politicians, `Print Media and TV`,
-        `Social Media`, `Interest Groups`, Citizens
+    )
+    if (mean_only) {
+      return(
+        out %>%
+          select(-se, -qoi, -lower, -upper, -method) %>%
+          pivot_wider(names_from = "name", values_from = "mean") %>%
+          select(
+            Politicians, `Print Media and TV`,
+            `Social Media`, `Interest Groups`, Citizens
+          )
       )
+    } else {
+      return(out)
+    }
+    
   } else {
-    unique(data[[v]]) %>%
+    out <- unique(data[[v]]) %>%
       set_names(., .) %>%
       map(
         ~ avg_rank(
@@ -491,12 +501,56 @@ summ_avg_rank_by_group <- function(data, items = NULL,
           items = items, raw = raw, weight = weight, round = round
         )
       ) %>%
-      bind_rows(.id = label) %>%
-      select(-se, -qoi, -lower, -upper, -method) %>%
-      pivot_wider(names_from = "item", values_from = "mean") %>%
-      select(
-        !!as.name(label), Politicians, `Print Media and TV`,
-        `Social Media`, `Interest Groups`, Citizens
+      bind_rows(.id = label)
+    if (mean_only) {
+      return(
+        out %>%
+          select(-se, -qoi, -lower, -upper, -method) %>%
+          pivot_wider(names_from = "item", values_from = "mean") %>%
+          select(
+            !!as.name(label), Politicians, `Print Media and TV`,
+            `Social Media`, `Interest Groups`, Citizens
+          )
       )
+    } else {
+      return(out)
+    }
   }
+}
+
+viz_avg_rank_temp <- function(data, wrap = NULL) {
+  p <- ggplot(data %>% rename(Method = method), aes(x = mean, y = item)) +
+    geom_vline(xintercept = 3, linetype = "dashed", color = "gray50") +
+    geom_point(aes(color = Method, shape = Method),
+      position = position_dodge(width = 0.5)
+    ) +
+    geom_errorbar(
+      aes(
+        xmin = lower, xmax = upper,
+        color = Method, linetype = Method
+      ),
+      width = 0,
+      position = position_dodge(width = 0.5)
+    ) +
+    scale_color_manual(
+      values = c("#b0015a", "#999999"),
+      name = "Method", labels = c("IPW", "Raw Data")
+    ) +
+    scale_shape_manual(
+      name = "Method", labels = c("IPW", "Raw Data"),
+      values = c(17, 15)
+    ) +
+    scale_linetype_manual(
+      name = "Method", labels = c("IPW", "Raw Data"),
+      values = c(2, 3)
+    ) +
+    xlim(1.8, 5) +
+    ylab("") + 
+    xlab("Average Rank") +
+    theme_bw() + 
+    scale_x_continuous(limits = c(0.75, 5.25))
+  if (!is.null(wrap)) {
+    p <- p + facet_wrap(as.formula(paste("~", wrap)))
+  }
+  return(p)
 }
