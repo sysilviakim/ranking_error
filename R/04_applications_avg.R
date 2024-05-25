@@ -46,9 +46,9 @@ save(prep_list, file = here("data", "tidy", "prep_applications_list.Rda"))
 prep_list %>%
   imap(
     ~ avg_rank(.x$full, paste0("app_", .y))%>%
-      select(name, mean) %>%
+      select(item, mean) %>%
       ## transpose dataframe, with `name` column as column names
-      pivot_wider(names_from = name, values_from = mean)
+      pivot_wider(names_from = item, values_from = mean)
   )
 
 # $tate
@@ -130,7 +130,8 @@ corrected_avg_list_asymp <- root_var %>%
       main_q = paste0("app_", .y),
       anchor_q = paste0("anc_", .y),
       anc_correct = paste0("anc_correct_", .y),
-      main_labels = prep_list[[.y]]$labe-ls
+      main_labels = prep_list[[.y]]$labels,
+      n_bootstrap = 1000
     )
   )
 save(
@@ -157,4 +158,15 @@ corrected_avg_list_asymp %>% map("p_non_random") %>% bind_rows(.id = "app")
 # 4 esystems 0.5628818 0.5619383 0.5638253
 
 # Save weights =================================================================
-corrected_avg_list_asymp$tate$PMF
+c(raw = "A. Raw Data", corrected = "B. Bias Corrected") %>%
+  set_names(., .) %>%
+  imap(
+    ~ corrected_avg_list_asymp$tate$PMF %>%
+      filter(imp == .x) %>%
+      rename(
+        !!as.name(paste0(est, "_", .y)) := est,
+        !!as.name(paste0(low, "_", .y)) := low,
+        !!as.name(paste0(up, "_", .y)) := up
+      )
+  ) ## %>%
+  ## Reduce()
