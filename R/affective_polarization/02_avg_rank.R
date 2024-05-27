@@ -63,7 +63,7 @@ df <- rbind(
 
 p <- viz_avg_rank_temp(df)
 pdf_default(p)
-ggsave(here("fig", "avg_rank_polar.pdf"), width = 7, height = 3)
+ggsave(here("fig", "avg_rank_polar.pdf"), width = 6, height = 2.5)
 
 ## By partisanship -------------------------------------------------------------
 summ_avg_rank_by_group(
@@ -93,7 +93,7 @@ df <- rbind(
 p <- viz_avg_rank_temp(df, wrap = "Partisanship")
 pdf_default(p) + 
   theme(legend.position = "bottom")
-ggsave(here("fig", "avg_rank_polar_by_pid.pdf"), width = 8, height = 3.5)
+ggsave(here("fig", "avg_rank_polar_by_pid.pdf"), width = 7, height = 2.5)
 
 ## By race ---------------------------------------------------------------------
 summ_avg_rank_by_group(

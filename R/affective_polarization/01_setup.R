@@ -1,6 +1,6 @@
 source(here::here("R", "utilities.R"))
 
-# Setup and load saved .Rda files ==============================================  
+# Setup and load saved .Rda files ==============================================
 load(here("data", "tidy", "df_list.Rda"))
 load(here("data", "tidy", "prep_applications_list.Rda"))
 main <- df_list$main
@@ -57,6 +57,50 @@ main <- main %>%
       religpew %in% c(9, 10, 11) ~ 11,
       ## Note that Jewish: only 39 cases, but still keep as category
       TRUE ~ as.numeric(religpew)
+    ),
+    relig5 = factor(
+      relig5,
+      levels = c(1, 2, 5, 11, 12),
+      labels = c(
+        "Protestant", "Catholic", "Jewish",
+        "None/Agnostic/Atheist", "Other"
+      )
+    ),
+    region = factor(
+      region,
+      levels = c(1, 2, 3, 4),
+      labels = c("Northeast", "Midwest", "South", "West")
+    ),
+    educ4 = factor(
+      educ4,
+      levels = c(1, 2, 3, 4),
+      labels = c("HS or less", "Some college", "College grad", "Postgrad")
+    ),
+    gender3 = factor(
+      gender3,
+      levels = c(1, 2, 3),
+      label = c("Male", "Female", "Other")
+    ),
+    race4labeled = factor(
+      race4labeled,
+      levels = c("White", "Black", "Hispanic", "Other race"),
+    ),
+    pid3final = factor(
+      pid3final,
+      levels = c("Democrat", "Independent", "Republican")
+    ),
+    faminc = case_when(
+      faminc_new %in% c(1, 2, 3, 4, 5) ~ "Under 50k",
+      faminc_new %in% c(6, 7, 8) ~ "50-80k",
+      faminc_new %in% c(9, 10, 11) ~ "80-150k",
+      faminc_new %in% c(12, 13, 14, 15, 16) ~ "150k or more",
+      TRUE ~ "Prefer not to say"
+    ),
+    faminc = factor(
+      faminc,
+      levels = c(
+        "Under 50k", "50-80k", "80-150k", "150k or more", "Prefer not to say"
+      )
     )
   ) %>%
   ## Recoding identity variables
