@@ -3,16 +3,7 @@ library(lmtest)
 library(sandwich)
 library(stargazer)
 
-# Generate top-1 binary variables ==============================================
-main <- main %>%
-  mutate(
-    politician_top = case_when(app_polar_1 == 1 ~ 1, TRUE ~ 0),
-    media_top = case_when(app_polar_2 == 1 ~ 1, TRUE ~ 0),
-    social_top = case_when(app_polar_3 == 1 ~ 1, TRUE ~ 0),
-    interest_top = case_when(app_polar_4 == 1 ~ 1, TRUE ~ 0),
-    citizen_top = case_when(app_polar_5 == 1 ~ 1, TRUE ~ 0)
-  )
-
+# Top-1 binary variables =======================================================
 ## What is the proportion of each?
 main %>%
   select(matches("_top$")) %>%

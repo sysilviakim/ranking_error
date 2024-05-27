@@ -119,4 +119,11 @@ main <- main %>%
       rank_interest == 1 ~ "interest groups",
       rank_citizens == 1 ~ "citizens"
     )
+  ) %>%
+  mutate(
+    politician_top = case_when(app_polar_1 == 1 ~ 1, TRUE ~ 0),
+    media_top = case_when(app_polar_2 == 1 ~ 1, TRUE ~ 0),
+    social_top = case_when(app_polar_3 == 1 ~ 1, TRUE ~ 0),
+    interest_top = case_when(app_polar_4 == 1 ~ 1, TRUE ~ 0),
+    citizen_top = case_when(app_polar_5 == 1 ~ 1, TRUE ~ 0)
   )

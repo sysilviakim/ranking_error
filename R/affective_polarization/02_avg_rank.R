@@ -162,3 +162,47 @@ p <- viz_avg_rank_temp(df, wrap = "`Follow Politics (Political Interest)`")
 pdf_default(p) + 
   theme(legend.position = "bottom")
 ggsave(here("fig", "avg_rank_polar_by_newsint.pdf"), width = 7, height = 3.5)
+
+# PID: chi-squared test ========================================================
+main_binary <- main %>%
+  filter(!(pid3final == "Independent")) %>%
+  mutate(pid3final = as.character(pid3final))
+
+chisq.test(table(main_binary$pid3final, main_binary$app_polar_1))
+chisq.test(table(main_binary$pid3final, main_binary$app_polar_2))
+chisq.test(table(main_binary$pid3final, main_binary$app_polar_3)) ## p 0.05688
+chisq.test(table(main_binary$pid3final, main_binary$app_polar_4))
+chisq.test(table(main_binary$pid3final, main_binary$app_polar_5))
+
+chisq.test(table(main$pid3final, main$app_polar_1))
+chisq.test(table(main$pid3final, main$app_polar_2))
+chisq.test(table(main$pid3final, main$app_polar_3)) ## p 0.1416
+chisq.test(table(main$pid3final, main$app_polar_4)) ## p 0.07075
+chisq.test(table(main$pid3final, main$app_polar_5))
+
+# Race: chi-squared test =======================================================
+temp <- main %>%
+  filter(race4labeled %in% c("White", "Black")) %>%
+  mutate(race4labeled = as.character(race4labeled))
+
+chisq.test(table(temp$race4labeled, temp$app_polar_1))
+chisq.test(table(temp$race4labeled, temp$app_polar_2))
+chisq.test(table(temp$race4labeled, temp$app_polar_3))
+chisq.test(table(temp$race4labeled, temp$app_polar_4))
+chisq.test(table(temp$race4labeled, temp$app_polar_5))
+
+t.test(politician_top ~ race4labeled, data = temp)
+t.test(media_top ~ race4labeled, data = temp)
+t.test(social_top ~ race4labeled, data = temp)
+t.test(interest_top ~ race4labeled, data = temp)
+t.test(citizen_top ~ race4labeled, data = temp)
+
+chisq.test(table(main$race4labeled, main$app_polar_1))
+chisq.test(table(main$race4labeled, main$app_polar_2))
+chisq.test(table(main$race4labeled, main$app_polar_3))
+chisq.test(table(main$race4labeled, main$app_polar_4))
+chisq.test(table(main$race4labeled, main$app_polar_5))
+
+# Political interest: chi-squared test =========================================
+
+
