@@ -13,34 +13,34 @@ main %>%
   select(matches("_top$")) %>%
   map_dbl(~ round(mean(.x) * 100, digits = 1))
 
-# politician_top      media_top     social_top   interest_top    citizen_top 
+# politician_top      media_top     social_top   interest_top    citizen_top
 #           43.3           24.1           14.8           11.0            6.8
 
 # OLS with each as dependent variable ==========================================
 ## map with as.formula is trouble when trying to do vcovHC
 temp <- list(
   politician = lm(
-    politician_top ~ pid3final + ideo7 + party_intense + age + 
+    politician_top ~ pid3final + ideo7 + party_intense + age +
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
     data = main, weights = w
   ),
   media = lm(
-    media_top ~ pid3final + ideo7 + party_intense + age + 
+    media_top ~ pid3final + ideo7 + party_intense + age +
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
     data = main, weights = w
   ),
   social = lm(
-    social_top ~ pid3final + ideo7 + party_intense + age + 
+    social_top ~ pid3final + ideo7 + party_intense + age +
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
     data = main, weights = w
   ),
   interest = lm(
-    interest_top ~ pid3final + ideo7 + party_intense + age + 
+    interest_top ~ pid3final + ideo7 + party_intense + age +
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
     data = main, weights = w
   ),
   citizen = lm(
-    citizen_top ~ pid3final + ideo7 + party_intense + age + 
+    citizen_top ~ pid3final + ideo7 + party_intense + age +
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
     data = main, weights = w
   )
@@ -113,6 +113,31 @@ stargazer(
   no.space = TRUE
 )
 
+## Coefficient plots for presentation? =========================================
+coefplot_list <- temp %>%
+  imap(
+    ~ {
+      p <- coefplot(
+        .x$model,
+        vertical = FALSE, intercept = FALSE,
+        decreasing = TRUE, col = "black", innerCI = 1.96, outerCI = 0
+      ) +
+        ylab("") +
+        xlab("") +
+        ggtitle("") +
+        scale_x_continuous(
+          limits = c(-0.31, 0.31), breaks = seq(-0.3, 0.3, 0.1),
+          labels = c(-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3)
+        )
+      pdf_default(p)
+      ggsave(
+        here("fig", paste0("top1_coefplot_", .y, ".pdf")),
+        width = 6, height = 5
+      )
+      return(p)
+    }
+  )
+
 ## What is the predictive performance in terms of accuracy? ====================
 temp %>%
   imap_dbl(
@@ -120,7 +145,7 @@ temp %>%
       pred <- predict(.x$model, type = "response") %>%
         round() %>%
         as.numeric()
-      acc <- sum(.x$model$model[[paste0(.y, "_top")]] == pred) / 
+      acc <- sum(.x$model$model[[paste0(.y, "_top")]] == pred) /
         nrow(.x$model$model)
       return(round(acc * 100, digits = 1))
     }
@@ -128,5 +153,5 @@ temp %>%
 
 ## Have to do AUC, not accuracy;
 ## anyway, not better than random guess using the proportion
-# politician      media     social   interest    citizen 
+# politician      media     social   interest    citizen
 #       59.1       76.1       85.2       89.0       93.2
