@@ -15,7 +15,7 @@ if (!file.exists(fname)) {
     main_q = "app_polar",
     anchor_q = "anc_polar",
     anc_correct = "anc_correct_polar",
-    n_bootstrap = 500
+    n_bootstrap = 1000
   )
   
   ipw_out <- imprr_weights(
@@ -24,7 +24,7 @@ if (!file.exists(fname)) {
     main_q = "app_polar",
     anchor_q = "anc_polar",
     anc_correct = "anc_correct_polar",
-    n_bootstrap = 500
+    n_bootstrap = 1000
   )
 
   save(list = c("direct_out", "ipw_out"), file = fname)
@@ -204,5 +204,8 @@ chisq.test(table(main$race4labeled, main$app_polar_4))
 chisq.test(table(main$race4labeled, main$app_polar_5))
 
 # Political interest: chi-squared test =========================================
-
-
+chisq.test(table(main$newsint, main$app_polar_1))
+chisq.test(table(main$newsint, main$app_polar_2)) ## p 0.2804
+chisq.test(table(main$newsint, main$app_polar_3)) ## p 0.1898
+chisq.test(table(main$newsint, main$app_polar_4)) ## p 0.5046
+chisq.test(table(main$newsint, main$app_polar_5))
