@@ -1,7 +1,11 @@
 source(here::here("R/affective_polarization", "01_setup.R"))
+load(here("output", "polar.Rda"))
 library(lmtest)
 library(sandwich)
 library(stargazer)
+
+main <- main %>%
+  left_join(ipw_out$weights, by = c("app_polar" = "ranking"))
 
 # Top-1 binary variables =======================================================
 ## What is the proportion of each?
@@ -18,27 +22,27 @@ temp <- list(
   politician = lm(
     politician_top ~ pid3final + ideo7 + party_intense + age + 
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
-    data = main
+    data = main, weights = w
   ),
   media = lm(
     media_top ~ pid3final + ideo7 + party_intense + age + 
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
-    data = main
+    data = main, weights = w
   ),
   social = lm(
     social_top ~ pid3final + ideo7 + party_intense + age + 
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
-    data = main
+    data = main, weights = w
   ),
   interest = lm(
     interest_top ~ pid3final + ideo7 + party_intense + age + 
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
-    data = main
+    data = main, weights = w
   ),
   citizen = lm(
     citizen_top ~ pid3final + ideo7 + party_intense + age + 
       gender3 + race4labeled + educ4 + faminc + newsint + relig5 + region,
-    data = main
+    data = main, weights = w
   )
 ) %>%
   ## Rename variables
@@ -77,10 +81,10 @@ temp <- list(
         str_replace_all("relig5Jewish", "Jewish") %>%
         str_replace_all(
           "relig5None/Agnostic/Atheist",
-          "None/Agnostic/Atheist"
+          "None/agnostic/atheist"
         ) %>%
         str_replace_all("relig5Other", "Other religion") %>%
-        str_replace_all("party_intense", "Party ID Intensity")
+        str_replace_all("party_intense", "Party ID intensity")
       return(.x)
     }
   ) %>%
@@ -125,4 +129,4 @@ temp %>%
 ## Have to do AUC, not accuracy;
 ## anyway, not better than random guess using the proportion
 # politician      media     social   interest    citizen 
-#       60.0       75.9       85.2       89.0       93.2 
+#       59.1       76.1       85.2       89.0       93.2
