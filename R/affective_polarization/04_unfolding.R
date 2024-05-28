@@ -1,6 +1,7 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
-source(here::here("R", "imprr_weights.R"))
+## source(here::here("R", "imprr_weights.R")) --> no need to call separately
+## now part of the ranking package
 
 # Grab main data
 main <- df_list$main
