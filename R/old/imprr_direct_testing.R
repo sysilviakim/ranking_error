@@ -17,7 +17,7 @@ test <- imprr_direct(
   main_q = "app_identity",
   anchor_q = "anc_identity",
   anc_correct = "anc_correct_identity",
-  n_bootstrap = 200
+  n_bootstrap = 1000
 )
 print(test)
 

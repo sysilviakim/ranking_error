@@ -39,9 +39,9 @@ id4 <- lm_robust(app_identity_4 ~ 1, dt_w) %>% tidy()
 
 rbind(id1, id2, id3, id4) %>%
   mutate(
-    mean = round(estimate, d = 2),
-    lower = round(conf.low, d = 2),
-    upper = round(conf.high, d = 2),
+    mean = round(estimate, d = 20),
+    lower = round(conf.low, d = 20),
+    upper = round(conf.high, d = 20),
     item = outcome,
     qoi = "average rank"
   ) %>%
@@ -56,9 +56,9 @@ id4 <- lm_robust(app_identity_4 ~ 1, dt_w, weights = w) %>% tidy()
 
 rbind(id1, id2, id3, id4) %>%
   mutate(
-    mean = round(estimate, d = 2),
-    lower = round(conf.low, d = 2),
-    upper = round(conf.high, d = 2),
+    mean = round(estimate, d = 20),
+    lower = round(conf.low, d = 20),
+    upper = round(conf.high, d = 20),
     item = outcome,
     qoi = "average rank"
   ) %>%
