@@ -101,6 +101,11 @@ main <- main %>%
       levels = c(
         "Under 50k", "50-80k", "80-150k", "150k or more", "Prefer not to say"
       )
+    ),
+    age4labeled = factor(
+      age4,
+      levels = c(1, 2, 3, 4),
+      labels = c("Under 30", "30-44", "45-64", "65 and older")
     )
   ) %>%
   ## Recoding identity variables
@@ -127,3 +132,12 @@ main <- main %>%
     interest_top = case_when(app_polar_4 == 1 ~ 1, TRUE ~ 0),
     citizen_top = case_when(app_polar_5 == 1 ~ 1, TRUE ~ 0)
   )
+
+# Descriptive statistics =======================================================
+prop(main, "pid3final")
+prop(main, "race4labeled")
+prop(main, "gender3")
+prop(main, "educ4")
+prop(main, "faminc")
+summary(main$age)
+prop(main, "age4labeled")
