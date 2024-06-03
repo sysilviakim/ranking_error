@@ -19,7 +19,7 @@ main <- main %>%
 data <- main %>%
   select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
          anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
-         anc_correct_identity)
+         anc_correct_identity, weight)
 
 # Direct bias correction
 d <- imprr_direct(
@@ -27,7 +27,8 @@ d <- imprr_direct(
   J = 4,
   main_q = "app_identity",
   anchor_q =  "anc_identity",
-  anc_correct = "anc_correct_identity"
+  anc_correct = "anc_correct_identity",
+  weight = data$weight
 )
 
 # Inverse probability weighting
@@ -112,7 +113,7 @@ avg_gg_comb %>%
   ggplot(aes(y = fct_reorder(item, -estimate, mean), 
              x = estimate, group = dt, color = dt)) +
   scale_fill_brewer(palette = "Accent") +
-  geom_vline(xintercept = 2.5, lty = 2, color = alpha("darkred", 0.5), linewidth = 0.3) +  
+  geom_vline(xintercept = 2.5, lty = 2, color = alpha("black", 0.5), linewidth = 0.3) +  
   geom_point(aes(shape = dt), position = position_dodge(width = width_par), size = 1.5) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
                 position = position_dodge(width_par), size = 0.6) +
@@ -136,9 +137,8 @@ avg_gg_comb %>%
         text = element_text(size = 8))
 
 
-
-ggsave(here::here("fig", "weight-avg-rank.pdf"), 
-       width = 4.5, height = 4.5)
+ggsave(here::here("fig", "weight-avg-rank-sample.pdf"), 
+       width = 4*1.2, height = 4)
 
 
 
