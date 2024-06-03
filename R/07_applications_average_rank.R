@@ -1,19 +1,8 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 
-# install.packages("devtools", dependencies = T)
-# devtools::install_github("sysilviakim/ranking")
-
-library(questionr) # for wtd.table()
+# library(questionr) # for wtd.table()
 library(RColorBrewer)  
-
-# Grab rankings and weights
-imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
-  mutate(
-    app_identity = as.character(ranking),
-    bias_weight = weight
-  ) %>%
-  dplyr::select(app_identity, bias_weight)
 
 # Grab main data
 main <- df_list$main
@@ -27,181 +16,115 @@ main <- main %>%
 
 # Reference set: (party, religion, gender, race)
 
+data <- main %>%
+  select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
+         anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
+         anc_correct_identity)
+
+# Direct bias correction
+d <- imprr_direct(
+  data = data,
+  J = 4,
+  main_q = "app_identity",
+  anchor_q =  "anc_identity",
+  anc_correct = "anc_correct_identity"
+)
+
+# Inverse probability weighting
+w <- imprr_weights(
+  data = data,
+  J = 4,
+  main_q = "app_identity",
+  anchor_q =  "anc_identity",
+  anc_correct = "anc_correct_identity"
+)
+
+print(d)
+print(w)
+
 # Downsize data
 dt <- main %>%
-  mutate(id = 1:nrow(main)) %>%
-  rename(
+  mutate(
     party = app_identity_1,
     religion = app_identity_2,
     gender = app_identity_3,
-    race_ethnicity = app_identity_4
+    race_ethnicity = app_identity_4,
+    ranking = app_identity
   ) %>%
-  left_join(imp_w, by = "app_identity") %>%
+  left_join(w$weights, by = "ranking") %>%
+  mutate(dual_weight = weight * w) %>%
   select(
-    party, religion, gender, race_ethnicity, id,
-    ideo7, pid7, race, app_identity, bias_weight
-  ) %>%
-  filter(
-    !is.na(ideo7),
-    !is.na(pid7),
-    !is.na(race)
-  )
+    party, religion, gender, race_ethnicity, race, ranking, weight, dual_weight) 
 
 
-# Visualize average ranks =============================================
 
+# Bias correction ==============================================================
+
+# Direct Bias Correction
+avg_rank.w <- d$qoi %>% 
+  filter(qoi == "average rank") %>%
+  ungroup(qoi) %>%
+  mutate(item = case_when(item == "app_identity_1" ~ "party",
+                          item == "app_identity_2" ~ "religion",
+                          item == "app_identity_3" ~ "gender",
+                          item == "app_identity_4" ~ "race_ethnicity"),
+         estimate = mean,
+         conf.low = lower,
+         conf.high = upper,
+         dt = "Direct") %>%
+  select(item, estimate, conf.low, conf.high, dt)
+
+
+# IPW
+avg_rank.i <- as.data.frame(NA)
+avg_rank.i <- lm_robust(party ~ 1, dt, weights = dual_weight) %>% tidy()
+avg_rank.i <- rbind(avg_rank.i, lm_robust(religion ~ 1, dt, weights = dual_weight) %>% tidy())
+avg_rank.i <- rbind(avg_rank.i, lm_robust(gender ~ 1, dt, weights = dual_weight) %>% tidy())
+avg_rank.i <- rbind(avg_rank.i, lm_robust(race_ethnicity ~ 1, dt, weights = dual_weight) %>% tidy())
+avg_rank.i$dt <- "IPW"
+avg_rank.i <- avg_rank.i %>%
+  rename(item = outcome) %>%
+  select(item, estimate, conf.low, conf.high, dt)
+
+
+# Raw Data
 avg_rank <- as.data.frame(NA)
-avg_rank <- lm_robust(party ~ 1, dt) %>% tidy()
-avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt) %>% tidy())
+avg_rank <- lm_robust(party ~ 1, dt, weights = weight) %>% tidy()
+avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, weights = weight) %>% tidy())
+avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, weights = weight) %>% tidy())
+avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, weights = weight) %>% tidy())
 avg_rank$dt <- "Raw Data"
-
-avg_rank.w <- as.data.frame(NA)
-avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight) %>% tidy()
-avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight) %>% tidy())
-avg_rank.w$dt <- "Bias Corrected"
-
-avg_rank.w <- avg_rank.w %>%
-  mutate(conf.low = estimate - 1.96*std.error*1.5,
-         conf.high = estimate + 1.96*std.error*1.5)
-
-
-avg_gg_all <- rbind(avg_rank, avg_rank.w) %>%
-  mutate(sample = "All Samples")
-
-
-# Whites Only
-avg_rank <- as.data.frame(NA)
-avg_rank <- lm_robust(party ~ 1, dt, subset = race==1) %>% tidy()
-avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==1) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==1) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==1) %>% tidy())
-avg_rank$dt <- "Raw Data"
-
-avg_rank.w <- as.data.frame(NA)
-avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==1) %>% tidy()
-avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==1) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==1) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==1) %>% tidy())
-avg_rank.w$dt <- "Bias Corrected"
-
-avg_rank.w <- avg_rank.w %>%
-  mutate(conf.low = estimate - 1.96*std.error*1.5,
-         conf.high = estimate + 1.96*std.error*1.5,)
-
-avg_gg_white <- rbind(avg_rank, avg_rank.w) %>%
-  mutate(sample = "Whites (n=797)")
-
-
-# Blacks Only
-avg_rank <- as.data.frame(NA)
-avg_rank <- lm_robust(party ~ 1, dt, subset = race==2) %>% tidy()
-avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==2) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==2) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==2) %>% tidy())
-avg_rank$dt <- "Raw Data"
-
-avg_rank.w <- as.data.frame(NA)
-avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==2) %>% tidy()
-avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==2) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==2) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==2) %>% tidy())
-avg_rank.w$dt <- "Bias Corrected"
-
-avg_rank.w <- avg_rank.w %>%
-  mutate(conf.low = estimate - 1.96*std.error*1.5,
-         conf.high = estimate + 1.96*std.error*1.5,)
-
-avg_gg_black <- rbind(avg_rank, avg_rank.w) %>%
-  mutate(sample = "Blacks (n=116)")
-
-
-# Latinos Only
-avg_rank <- as.data.frame(NA)
-avg_rank <- lm_robust(party ~ 1, dt, subset = race==3) %>% tidy()
-avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==3) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==3) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==3) %>% tidy())
-avg_rank$dt <- "Raw Data"
-
-avg_rank.w <- as.data.frame(NA)
-avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==3) %>% tidy()
-avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==3) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==3) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==3) %>% tidy())
-avg_rank.w$dt <- "Bias Corrected"
-
-avg_rank.w <- avg_rank.w %>%
-  mutate(conf.low = estimate - 1.96*std.error*1.5,
-         conf.high = estimate + 1.96*std.error*1.5)
-
-avg_gg_latino <- rbind(avg_rank, avg_rank.w) %>%
-  mutate(sample = "Latinos (n=87)")
-
-
-# Asians Only
-avg_rank <- as.data.frame(NA)
-avg_rank <- lm_robust(party ~ 1, dt, subset = race==4) %>% tidy()
-avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==4) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==4) %>% tidy())
-avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==4) %>% tidy())
-avg_rank$dt <- "Raw Data"
-
-avg_rank.w <- as.data.frame(NA)
-avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==4) %>% tidy()
-avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==4) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==4) %>% tidy())
-avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==4) %>% tidy())
-avg_rank.w$dt <- "Bias Corrected"
-
-avg_rank.w <- avg_rank.w %>%
-  mutate(conf.low = estimate - 1.96*std.error*1.5,
-         conf.high = estimate + 1.96*std.error*1.5)
-
-avg_gg_asian <- rbind(avg_rank, avg_rank.w) %>%
-  mutate(sample = "Asians (n=30)")
+avg_rank <- avg_rank %>%
+  rename(item = outcome) %>%
+  select(item, estimate, conf.low, conf.high, dt)
 
 
 
-avg_gg_comb <- rbind(avg_gg_all,
-                     avg_gg_white,
-                     avg_gg_black,
-                     avg_gg_latino,
-                     avg_gg_asian)
+# Visualization ==============================================================
 
-avg_gg_comb$sample <-  factor(avg_gg_comb$sample, 
-                              levels = c("All Samples", 
-                                         "Whites (n=797)", 
-                                         "Blacks (n=116)", 
-                                         "Latinos (n=87)",
-                                         "Asians (n=30)"))
+avg_gg_comb <- rbind(avg_rank,
+                     avg_rank.w,
+                     avg_rank.i)
 
-
+width_par <- 0.5
 
 avg_gg_comb %>% 
-  ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
-                      x = estimate, group = dt, color = dt)) +
-  geom_rect(aes(fill = sample),
-            xmin = -Inf,xmax = Inf,
-            ymin = -Inf,ymax = Inf, alpha = 0.01,
-            show_guide = FALSE
-  ) +    
+  ggplot(aes(y = fct_reorder(item, -estimate, mean), 
+             x = estimate, group = dt, color = dt)) +
   scale_fill_brewer(palette = "Accent") +
   geom_vline(xintercept = 2.5, lty = 2, color = alpha("darkred", 0.5), linewidth = 0.3) +  
-  geom_point(aes(shape = dt), position = position_dodge(width = 1.2), size = 1.5) +
+  geom_point(aes(shape = dt), position = position_dodge(width = width_par), size = 1.5) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
-                position = position_dodge(1.2), size = 0.6) +
-  scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
+                position = position_dodge(width_par), size = 0.6) +
+  scale_color_manual(values = c("Direct" = "darkcyan", 
+                                "IPW" = "maroon4",
                                 "Raw Data" =  alpha("dimgray", 0.5))) +
   geom_text(aes(x = conf.high + 0.1,
-             label = round(estimate, 1.5)),
-            position = position_dodge(width = 1.2),
+                label = round(estimate, 1.5)),
+            position = position_dodge(width = width_par),
             size = 1.5,
             color = "black") +
-  facet_grid(sample ~ .) +
+  # facet_grid(sample ~ .) +
   xlim(1, 4.1) +
   ylab("") +
   xlab("") +
@@ -212,9 +135,207 @@ avg_gg_comb %>%
         axis.text.y = element_text(size = 6),
         text = element_text(size = 8))
 
+
+
 ggsave(here::here("fig", "weight-avg-rank.pdf"), 
        width = 4.5, height = 4.5)
 
+
+
+
+
+
+# # The following is an old code before using the package
+# 
+# 
+# # Downsize data
+# dt <- main %>%
+#   mutate(id = 1:nrow(main)) %>%
+#   rename(
+#     party = app_identity_1,
+#     religion = app_identity_2,
+#     gender = app_identity_3,
+#     race_ethnicity = app_identity_4
+#   ) %>%
+#   left_join(imp_w, by = "app_identity") %>%
+#   select(
+#     party, religion, gender, race_ethnicity, id,
+#     ideo7, pid7, race, app_identity, bias_weight
+#   ) %>%
+#   filter(
+#     !is.na(ideo7),
+#     !is.na(pid7),
+#     !is.na(race)
+#   )
+# 
+# 
+# # Visualize average ranks =============================================
+# 
+# avg_rank <- as.data.frame(NA)
+# avg_rank <- lm_robust(party ~ 1, dt) %>% tidy()
+# avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt) %>% tidy())
+# avg_rank$dt <- "Raw Data"
+# 
+# avg_rank.w <- as.data.frame(NA)
+# avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight) %>% tidy()
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight) %>% tidy())
+# avg_rank.w$dt <- "Bias Corrected"
+# 
+# avg_rank.w <- avg_rank.w %>%
+#   mutate(conf.low = estimate - 1.96*std.error*1.5,
+#          conf.high = estimate + 1.96*std.error*1.5)
+# 
+# 
+# avg_gg_all <- rbind(avg_rank, avg_rank.w) %>%
+#   mutate(sample = "All Samples")
+# 
+# 
+# # Whites Only
+# avg_rank <- as.data.frame(NA)
+# avg_rank <- lm_robust(party ~ 1, dt, subset = race==1) %>% tidy()
+# avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==1) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==1) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==1) %>% tidy())
+# avg_rank$dt <- "Raw Data"
+# 
+# avg_rank.w <- as.data.frame(NA)
+# avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==1) %>% tidy()
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==1) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==1) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==1) %>% tidy())
+# avg_rank.w$dt <- "Bias Corrected"
+# 
+# avg_rank.w <- avg_rank.w %>%
+#   mutate(conf.low = estimate - 1.96*std.error*1.5,
+#          conf.high = estimate + 1.96*std.error*1.5,)
+# 
+# avg_gg_white <- rbind(avg_rank, avg_rank.w) %>%
+#   mutate(sample = "Whites (n=797)")
+# 
+# 
+# # Blacks Only
+# avg_rank <- as.data.frame(NA)
+# avg_rank <- lm_robust(party ~ 1, dt, subset = race==2) %>% tidy()
+# avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==2) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==2) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==2) %>% tidy())
+# avg_rank$dt <- "Raw Data"
+# 
+# avg_rank.w <- as.data.frame(NA)
+# avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==2) %>% tidy()
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==2) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==2) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==2) %>% tidy())
+# avg_rank.w$dt <- "Bias Corrected"
+# 
+# avg_rank.w <- avg_rank.w %>%
+#   mutate(conf.low = estimate - 1.96*std.error*1.5,
+#          conf.high = estimate + 1.96*std.error*1.5,)
+# 
+# avg_gg_black <- rbind(avg_rank, avg_rank.w) %>%
+#   mutate(sample = "Blacks (n=116)")
+# 
+# 
+# # Latinos Only
+# avg_rank <- as.data.frame(NA)
+# avg_rank <- lm_robust(party ~ 1, dt, subset = race==3) %>% tidy()
+# avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==3) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==3) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==3) %>% tidy())
+# avg_rank$dt <- "Raw Data"
+# 
+# avg_rank.w <- as.data.frame(NA)
+# avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==3) %>% tidy()
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==3) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==3) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==3) %>% tidy())
+# avg_rank.w$dt <- "Bias Corrected"
+# 
+# avg_rank.w <- avg_rank.w %>%
+#   mutate(conf.low = estimate - 1.96*std.error*1.5,
+#          conf.high = estimate + 1.96*std.error*1.5)
+# 
+# avg_gg_latino <- rbind(avg_rank, avg_rank.w) %>%
+#   mutate(sample = "Latinos (n=87)")
+# 
+# 
+# # Asians Only
+# avg_rank <- as.data.frame(NA)
+# avg_rank <- lm_robust(party ~ 1, dt, subset = race==4) %>% tidy()
+# avg_rank <- rbind(avg_rank, lm_robust(religion ~ 1, dt, subset = race==4) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(gender ~ 1, dt, subset = race==4) %>% tidy())
+# avg_rank <- rbind(avg_rank, lm_robust(race_ethnicity ~ 1, dt, subset = race==4) %>% tidy())
+# avg_rank$dt <- "Raw Data"
+# 
+# avg_rank.w <- as.data.frame(NA)
+# avg_rank.w <- lm_robust(party ~ 1, dt, bias_weight, subset = race==4) %>% tidy()
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(religion ~ 1, dt, bias_weight, subset = race==4) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(gender ~ 1, dt, bias_weight, subset = race==4) %>% tidy())
+# avg_rank.w <- rbind(avg_rank.w, lm_robust(race_ethnicity ~ 1, dt, bias_weight, subset = race==4) %>% tidy())
+# avg_rank.w$dt <- "Bias Corrected"
+# 
+# avg_rank.w <- avg_rank.w %>%
+#   mutate(conf.low = estimate - 1.96*std.error*1.5,
+#          conf.high = estimate + 1.96*std.error*1.5)
+# 
+# avg_gg_asian <- rbind(avg_rank, avg_rank.w) %>%
+#   mutate(sample = "Asians (n=30)")
+# 
+# 
+# 
+# avg_gg_comb <- rbind(avg_gg_all,
+#                      avg_gg_white,
+#                      avg_gg_black,
+#                      avg_gg_latino,
+#                      avg_gg_asian)
+# 
+# avg_gg_comb$sample <-  factor(avg_gg_comb$sample, 
+#                               levels = c("All Samples", 
+#                                          "Whites (n=797)", 
+#                                          "Blacks (n=116)", 
+#                                          "Latinos (n=87)",
+#                                          "Asians (n=30)"))
+# 
+# 
+# 
+# avg_gg_comb %>% 
+#   ggplot(aes(y = fct_reorder(outcome, -estimate, mean), 
+#                       x = estimate, group = dt, color = dt)) +
+#   geom_rect(aes(fill = sample),
+#             xmin = -Inf,xmax = Inf,
+#             ymin = -Inf,ymax = Inf, alpha = 0.01,
+#             show_guide = FALSE
+#   ) +    
+#   scale_fill_brewer(palette = "Accent") +
+#   geom_vline(xintercept = 2.5, lty = 2, color = alpha("darkred", 0.5), linewidth = 0.3) +  
+#   geom_point(aes(shape = dt), position = position_dodge(width = 1.2), size = 1.5) +
+#   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
+#                 position = position_dodge(1.2), size = 0.6) +
+#   scale_color_manual(values = c("Bias Corrected" = "darkcyan", 
+#                                 "Raw Data" =  alpha("dimgray", 0.5))) +
+#   geom_text(aes(x = conf.high + 0.1,
+#              label = round(estimate, 1.5)),
+#             position = position_dodge(width = 1.2),
+#             size = 1.5,
+#             color = "black") +
+#   facet_grid(sample ~ .) +
+#   xlim(1, 4.1) +
+#   ylab("") +
+#   xlab("") +
+#   theme_classic(base_rect_size = 11/44) +
+#   theme(legend.position = "top",
+#         legend.title = element_blank(),
+#         legend.text = element_text(size = 6),
+#         axis.text.y = element_text(size = 6),
+#         text = element_text(size = 8))
+# 
+# ggsave(here::here("fig", "weight-avg-rank.pdf"), 
+#        width = 4.5, height = 4.5)
+# 
 
 # 
 # 
