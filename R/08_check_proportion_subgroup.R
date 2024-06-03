@@ -95,3 +95,23 @@ d_others$est_p_random
 # mean     lower     upper
 # 1 0.281966 0.1814745 0.3784499
 
+
+d_com <- rbind(d$est_p_random,
+               d_white$est_p_random,
+               d_black$est_p_random,
+               d_latino$est_p_random,
+               d_others$est_p_random
+               ) 
+d_com$group <- c("sample", "white", "black", "latino", "others")
+
+
+ggplot(d_com, aes(x = mean, y = group)) +
+  geom_point() +  
+  geom_errorbar(aes(xmin = lower, 
+                    xmax = upper), width = 0,
+                                position = position_dodge(width_par), size = 0.6) +
+  xlab("Proportion of Random Responses") 
+
+ggsave(here::here("fig", "check-pz-race.pdf"), 
+       width = 4*1.2, height = 4)
+
