@@ -7,14 +7,6 @@ load(here("data", "tidy", "df_list.Rda"))
 library(questionr) # for wtd.table()
 library(RColorBrewer)  
 
-# Grab rankings and weights
-imp_w <- read_csv(here::here("data/tidy", "temp_weight.csv")) %>%
-  mutate(
-    app_identity = as.character(ranking),
-    bias_weight = weight
-  ) %>%
-  dplyr::select(app_identity, bias_weight)
-
 # Grab main data
 main <- df_list$main
 
@@ -27,32 +19,64 @@ main <- main %>%
 
 # Reference set: (party, religion, gender, race)
 
+data <- main %>%
+  select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
+         anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
+         anc_correct_identity, weight)
+
+# Inverse probability weighting
+w <- imprr_weights(
+  data = data,
+  J = 4,
+  main_q = "app_identity",
+  anchor_q =  "anc_identity",
+  anc_correct = "anc_correct_identity",
+  weight = data$weight
+)
+
+w0 <- imprr_weights(
+  data = data,
+  J = 4,
+  main_q = "app_identity",
+  anchor_q =  "anc_identity",
+  anc_correct = "anc_correct_identity"
+)
+
+print(w)
+print(w0)
+
+sum(w$weights$w)
+sum(w0$weights$w)
+
+w$weights <- w$weights %>%
+  rename(alt_w = w)
+
 # Downsize data
 dt <- main %>%
-  mutate(id = 1:nrow(main)) %>%
-  rename(
+  mutate(
     party = app_identity_1,
     religion = app_identity_2,
     gender = app_identity_3,
-    race_ethnicity = app_identity_4
+    race_ethnicity = app_identity_4,
+    ranking = app_identity
   ) %>%
-  left_join(imp_w, by = "app_identity") %>%
+  left_join(w$weights, by = "ranking") %>%
+  left_join(w0$weights, by = "ranking") %>%
+  mutate(w_multiplied = weight * w) %>%
   select(
-    party, religion, gender, race_ethnicity, id,
-    ideo7, pid7, race, app_identity, bias_weight
-  ) %>%
-  filter(
-    !is.na(ideo7),
-    !is.na(pid7),
-    !is.na(race)
-  )
+    party, religion, gender, race_ethnicity, race, app_identity,
+    ranking, weight, w, alt_w, w_multiplied) 
+
+  
+
+  
 
 # Visualize full PMF============================================================
 
 # Bias Corrected PMF
 perm <- combinat::permn(x = c("Party","Religion","Gender","Race")) 
 pmf <- wtd.table(x = dt$app_identity,
-                 weights = dt$bias_weight/dim(dt)[1]) %>%
+                 weights = dt$w_multiplied) %>%
   data.frame() %>%
   mutate(party = substr(Var1, 1, 1),
          religion = substr(Var1, 2, 2),
@@ -62,6 +86,7 @@ pmf <- wtd.table(x = dt$app_identity,
                           religion == 1 ~ "B",
                           gender == 1 ~ "C",
                           race == 1 ~ "D"),
+         Freq = Freq / sum(dt$w_multiplied), # Make it proportional         
          ordering = case_when(Var1 == 1234 ~ "Party-Religion-Gender-Race",
                               Var1 == 1243 ~ "Party-Religion-Race-Gender",
                               Var1 == 1324 ~ "Party-Gender-Religion-Race",
@@ -166,12 +191,12 @@ p2
 
 
 p
-ggsave(here::here("fig", "weight-PMF.pdf"),
+ggsave(here::here("fig", "weight-PMF-survey-weights.pdf"),
         width = 5, height = 4)
 
 
 p2
-ggsave(here::here("fig", "weight-PMF-combined.pdf"),
+ggsave(here::here("fig", "weight-PMF-combined-survey-weights.pdf"),
        width = 8, height = 4)
 
 
