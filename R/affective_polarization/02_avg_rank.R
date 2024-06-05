@@ -40,6 +40,25 @@ dt_w <- main %>%
   ) %>%
   left_join(ipw_out$weights, by = c("app_polar" = "ranking"))
 
+# Proportion of prevalent rankings =============================================
+## Later, export this via xtable and figure out the automation
+sort(table(main$app_polar), decreasing = TRUE)
+prop(main, "app_polar")
+
+## Top 10?
+count(dt_w, app_polar, wt = w) %>%
+  mutate(prop = formatC(n / sum(n) * 100, digits = 2, format = "f")) %>%
+  arrange(desc(prop)) %>%
+  select(app_polar, prop) %>%
+  slice_head(n = 10)
+
+## And how much do they account for?
+count(dt_w, app_polar, wt = w) %>%
+  mutate(sum = sum(n)) %>%
+  slice_head(n = 10) %>%
+  mutate(top_sum = sum(n)) %>%
+  mutate(top_perc = round(top_sum / sum * 100, digits = 1))
+
 # Average rank calculations and visualization ==================================
 ## All sample: raw and corrected -----------------------------------------------
 avg_rank(main, "app_polar", items = item_list$item, round = 2)
