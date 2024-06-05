@@ -1,8 +1,8 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 
-# library(questionr) # for wtd.table()
-library(RColorBrewer)  
+# # library(questionr) # for wtd.table()
+# library(RColorBrewer)  
 
 # Grab main data
 main <- df_list$main
@@ -26,7 +26,6 @@ d <- imprr_direct(
   data = data,
   J = 4,
   main_q = "app_identity",
-  anchor_q =  "anc_identity",
   anc_correct = "anc_correct_identity",
   weight = data$weight
 )
@@ -36,7 +35,6 @@ w <- imprr_weights(
   data = data,
   J = 4,
   main_q = "app_identity",
-  anchor_q =  "anc_identity",
   anc_correct = "anc_correct_identity"
 )
 

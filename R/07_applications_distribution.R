@@ -1,11 +1,8 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 
-# install.packages("devtools", dependencies = T)
-# devtools::install_github("sysilviakim/ranking")
-
-library(questionr) # for wtd.table()
-library(RColorBrewer)  
+# library(questionr) # for wtd.table()
+# library(RColorBrewer)  
 
 # Grab main data
 main <- df_list$main
