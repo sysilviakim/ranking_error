@@ -112,13 +112,15 @@ p <- conf_persons %>%
     alpha = 0.3
   ) +
   geom_point(aes(x = D1, y = D2), conf_items, colour = "black", size = 3) +
-  geom_text(aes(x = D1, y = D2, label = rownames(conf_items)),
+  geom_text(
+    aes(x = D1, y = D2, label = rownames(conf_items)),
     conf_items,
-    colour = "black", vjust = -0.8, hjust = 0.5
+    colour = "black", vjust = -0.8, hjust = 0.5, family = "CM Roman"
   ) +
   xlab("Primary dimension") +
   ylab("Secondary dimension") +
-  xlim(-1, 1) +
+  xlim(-1, 1.1) +
+  ylim(-1, 1.1) + 
   theme_bw() +
   theme(
     legend.position = "none",
