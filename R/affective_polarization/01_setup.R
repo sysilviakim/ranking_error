@@ -85,6 +85,13 @@ main <- main %>%
       race4labeled,
       levels = c("White", "Black", "Hispanic", "Other race"),
     ),
+    white = case_when(
+      race4labeled != "White" ~ "Non-white",
+      TRUE ~ "White"
+    ),
+    white = factor(
+      white, levels = c("White", "Non-white")
+    ),
     pid3final = factor(
       pid3final,
       levels = c("Democrat", "Independent", "Republican")

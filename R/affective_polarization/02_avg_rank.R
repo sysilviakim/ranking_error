@@ -1,4 +1,6 @@
 source(here::here("R/affective_polarization", "01_setup.R"))
+library(weights)
+
 data <- df_list$main %>%
   select(
     app_polar_1, app_polar_2, app_polar_3, app_polar_4, app_polar_5,
@@ -119,6 +121,17 @@ summ_avg_rank_by_group(
   main,
   v = "race4labeled", items = item_list$item, label = "Race"
 )
+summ_avg_rank_by_group(
+  dt_w,
+  v = "race4labeled", items = item_list, label = "Race",
+  raw = FALSE, weight = "w", mean_only = FALSE
+)
+
+summ_avg_rank_by_group(
+  dt_w,
+  v = "white", items = item_list, label = "Race",
+  raw = FALSE, weight = "w", mean_only = FALSE
+)
 
 df <- rbind(
   summ_avg_rank_by_group(
@@ -200,9 +213,10 @@ chisq.test(table(main$pid3final, main$app_polar_4)) ## p 0.07075
 chisq.test(table(main$pid3final, main$app_polar_5))
 
 # Race: chi-squared test =======================================================
-temp <- main %>%
+temp <- dt_w %>%
   filter(race4labeled %in% c("White", "Black")) %>%
-  mutate(race4labeled = as.character(race4labeled))
+  mutate(race4labeled = as.character(race4labeled)) %>%
+  mutate(race4numeric = ifelse(race4labeled == "White", 0, 1))
 
 chisq.test(table(temp$race4labeled, temp$app_polar_1))
 chisq.test(table(temp$race4labeled, temp$app_polar_2))
@@ -210,17 +224,23 @@ chisq.test(table(temp$race4labeled, temp$app_polar_3))
 chisq.test(table(temp$race4labeled, temp$app_polar_4))
 chisq.test(table(temp$race4labeled, temp$app_polar_5))
 
-t.test(politician_top ~ race4labeled, data = temp)
-t.test(media_top ~ race4labeled, data = temp)
-t.test(social_top ~ race4labeled, data = temp)
-t.test(interest_top ~ race4labeled, data = temp)
-t.test(citizen_top ~ race4labeled, data = temp)
+wtd.t.test(temp$politician_top, temp$race4numeric, weight = temp$w)
+wtd.t.test(temp$media_top, temp$race4numeric, weight = temp$w)
+wtd.t.test(temp$social_top, temp$race4numeric, weight = temp$w)
+wtd.t.test(temp$interest_top, temp$race4numeric, weight = temp$w)
+wtd.t.test(temp$citizen_top, temp$race4numeric, weight = temp$w)
 
 chisq.test(table(main$race4labeled, main$app_polar_1))
 chisq.test(table(main$race4labeled, main$app_polar_2))
 chisq.test(table(main$race4labeled, main$app_polar_3))
 chisq.test(table(main$race4labeled, main$app_polar_4))
 chisq.test(table(main$race4labeled, main$app_polar_5))
+
+t.test(politician_top ~ white, data = main)
+t.test(media_top ~ white, data = main)
+t.test(social_top ~ white, data = main)
+t.test(interest_top ~ white, data = main)
+t.test(citizen_top ~ white, data = main)
 
 # Political interest: chi-squared test =========================================
 chisq.test(table(main$newsint, main$app_polar_1))
