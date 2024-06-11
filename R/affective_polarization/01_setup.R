@@ -92,6 +92,10 @@ main <- main %>%
     white = factor(
       white, levels = c("White", "Non-white")
     ),
+    white_numeric = case_when(
+      race4labeled == "White" ~ 0,
+      TRUE ~ 1
+    ),
     pid3final = factor(
       pid3final,
       levels = c("Democrat", "Independent", "Republican")

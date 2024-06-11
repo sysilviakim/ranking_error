@@ -248,3 +248,19 @@ chisq.test(table(main$newsint, main$app_polar_2)) ## p 0.2804
 chisq.test(table(main$newsint, main$app_polar_3)) ## p 0.1898
 chisq.test(table(main$newsint, main$app_polar_4)) ## p 0.5046
 chisq.test(table(main$newsint, main$app_polar_5))
+
+prop(main, "newsint_labeled")
+
+temp <- dt_w %>%
+  mutate(
+    newsint_binary = case_when(
+      newsint_labeled == "Hardly at all" ~ 1,
+      TRUE ~ 0
+    )
+  )
+
+wtd.t.test(temp$politician_top, temp$newsint_binary, weight = temp$w)
+wtd.t.test(temp$media_top, temp$newsint_binary, weight = temp$w)
+wtd.t.test(temp$social_top, temp$newsint_binary, weight = temp$w)
+wtd.t.test(temp$interest_top, temp$newsint_binary, weight = temp$w) ## p 0.4350
+wtd.t.test(temp$citizen_top, temp$newsint_binary, weight = temp$w)
