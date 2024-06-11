@@ -260,7 +260,22 @@ temp <- dt_w %>%
   )
 
 wtd.t.test(temp$politician_top, temp$newsint_binary, weight = temp$w)
+## t.test(politician_top ~ newsint_binary, data = temp)
 wtd.t.test(temp$media_top, temp$newsint_binary, weight = temp$w)
+## t.test(media_top ~ newsint_binary, data = temp)
 wtd.t.test(temp$social_top, temp$newsint_binary, weight = temp$w)
+## t.test(social_top ~ newsint_binary, data = temp)
 wtd.t.test(temp$interest_top, temp$newsint_binary, weight = temp$w) ## p 0.4350
+## t.test(interest_top ~ newsint_binary, data = temp)
 wtd.t.test(temp$citizen_top, temp$newsint_binary, weight = temp$w)
+## t.test(citizen_top ~ newsint_binary, data = temp)
+
+## Unweighted
+pretty_condprob(temp, "politician_top", 1, "newsint_binary", 1)
+pretty_condprob(temp, "politician_top", 1, "newsint_binary", 0)
+
+pretty_condprob(temp, "media_top", 1, "newsint_binary", 1)
+pretty_condprob(temp, "media_top", 1, "newsint_binary", 0)
+
+pretty_condprob(temp, "citizen_top", 1, "newsint_binary", 1)
+pretty_condprob(temp, "citizen_top", 1, "newsint_binary", 0)
