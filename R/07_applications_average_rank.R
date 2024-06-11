@@ -107,6 +107,7 @@ avg_gg_comb <- rbind(avg_rank,
 
 width_par <- 0.5
 
+
 avg_gg_comb %>% 
   ggplot(aes(y = fct_reorder(item, -estimate, mean), 
              x = estimate, group = dt, color = dt)) +
@@ -121,18 +122,17 @@ avg_gg_comb %>%
   geom_text(aes(x = conf.high + 0.1,
                 label = round(estimate, 1.5)),
             position = position_dodge(width = width_par),
-            size = 1.5,
+            size = 2,
             color = "black") +
-  # facet_grid(sample ~ .) +
   xlim(1, 4.1) +
   ylab("") +
   xlab("") +
   theme_classic(base_rect_size = 11/44) +
   theme(legend.position = "top",
         legend.title = element_blank(),
-        legend.text = element_text(size = 6),
-        axis.text.y = element_text(size = 6),
-        text = element_text(size = 8))
+        legend.text = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        text = element_text(size = 10))
 
 
 ggsave(here::here("fig", "weight-avg-rank-sample.pdf"), 
