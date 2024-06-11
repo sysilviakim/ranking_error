@@ -64,7 +64,7 @@ plot(
   xlim = c(-0.1, 6.5),
   ylim = c(0, 0.45),
   xlab = "",
-  ylab = "Proportion (Probability Mass)"
+  ylab = "Probability Mass"
 )
 axis(
   side = 1, at = c(1, 2, 3, 4, 5, 6),
@@ -75,11 +75,11 @@ lines(p_true, col = "darkcyan", lwd = 2)
 points(p_raw, col = "dimgray", cex = 1.5, pch = 16)
 lines(p_raw, col = "dimgray", lwd = 2, lty = 2)
 text(
-  x = 2.5, y = 0.38, labels = "Sincere Responses",
+  x = 2.9, y = 0.38, labels = "Non-randome Responses",
   cex = 1.2, col = "darkcyan", font = 2
 )
 text(
-  x = 1.5, y = 0.18, labels = "Observed Data",
+  x = 1.5, y = 0.18, labels = "Raw Data",
   cex = 1.2, col = "black", font = 2
 )
 arrows(
@@ -103,8 +103,8 @@ text(
   col = "deeppink4"
 )
 text(x = 4.5, y = 0.35, labels = "w (weight) = ", col = "deeppink4")
-text(x = 5.6, y = 0.35 + 0.015, labels = "P(Sincere)", col = "darkcyan")
-text(x = 5.7, y = 0.35 - 0.015, labels = "P(Observed)", col = "dimgray")
+text(x = 5.8, y = 0.35 + 0.015, labels = "P(Non-random)", col = "darkcyan")
+text(x = 5.7, y = 0.35 - 0.015, labels = "P(Raw Data)", col = "dimgray")
 arrows(
   x0 = 5.6 - 0.5, x1 = 5.7 + 0.5, y0 = 0.35, y1 = 0.35, length = 0,
   col = "dimgray"
