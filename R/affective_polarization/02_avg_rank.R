@@ -86,6 +86,10 @@ p <- viz_avg_rank_temp(df)
 pdf_default(p)
 ggsave(here("fig", "avg_rank_polar.pdf"), width = 6, height = 2.5)
 
+p <- df %>% filter(method == "IPW") %>% viz_avg_rank_temp(ipw_only = TRUE)
+pdf_default(p) + theme(legend.position = "none")
+ggsave(here("fig", "avg_rank_polar_ipw_only.pdf"), width = 6, height = 2.5)
+
 ## By partisanship -------------------------------------------------------------
 summ_avg_rank_by_group(
   main,
@@ -115,6 +119,15 @@ p <- viz_avg_rank_temp(df, wrap = "Partisanship")
 pdf_default(p) + 
   theme(legend.position = "bottom")
 ggsave(here("fig", "avg_rank_polar_by_pid.pdf"), width = 7, height = 2.5)
+
+p <- df %>%
+  filter(method == "IPW") %>% 
+  viz_avg_rank_temp(ipw_only = TRUE, wrap = "Partisanship")
+pdf_default(p) + theme(legend.position = "none")
+ggsave(
+  here("fig", "avg_rank_polar_by_pid_ipw_only.pdf"),
+  width = 7, height = 2.5
+)
 
 ## By race ---------------------------------------------------------------------
 summ_avg_rank_by_group(
@@ -158,11 +171,26 @@ pdf_default(p) +
   theme(legend.position = "bottom")
 ggsave(here("fig", "avg_rank_polar_by_race.pdf"), width = 7, height = 3.5)
 
+p <- df %>%
+  filter(method == "IPW") %>% 
+  viz_avg_rank_temp(ipw_only = TRUE, wrap = "Race")
+pdf_default(p) + theme(legend.position = "none")
+ggsave(
+  here("fig", "avg_rank_polar_by_race_ipw_only.pdf"),
+  width = 7, height = 3.5
+)
+
 ## By political interest -------------------------------------------------------
 summ_avg_rank_by_group(
   main,
   v = "newsint_labeled", items = item_list$item,
   label = "Follow Politics (Political Interest)"
+)
+summ_avg_rank_by_group(
+  dt_w,
+  v = "newsint_labeled", items = item_list, 
+  label = "Follow Politics (Political Interest)",
+  raw = FALSE, weight = "w", mean_only = FALSE
 )
 
 df <- rbind(
@@ -194,6 +222,18 @@ p <- viz_avg_rank_temp(df, wrap = "`Follow Politics (Political Interest)`")
 pdf_default(p) + 
   theme(legend.position = "bottom")
 ggsave(here("fig", "avg_rank_polar_by_newsint.pdf"), width = 7, height = 3.5)
+
+p <- df %>%
+  filter(method == "IPW") %>% 
+  viz_avg_rank_temp(
+    ipw_only = TRUE,
+    wrap = "`Follow Politics (Political Interest)`"
+  )
+pdf_default(p) + theme(legend.position = "none")
+ggsave(
+  here("fig", "avg_rank_polar_by_newsint_ipw_only.pdf"),
+  width = 7, height = 3.5
+)
 
 # PID: chi-squared test ========================================================
 main_binary <- main %>%
@@ -249,6 +289,13 @@ chisq.test(table(main$newsint, main$app_polar_3)) ## p 0.1898
 chisq.test(table(main$newsint, main$app_polar_4)) ## p 0.5046
 chisq.test(table(main$newsint, main$app_polar_5))
 
+## Weighted version
+wtd.chi.sq(dt_w$newsint, dt_w$app_polar_1, weight = dt_w$w)
+wtd.chi.sq(dt_w$newsint, dt_w$app_polar_2, weight = dt_w$w)
+wtd.chi.sq(dt_w$newsint, dt_w$app_polar_3, weight = dt_w$w)
+wtd.chi.sq(dt_w$newsint, dt_w$app_polar_4, weight = dt_w$w)
+wtd.chi.sq(dt_w$newsint, dt_w$app_polar_5, weight = dt_w$w)
+
 prop(main, "newsint_labeled")
 
 temp <- dt_w %>%
@@ -274,8 +321,15 @@ wtd.t.test(temp$citizen_top, temp$newsint_binary, weight = temp$w)
 pretty_condprob(temp, "politician_top", 1, "newsint_binary", 1)
 pretty_condprob(temp, "politician_top", 1, "newsint_binary", 0)
 
-pretty_condprob(temp, "media_top", 1, "newsint_binary", 1)
-pretty_condprob(temp, "media_top", 1, "newsint_binary", 0)
+pretty_condprob(temp, "politician_top", 1, "newsint", 1)
+pretty_condprob(temp, "politician_top", 1, "newsint", 2)
+pretty_condprob(temp, "politician_top", 1, "newsint", 3)
+pretty_condprob(temp, "politician_top", 1, "newsint", 4)
 
 pretty_condprob(temp, "citizen_top", 1, "newsint_binary", 1)
 pretty_condprob(temp, "citizen_top", 1, "newsint_binary", 0)
+
+pretty_condprob(temp, "citizen_top", 1, "newsint", 1)
+pretty_condprob(temp, "citizen_top", 1, "newsint", 2)
+pretty_condprob(temp, "citizen_top", 1, "newsint", 3)
+pretty_condprob(temp, "citizen_top", 1, "newsint", 4)

@@ -518,7 +518,7 @@ summ_avg_rank_by_group <- function(data, items = NULL,
   }
 }
 
-viz_avg_rank_temp <- function(data, wrap = NULL) {
+viz_avg_rank_temp <- function(data, wrap = NULL, ipw_only = FALSE) {
   p <- ggplot(data %>% rename(Method = method), aes(x = mean, y = item)) +
     geom_vline(xintercept = 3, linetype = "dashed", color = "gray50") +
     geom_point(aes(color = Method, shape = Method),
@@ -549,6 +549,18 @@ viz_avg_rank_temp <- function(data, wrap = NULL) {
     xlab("Average Rank") +
     theme_bw() + 
     scale_x_continuous(limits = c(0.75, 5.25))
+  if (ipw_only) {
+    p <- p +
+      scale_shape_manual(
+        name = "Method", labels = c("IPW", "Raw Data"),
+        values = rev(c(16, 16))
+      ) +
+      scale_linetype_manual(
+        name = "Method", labels = c("IPW", "Raw Data"),
+        values = rev(c("solid", "solid"))
+      )
+  }
+  
   if (!is.null(wrap)) {
     p <- p + facet_wrap(as.formula(paste("~", wrap)))
   }
