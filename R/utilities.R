@@ -566,3 +566,57 @@ viz_avg_rank_temp <- function(data, wrap = NULL, ipw_only = FALSE) {
   }
   return(p)
 }
+
+coef_rename <- function(x) {
+  ## List input
+  x %>%
+    ## Rename variables
+    map(
+      ~ {
+        names(.x$coefficients) <- names(.x$coefficients) %>%
+          str_replace_all("age", "Age") %>%
+          str_replace_all("Age_sq", "Age squared") %>%
+          str_replace_all("gender3Female", "Female") %>%
+          str_replace_all("gender3Other", "Neither male/female") %>%
+          str_replace_all("race4labeledBlack", "Black") %>%
+          str_replace_all("race4labeledHispanic", "Hispanic/Latino") %>%
+          str_replace_all("race4labeledOther race", "Other race") %>%
+          str_replace_all("educ4Some college", "Some college") %>%
+          str_replace_all("educ4College grad", "College graduate") %>%
+          str_replace_all("educ4Postgrad", "Post-graduate") %>%
+          str_replace_all("pid3finalIndependent", "Independent") %>%
+          str_replace_all("pid3finalRepublican", "Republican") %>%
+          str_replace_all("ideo7", "Ideology") %>%
+          str_replace_all("newsint", "Political interest") %>%
+          str_replace_all("regionSouth", "Region: south") %>%
+          str_replace_all("regionWest", "Region: west") %>%
+          str_replace_all("regionMidwest", "Region: midwest") %>%
+          str_replace_all("ideo7Moderate", "Moderate") %>%
+          str_replace_all("faminc50-80k", "Household income: 50-80k") %>%
+          str_replace_all("faminc80-150k", "Household income: 80-150k") %>%
+          str_replace_all(
+            "faminc150k or more",
+            "Household income: 150k or more"
+          ) %>%
+          str_replace_all(
+            "famincPrefer not to say",
+            "Household income: prefer not to say"
+          ) %>%
+          str_replace_all("relig5Catholic", "Catholic") %>%
+          str_replace_all("relig5Jewish", "Jewish") %>%
+          str_replace_all(
+            "relig5None/Agnostic/Atheist",
+            "None/agnostic/atheist"
+          ) %>%
+          str_replace_all("relig5Other", "Other religion") %>%
+          str_replace_all("party_intense", "Party ID intensity")
+        return(.x)
+      }
+    ) %>%
+    map(
+      ~ list(
+        model = .x,
+        se_robust = coeftest(.x, vcov = vcovHC(.x, type = "HC0"))[, "Std. Error"]
+      )
+    )
+}
