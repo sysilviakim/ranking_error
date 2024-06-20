@@ -48,13 +48,14 @@ dt_exact <-data %>% filter(!is.na(anc_correct_id_exact))
 dt_repeat <- data %>% filter(!is.na(app_identity_repeat)) %>%
   mutate(repeat_correct = ifelse(app_identity_repeat == app_identity, 1, 0))
 
+dt_checkI <- data %>% filter(!is.na(attention_berinsky))
+dt_checkII <- data %>% filter(!is.na(attention_ternovski))
+
+
 table(dt_repeat$repeat_correct)
 
 
 
-# I think something is wrong with the following approach
-# Especially, anchor_q should be modified
-# Yuki will work on this more tomorrow
 
 
 # Direct bias correction
@@ -86,57 +87,41 @@ d_exact <- imprr_direct(
   weight = dt_exact$weight
 )
 
+# Estimate the proportion of random responses with
+# Attention checks I
+# Attention checks II
+# Repeated question 
 
-# Repeated question
-d_repeat <- imprr_direct(
-  data = dt_repeat,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "repeat_correct",
-  weight = dt_repeat$weight
-)
-
-# Attention check -- berinsky
-d_attent1 <- imprr_direct(
-  data = data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "attention_berinsky",
-  weight = data$weight
-)
+est_p_random_checks <- rbind(
+lm_robust(repeat_identity ~ 1, main),
+lm_robust(berinsky_fail ~ 1, main),
+lm_robust(ternovski_fail ~ 1, main)
+) %>%
+  as.data.frame() %>%
+  mutate(mean = as.numeric(coefficients),
+         lower = as.numeric(conf.low),
+         upper = as.numeric(conf.high)) %>%
+  select(mean, lower, upper)
 
 
-# Attention check -- ternovski
-d_attent2 <- imprr_direct(
-  data = data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "attention_ternovski",
-  weight = data$weight
-)
-
-
-
+# Combine the estimated proportions
 
 d$est_p_random
 d_alpha$est_p_random
 d_exact$est_p_random
-d_repeat$est_p_random
-d_attent1$est_p_random
-d_attent2$est_p_random
 
-d_com <- rbind(d_alpha$est_p_random,
+
+d_com <- rbind(d$est_p_random,
+               d_alpha$est_p_random,
                d_exact$est_p_random,
-               d_repeat$est_p_random,
-               d$est_p_random,
-               d_attent1$est_p_random,
-               d_attent2$est_p_random
+               est_p_random_checks
 ) 
 
-d_com$group <- c("Anchor alphabet", 
+
+d_com$group <- c("Anchor main",
+                 "Anchor alphabet", 
                  "Anchor exact", 
                  "Repeated", 
-                 "Anchor main",
                  "Attention I",
                  "Attention II")
 
@@ -166,43 +151,120 @@ ggplot(d_com, aes(x = mean, y = group)) +
   theme(legend.position = "null") -> a
 
 
+# Plot the estimated average ranks
+
 dt_main <- d$qoi %>% filter(qoi == "average rank") %>%
   mutate(dt = "Anchor main")
 dt_alpha <- d_alpha$qoi %>% filter(qoi == "average rank") %>%
   mutate(dt = "Anchor alphabet")
 dt_exact <- d_exact$qoi %>% filter(qoi == "average rank") %>%
   mutate(dt = "Anchor exact")
-dt_repeat <- d_repeat$qoi %>% filter(qoi == "average rank") %>%
-  mutate(dt = "Repeat")
-dt_attent1 <- d_attent1$qoi %>% filter(qoi == "average rank") %>%
-  mutate(dt = "Attention I")
-dt_attent2 <- d_attent2$qoi %>% filter(qoi == "average rank") %>%
-  mutate(dt = "Attention II")
 
 
 avg_gg_comb <- rbind(dt_main,
                      dt_alpha,
-                     dt_exact,
-                     dt_repeat,
-                     dt_attent1,
-                     dt_attent2) %>%
+                     dt_exact) %>%
   mutate(item = case_when(item == "app_identity_1" ~ "party",
                           item == "app_identity_2" ~ "religion",
                           item == "app_identity_3" ~ "gender",
                           item == "app_identity_4" ~ "race_ethnicity")) %>%
   rename(estimate = mean,
          conf.low = lower,
-         conf.high = upper)
+         conf.high = upper) %>%
+  ungroup() %>%
+  select(item, estimate, conf.low, conf.high, dt)
 
 
-avg_gg_comb %>% 
+
+
+
+
+## Listwise deletion estimates
+### Create "clean" data
+dt_checkI_clean <- dt_checkI %>% filter(attention_berinsky == 1) 
+dt_checkII_clean <- dt_checkI %>% filter(attention_ternovski == 1) 
+dt_repeat_clean <- dt_repeat %>% filter(repeat_correct == 1)
+
+
+est_checkI <- rbind(
+  lm_robust(app_identity_1 ~ 1, dt_checkI_clean) %>% tidy(),
+  lm_robust(app_identity_2 ~ 1, dt_checkI_clean) %>% tidy(),
+  lm_robust(app_identity_3 ~ 1, dt_checkI_clean) %>% tidy(),
+  lm_robust(app_identity_4 ~ 1, dt_checkI_clean) %>% tidy()
+) %>%
+  mutate(dt = "Attention I")
+
+est_checkII <- rbind(
+  lm_robust(app_identity_1 ~ 1, dt_checkII_clean) %>% tidy(),
+  lm_robust(app_identity_2 ~ 1, dt_checkII_clean) %>% tidy(),
+  lm_robust(app_identity_3 ~ 1, dt_checkII_clean) %>% tidy(),
+  lm_robust(app_identity_4 ~ 1, dt_checkII_clean) %>% tidy()
+) %>%
+  mutate(dt = "Attention II")
+
+est_repeat <- rbind(
+  lm_robust(app_identity_1 ~ 1, dt_repeat_clean) %>% tidy(),
+  lm_robust(app_identity_2 ~ 1, dt_repeat_clean) %>% tidy(),
+  lm_robust(app_identity_3 ~ 1, dt_repeat_clean) %>% tidy(),
+  lm_robust(app_identity_4 ~ 1, dt_repeat_clean) %>% tidy()
+) %>%
+  mutate(dt = "Repeat")
+
+est_unadjusted <- rbind(
+  lm_robust(app_identity_1 ~ 1, main) %>% tidy(),
+  lm_robust(app_identity_2 ~ 1, main) %>% tidy(),
+  lm_robust(app_identity_3 ~ 1, main) %>% tidy(),
+  lm_robust(app_identity_4 ~ 1, main) %>% tidy()
+) %>%
+  mutate(dt = "Unadjusted")
+
+
+est_com <- rbind(est_checkI,
+                 est_checkII,
+                 est_repeat) %>%
+  mutate(item = case_when(outcome == "app_identity_1" ~ "party",
+                          outcome == "app_identity_2" ~ "religion",
+                          outcome == "app_identity_3" ~ "gender",
+                          outcome == "app_identity_4" ~ "race_ethnicity")) %>%
+  select(item, estimate, conf.low, conf.high, dt)
+
+
+
+avg_gg_comb2 <- rbind(avg_gg_comb, est_com)
+
+avg_gg_comb2 %>% 
   ggplot(aes(y = fct_reorder(item, -estimate, mean), 
              x = estimate, group = dt, color = dt)) +
   scale_fill_brewer(palette = "Accent") +
-  # geom_vline(xintercept = 2.5, lty = 2, color = alpha("black", 0.5), linewidth = 0.3) +  
+   # geom_vline(xintercept = est_unadjusted$estimate, 
+   #            lty = 2, color = alpha("black", 0.5), linewidth = 0.3) +  
+  geom_rect(aes(xmin = est_unadjusted$conf.low[1], 
+                xmax = est_unadjusted$conf.high[1], 
+                ymin = 1.45, 
+                ymax = 0.55),
+            color = alpha("gray50", 0),
+            fill = alpha("gray50", 0.01)) +  
+  geom_rect(aes(xmin = est_unadjusted$conf.low[2], 
+                xmax = est_unadjusted$conf.high[2], 
+                ymin = 2.45, 
+                ymax = 1.55),
+            color = alpha("gray50", 0),
+            fill = alpha("gray50", 0.01)) +    
+  geom_rect(aes(xmin = est_unadjusted$conf.low[4], 
+                xmax = est_unadjusted$conf.high[4], 
+                ymin = 3.45, 
+                ymax = 2.55),
+            color = alpha("gray50", 0),
+            fill = alpha("gray50", 0.01)) +      
+  geom_rect(aes(xmin = est_unadjusted$conf.low[3], 
+                xmax = est_unadjusted$conf.high[3], 
+                ymin = 4.45, 
+                ymax = 3.55),
+            color = alpha("gray50", 0),
+            fill = alpha("gray50", 0.01)) +    
   geom_point(aes(shape = dt), position = position_dodge(width = width_par), size = 1.5) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0,
-                position = position_dodge(width_par), size = 0.6) +
+                position = position_dodge(width_par), linewidth = 0.6) +
   scale_color_manual(values = c("Anchor main" = "darkcyan", 
                                 "Anchor alphabet" = alpha("darkcyan", 0.5),
                                 "Anchor exact" =  alpha("darkcyan", 0.5),
