@@ -54,6 +54,18 @@ unbiased_correct_prop(
   J = 6
 )
 
+## Exact and alphabet?
+unbiased_correct_prop(
+  sum(main$random_id_exact == 0, na.rm = TRUE) / 
+    sum(!is.na(main$random_id_exact)),
+  J = 4
+)
+unbiased_correct_prop(
+  sum(main$random_id_alphabet == 0, na.rm = TRUE) / 
+    sum(!is.na(main$random_id_alphabet)),
+  J = 4
+)
+
 # Correlation between attention filters ========================================
 temp <- main %>%
   select(
@@ -83,7 +95,7 @@ print(
 
 ## Corrplot --------------------------------------------------------------------
 # corrplot(
-#   cor_matrix, method = "color", type = "lower", 
+#   cor_matrix, method = "color", type = "lower",
 #   tl.cex = 0.8, tl.col = "black", tl.srt = 0, tl.pos = "lt",
 #   addCoef.col = "black", number.cex = 0.8
 # )
@@ -92,13 +104,15 @@ p <- cor_matrix %>%
   reshape2::melt() %>%
   mutate(
     Var1 = factor(
-      Var1, levels = c(
+      Var1,
+      levels = c(
         "Repeated", "Attention I", "Attention II", "Anchor main",
         "Anchor exact", "Anchor alphabet"
       )
     ),
     Var2 = factor(
-      Var2, levels = rev(
+      Var2,
+      levels = rev(
         c(
           "Repeated", "Attention I", "Attention II", "Anchor main",
           "Anchor exact", "Anchor alphabet"
@@ -108,15 +122,20 @@ p <- cor_matrix %>%
   ) %>%
   rename(`Correlation Coefficient` = value) %>%
   ggplot(
-    aes(x = Var1, y = ordered(Var2, levels = ), fill = `Correlation Coefficient`)
+    aes(
+      x = Var1, y = ordered(Var2, levels = ), fill = `Correlation Coefficient`
+    )
   ) +
   geom_tile() +
   scale_fill_distiller(palette = "RdPu", direction = 1) +
   coord_fixed() +
-  geom_text(aes(label = `Correlation Coefficient`), size = 3) +
+  geom_text(
+    aes(label = `Correlation Coefficient`),
+    size = 3, family = "CM Roman"
+  ) +
   labs(x = "", y = "")
 
-pdf_default(p) + 
+pdf_default(p) +
   theme(
     legend.position = "bottom",
     axis.text.x = element_text(angle = 45, hjust = 1)
@@ -129,17 +148,18 @@ cor_and_condprob(main, "ternovski_fail", "berinsky_fail")
 
 ## Ternovski test x random responses
 cor_and_condprob(main, "ternovski_fail", "random_identity")
-cor_and_condprob(main, "ternovski_fail", "random_id_alphabet")
 cor_and_condprob(main, "ternovski_fail", "random_id_exact")
+cor_and_condprob(main, "ternovski_fail", "random_id_alphabet")
 
 ## Berinsky test x random responses
 cor_and_condprob(main, "berinsky_fail", "random_identity")
-cor_and_condprob(main, "berinsky_fail", "random_id_alphabet")
 cor_and_condprob(main, "berinsky_fail", "random_id_exact")
+cor_and_condprob(main, "berinsky_fail", "random_id_alphabet")
 
 ## Between random responses (within topic)
-cor_and_condprob(main, "random_identity", "random_id_alphabet")
 cor_and_condprob(main, "random_identity", "random_id_exact")
+cor_and_condprob(main, "random_identity", "random_id_alphabet")
+cor_and_condprob(main, "random_id_alphabet", "random_id_exact")
 
 ## Ternovski test x repeated responses
 cor_and_condprob(main, "ternovski_fail", "repeat_identity")
@@ -149,8 +169,8 @@ cor_and_condprob(main, "berinsky_fail", "repeat_identity")
 
 ## Random responses x repeated responses (within topic)
 cor_and_condprob(main, "random_identity", "repeat_identity")
-cor_and_condprob(main, "random_id_alphabet", "repeat_identity")
 cor_and_condprob(main, "random_id_exact", "repeat_identity")
+cor_and_condprob(main, "random_id_alphabet", "repeat_identity")
 
 # Venn Diagram =================================================================
 venn_diagram_fill(main, "ternovski_fail", "repeat_tate", "random_tate")
