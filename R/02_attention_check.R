@@ -159,7 +159,6 @@ cor_and_condprob(main, "berinsky_fail", "random_id_alphabet")
 ## Between random responses (within topic)
 cor_and_condprob(main, "random_identity", "random_id_exact")
 cor_and_condprob(main, "random_identity", "random_id_alphabet")
-cor_and_condprob(main, "random_id_alphabet", "random_id_exact")
 
 ## Ternovski test x repeated responses
 cor_and_condprob(main, "ternovski_fail", "repeat_identity")
