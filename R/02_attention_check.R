@@ -1,4 +1,5 @@
 source(here::here("R", "utilities.R"))
+library(corrplot)
 
 # Import data ==================================================================
 ## substitute file name when actual data is sent
@@ -54,56 +55,102 @@ unbiased_correct_prop(
 )
 
 # Correlation between attention filters ========================================
+temp <- main %>%
+  select(
+    `Repeated` = repeat_identity,
+    `Attention I` = ternovski_fail,
+    `Attention II` = berinsky_fail,
+    `Anchor main` = random_identity,
+    `Anchor exact` = random_id_exact,
+    `Anchor alphabet` = random_id_alphabet
+  )
+
+## Pairwise correlation matrix -------------------------------------------------
+cor_matrix <- cor(temp, use = "pairwise.complete.obs") %>%
+  round(., digits = 2)
+
+print(
+  cor_matrix %>%
+    xtable(
+      caption = "Pairwise Correlation Between Checks for Random Responses",
+      label = "tab:cor-random-checks",
+      align = "lrrrrrr"
+    ),
+  file = here("tab", "cor_random_check.tex"),
+  floating = FALSE,
+  booktabs = TRUE
+)
+
+## Corrplot --------------------------------------------------------------------
+# corrplot(
+#   cor_matrix, method = "color", type = "lower", 
+#   tl.cex = 0.8, tl.col = "black", tl.srt = 0, tl.pos = "lt",
+#   addCoef.col = "black", number.cex = 0.8
+# )
+
+p <- cor_matrix %>%
+  reshape2::melt() %>%
+  mutate(
+    Var1 = factor(
+      Var1, levels = c(
+        "Repeated", "Attention I", "Attention II", "Anchor main",
+        "Anchor exact", "Anchor alphabet"
+      )
+    ),
+    Var2 = factor(
+      Var2, levels = rev(
+        c(
+          "Repeated", "Attention I", "Attention II", "Anchor main",
+          "Anchor exact", "Anchor alphabet"
+        )
+      )
+    )
+  ) %>%
+  rename(`Correlation Coefficient` = value) %>%
+  ggplot(
+    aes(x = Var1, y = ordered(Var2, levels = ), fill = `Correlation Coefficient`)
+  ) +
+  geom_tile() +
+  scale_fill_distiller(palette = "RdPu", direction = 1) +
+  coord_fixed() +
+  geom_text(aes(label = `Correlation Coefficient`), size = 3) +
+  labs(x = "", y = "")
+
+pdf_default(p) + 
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+ggsave(here("fig", "corrplot_random_check.pdf"), width = 5, height = 5)
+
+## Conditional probabilities? --------------------------------------------------
 ## Between attention filters
 cor_and_condprob(main, "ternovski_fail", "berinsky_fail")
 
 ## Ternovski test x random responses
-cor_and_condprob(main, "ternovski_fail", "random_tate")
 cor_and_condprob(main, "ternovski_fail", "random_identity")
 cor_and_condprob(main, "ternovski_fail", "random_id_alphabet")
 cor_and_condprob(main, "ternovski_fail", "random_id_exact")
-cor_and_condprob(main, "ternovski_fail", "random_polar")
-cor_and_condprob(main, "ternovski_fail", "random_esystems")
-cor_and_condprob(main, "ternovski_fail", "random_es_alphabet")
-cor_and_condprob(main, "ternovski_fail", "random_es_temporal")
 
 ## Berinsky test x random responses
-cor_and_condprob(main, "berinsky_fail", "random_tate")
 cor_and_condprob(main, "berinsky_fail", "random_identity")
 cor_and_condprob(main, "berinsky_fail", "random_id_alphabet")
 cor_and_condprob(main, "berinsky_fail", "random_id_exact")
-cor_and_condprob(main, "berinsky_fail", "random_polar")
-cor_and_condprob(main, "berinsky_fail", "random_esystems")
-cor_and_condprob(main, "berinsky_fail", "random_es_alphabet")
-cor_and_condprob(main, "berinsky_fail", "random_es_temporal")
 
 ## Between random responses (within topic)
 cor_and_condprob(main, "random_identity", "random_id_alphabet")
 cor_and_condprob(main, "random_identity", "random_id_exact")
-cor_and_condprob(main, "random_esystems", "random_es_alphabet")
-cor_and_condprob(main, "random_esystems", "random_es_temporal")
 
 ## Ternovski test x repeated responses
-cor_and_condprob(main, "ternovski_fail", "repeat_tate")
 cor_and_condprob(main, "ternovski_fail", "repeat_identity")
-cor_and_condprob(main, "ternovski_fail", "repeat_polar")
-cor_and_condprob(main, "ternovski_fail", "repeat_esystems")
 
 ## Berinsky test x repeated responses
-cor_and_condprob(main, "berinsky_fail", "repeat_tate")
 cor_and_condprob(main, "berinsky_fail", "repeat_identity")
-cor_and_condprob(main, "berinsky_fail", "repeat_polar")
-cor_and_condprob(main, "berinsky_fail", "repeat_esystems")
 
 ## Random responses x repeated responses (within topic)
-cor_and_condprob(main, "random_tate", "repeat_tate")
 cor_and_condprob(main, "random_identity", "repeat_identity")
 cor_and_condprob(main, "random_id_alphabet", "repeat_identity")
 cor_and_condprob(main, "random_id_exact", "repeat_identity")
-cor_and_condprob(main, "random_polar", "repeat_polar")
-cor_and_condprob(main, "random_esystems", "repeat_esystems")
-cor_and_condprob(main, "random_es_alphabet", "repeat_esystems")
-cor_and_condprob(main, "random_es_temporal", "repeat_esystems")
 
 # Venn Diagram =================================================================
 venn_diagram_fill(main, "ternovski_fail", "repeat_tate", "random_tate")
