@@ -149,10 +149,11 @@ ggplot(d_com, aes(x = mean, y = group)) +
       label = round(mean, 1.5)
     ),
     position = position_dodge(width = width_par),
-    size = 1.5,
-    color = "black"
+    size = 2.5,
+    color = "black",
+    family = "CM Roman"
   ) +
-  xlab("Estimated prop. random responses") +
+  xlab("Estimated proportion of random responses") +
   ylab("") +
   # theme_bw() +
   theme(legend.position = "null") -> a
@@ -241,11 +242,23 @@ est_com <- rbind(
 avg_gg_comb2 <- rbind(avg_gg_comb, est_com)
 
 avg_gg_comb2 %>%
+  mutate(
+    item = case_when(
+      item == "gender" ~ "Gender",
+      item == "race_ethnicity" ~ "Race/ethnicity",
+      item == "religion" ~ "Religion",
+      item == "party" ~ "Party"
+    )
+  ) %>%
   ggplot(aes(
     y = fct_reorder(item, -estimate, mean),
     x = estimate, group = dt, color = dt
   )) +
   scale_fill_brewer(palette = "Accent") +
+  geom_point(
+    aes(shape = dt),
+    position = position_dodge(width = width_par), size = 1.5
+  ) +
   # geom_vline(xintercept = est_unadjusted$estimate,
   #            lty = 2, color = alpha("black", 0.5), linewidth = 0.3) +
   geom_rect(
@@ -288,30 +301,29 @@ avg_gg_comb2 %>%
     color = alpha("gray50", 0),
     fill = alpha("gray50", 0.01)
   ) +
-  geom_point(
-    aes(shape = dt),
-    position = position_dodge(width = width_par), size = 1.5
-  ) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
     width = 0,
     position = position_dodge(width_par), linewidth = 0.6
   ) +
-  scale_color_manual(values = c(
-    "Anchor main" = "darkcyan",
-    "Anchor alphabet" = alpha("darkcyan", 0.5),
-    "Anchor exact" = alpha("darkcyan", 0.5),
-    "Repeat" = alpha("dimgray", 0.5),
-    "Attention I" = alpha("maroon", 0.5),
-    "Attention II" = alpha("maroon", 0.5)
-  )) +
+  scale_color_manual(
+    values = c(
+      "Anchor main" = "darkcyan",
+      "Anchor alphabet" = alpha("darkcyan", 0.5),
+      "Anchor exact" = alpha("darkcyan", 0.5),
+      "Repeat" = alpha("dimgray", 0.5),
+      "Attention I" = alpha("maroon", 0.5),
+      "Attention II" = alpha("maroon", 0.5)
+    )
+  ) +
   geom_text(
     aes(
       x = conf.high + 0.1,
       label = round(estimate, 1.5)
     ),
     position = position_dodge(width = width_par),
-    size = 1.5,
-    color = "black"
+    size = 2.5,
+    color = "black",
+    family = "CM Roman"
   ) +
   xlim(0.8, 4.1) +
   ylab("") +
@@ -326,11 +338,12 @@ avg_gg_comb2 %>%
     text = element_text(size = 10)
   ) -> b
 
-ggpubr::ggarrange(a, b,
-  ncol = 1,
-  heights = c(0.4, 1)
+ggpubr::ggarrange(
+  pdf_default(a) + theme(legend.position = "none"), 
+  pdf_default(b) + theme(legend.position = "none"), 
+  ncol = 1, heights = c(0.4, 1)
 )
-
-ggsave(here::here("fig", "weight-avg-rank-multiple-anchors.pdf"),
+ggsave(
+  here("fig", "weight-avg-rank-multiple-anchors.pdf"),
   width = 5, height = 5
 )
