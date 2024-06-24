@@ -573,7 +573,8 @@ ggdt_all %>%
   geom_pointrange(aes(ymin = low, ymax = up),
                   position = position_dodge2(width = 0.5)) +
   scale_color_manual(values = c("darkcyan", alpha("dimgray", 0.3))) +
-  facet_wrap(~ ranking, scales = "free") +
+  facet_wrap(~ ranking) +
+#  , scales = "free"
   theme_bw() +
   scale_x_continuous(breaks=seq(0, 7, 1)) +
   xlab("Ideology (liberal - conservative)") +
@@ -589,7 +590,7 @@ ggdt_all %>%
 
 p
 
-ggsave(here::here("fig", "placketluce_weight_all.pdf"),
+ggsave(here::here("fig", "placketluce_weight_all_weight.pdf"),
        width = 6, height = 5
 )
 
