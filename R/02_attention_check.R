@@ -171,35 +171,36 @@ cor_and_condprob(main, "random_identity", "repeat_identity")
 cor_and_condprob(main, "random_id_exact", "repeat_identity")
 cor_and_condprob(main, "random_id_alphabet", "repeat_identity")
 
-# Venn Diagram =================================================================
-venn_diagram_fill(main, "ternovski_fail", "repeat_tate", "random_tate")
-venn_diagram_fill(main, "berinsky_fail", "repeat_tate", "random_tate")
+# Quick check: does it matter if anchor comes first or main? ===================
+## Absolutely not!
+prop.table(table(df_list$raw$hopkins_order_q))
+chisq.test(table(df_list$raw$hopkins_order_q, df_list$raw$app_identity_1))
+chisq.test(table(df_list$raw$hopkins_order_q, df_list$raw$app_identity_2))
+chisq.test(table(df_list$raw$hopkins_order_q, df_list$raw$app_identity_3))
+chisq.test(table(df_list$raw$hopkins_order_q, df_list$raw$app_identity_4))
 
-venn_diagram_fill(main, "ternovski_fail", "repeat_esystems", "random_esystems")
-venn_diagram_fill(main, "berinsky_fail", "repeat_esystems", "random_esystems")
+# Latency of the six different screeners =======================================
+## Main ranking question
+summary(df_list$raw$page_app_identity_page_timing) ## mean 33.5s
 
-venn_diagram_fill(main, "ternovski_fail", "repeat_identity", "random_tate")
-venn_diagram_fill(main, "berinsky_fail", "repeat_identity", "random_tate")
+## Screeners
+summary(df_list$raw$page_app_identity_repeat_page_timing) ## mean 50.1s
+summary(df_list$raw$page_attention_check_1_timing) ## mean 23.4s
+summary(df_list$raw$page_attention_check_2_timing) # mean 44.3s
+summary(df_list$raw$page_hopkins_page_timing) # mean 54.3s
+## was marked Identity Hopkins (2023) so this is the main ranking
+summary(df_list$raw$page_alpha_page_timing) # mean 22.6s
+summary(df_list$raw$page_exact_page_timing) # mean 16.6s
 
-venn_diagram_fill(main, "ternovski_fail", "repeat_polar", "random_polar")
-venn_diagram_fill(main, "berinsky_fail", "repeat_polar", "random_polar")
+## Depending on failing or passing the screener, is there a difference
+## in the latency of the main ranking question?
+temp <- left_join(main, df_list$raw, by = "response_id")
+
+temp %>%
+  group_by(ternovski_fail_label) %>%
+  summarise(mean(page_app_identity_page_timing))
 
 # Pattern comparison by attention checks =======================================
-berinsky_plots <- pattern_compare_pass_fail(main, "berinsky_fail")
-ternovski_plots <- pattern_compare_pass_fail(main, "ternovski_fail")
-
-print(ggarrange(plotlist = berinsky_plots$tate))
-ggsave(
-  here("fig", "berinsky_fail_recorded_tate.pdf"),
-  width = 6, height = 3
-)
-
-print(ggarrange(plotlist = ternovski_plots$tate))
-ggsave(
-  here("fig", "ternovski_fail_recorded_tate.pdf"),
-  width = 6, height = 3
-)
-
 print(
   ggarrange(
     plotlist = berinsky_plots$identity %>%
@@ -229,157 +230,3 @@ ggsave(
   here("fig", "ternovski_fail_recorded_identity.pdf"),
   width = 6, height = 3
 )
-
-print(ggarrange(plotlist = berinsky_plots$no_context_3))
-ggsave(
-  here("fig", "berinsky_fail_recorded_nocontext3.pdf"),
-  width = 6, height = 3
-)
-
-print(ggarrange(plotlist = ternovski_plots$no_context_3))
-ggsave(
-  here("fig", "ternovski_fail_recorded_nocontext3.pdf"),
-  width = 6, height = 3
-)
-
-print(
-  ggarrange(
-    plotlist = berinsky_plots$no_context_4 %>%
-      map(
-        ~ .x +
-          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-      ),
-    ncol = 1
-  )
-)
-ggsave(
-  here("fig", "berinsky_fail_recorded_nocontext4.pdf"),
-  width = 6, height = 3
-)
-
-print(
-  ggarrange(
-    plotlist = ternovski_plots$no_context_4 %>%
-      map(
-        ~ .x +
-          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-      ),
-    ncol = 1
-  )
-)
-ggsave(
-  here("fig", "ternovski_fail_recorded_nocontext4.pdf"),
-  width = 6, height = 3
-)
-
-# [1] 0.2483813
-# Cond. on berinsky_fail == 1, Pr(ternovski_fail == 1) is 34.4%
-# Cond. on ternovski_fail == 1, Pr(berinsky_fail == 1) is 36.5%
-# [1] 0.1241025
-# Cond. on random_tate == 1, Pr(ternovski_fail == 1) is 19.9%
-# Cond. on ternovski_fail == 1, Pr(random_tate == 1) is 46.6%
-# [1] 0.1470883
-# Cond. on random_identity == 1, Pr(ternovski_fail == 1) is 21.3%
-# Cond. on ternovski_fail == 1, Pr(random_identity == 1) is 47.3%
-# [1] 0.172759
-# Cond. on random_id_alphabet == 1, Pr(ternovski_fail == 1) is 19.3%
-# Cond. on ternovski_fail == 1, Pr(random_id_alphabet == 1) is 39.2%
-# [1] 0.1941519
-# Cond. on random_id_exact == 1, Pr(ternovski_fail == 1) is 20.5%
-# Cond. on ternovski_fail == 1, Pr(random_id_exact == 1) is 35.1%
-# [1] 0.1798178
-# Cond. on random_polar == 1, Pr(ternovski_fail == 1) is 25.9%
-# Cond. on ternovski_fail == 1, Pr(random_polar == 1) is 38.5%
-# [1] 0.1371913
-# Cond. on random_esystems == 1, Pr(ternovski_fail == 1) is 19%
-# Cond. on ternovski_fail == 1, Pr(random_esystems == 1) is 60.8%
-# [1] 0.1717841
-# Cond. on random_es_alphabet == 1, Pr(ternovski_fail == 1) is 21.8%
-# Cond. on ternovski_fail == 1, Pr(random_es_alphabet == 1) is 24.3%
-# [1] 0.1117112
-# Cond. on random_es_temporal == 1, Pr(ternovski_fail == 1) is 18.9%
-# Cond. on ternovski_fail == 1, Pr(random_es_temporal == 1) is 28.4%
-# [1] 0.2004261
-# Cond. on random_tate == 1, Pr(berinsky_fail == 1) is 24.8%
-# Cond. on berinsky_fail == 1, Pr(random_tate == 1) is 54.8%
-# [1] 0.2192757
-# Cond. on random_identity == 1, Pr(berinsky_fail == 1) is 26.2%
-# Cond. on berinsky_fail == 1, Pr(random_identity == 1) is 54.8%
-# [1] 0.1946443
-# Cond. on random_id_alphabet == 1, Pr(berinsky_fail == 1) is 20.6%
-# Cond. on berinsky_fail == 1, Pr(random_id_alphabet == 1) is 39.5%
-# [1] 0.2108547
-# Cond. on random_id_exact == 1, Pr(berinsky_fail == 1) is 22.4%
-# Cond. on berinsky_fail == 1, Pr(random_id_exact == 1) is 36.3%
-# [1] 0.2808623
-# Cond. on random_polar == 1, Pr(berinsky_fail == 1) is 34.1%
-# Cond. on berinsky_fail == 1, Pr(random_polar == 1) is 47.8%
-# [1] 0.2399974
-# Cond. on random_esystems == 1, Pr(berinsky_fail == 1) is 24.1%
-# Cond. on berinsky_fail == 1, Pr(random_esystems == 1) is 72.6%
-# [1] 0.2539862
-# Cond. on random_es_alphabet == 1, Pr(berinsky_fail == 1) is 29.1%
-# Cond. on berinsky_fail == 1, Pr(random_es_alphabet == 1) is 30.6%
-# [1] 0.1914317
-# Cond. on random_es_temporal == 1, Pr(berinsky_fail == 1) is 21.6%
-# Cond. on berinsky_fail == 1, Pr(random_es_temporal == 1) is 30.6%
-# [1] 0.2112265
-# Cond. on random_id_alphabet == 1, Pr(random_identity == 1) is 37.5%
-# Cond. on random_identity == 1, Pr(random_id_alphabet == 1) is 34.5%
-# [1] 0.2836382
-# Cond. on random_id_exact == 1, Pr(random_identity == 1) is 45.7%
-# Cond. on random_identity == 1, Pr(random_id_exact == 1) is 35.4%
-# [1] 0.423808
-# Cond. on random_es_alphabet == 1, Pr(random_esystems == 1) is 74.5%
-# Cond. on random_esystems == 1, Pr(random_es_alphabet == 1) is 26%
-# [1] 0.2083223
-# Cond. on random_es_temporal == 1, Pr(random_esystems == 1) is 56.8%
-# Cond. on random_esystems == 1, Pr(random_es_temporal == 1) is 26.6%
-# [1] 0.08910355
-# Cond. on repeat_tate == 1, Pr(ternovski_fail == 1) is 18.8%
-# Cond. on ternovski_fail == 1, Pr(repeat_tate == 1) is 22.3%
-# [1] 0.1731812
-# Cond. on repeat_identity == 1, Pr(ternovski_fail == 1) is 21.2%
-# Cond. on ternovski_fail == 1, Pr(repeat_identity == 1) is 27%
-# [1] 0.06668797
-# Cond. on repeat_polar == 1, Pr(ternovski_fail == 1) is 17.5%
-# Cond. on ternovski_fail == 1, Pr(repeat_polar == 1) is 29.7%
-# [1] 0.123865
-# Cond. on repeat_esystems == 1, Pr(ternovski_fail == 1) is 15.4%
-# Cond. on ternovski_fail == 1, Pr(repeat_esystems == 1) is 36.5%
-# [1] 0.1632269
-# Cond. on repeat_tate == 1, Pr(berinsky_fail == 1) is 22.2%
-# Cond. on berinsky_fail == 1, Pr(repeat_tate == 1) is 24.8%
-# [1] 0.2502592
-# Cond. on repeat_identity == 1, Pr(berinsky_fail == 1) is 27%
-# Cond. on berinsky_fail == 1, Pr(repeat_identity == 1) is 32.5%
-# [1] 0.2138874
-# Cond. on repeat_polar == 1, Pr(berinsky_fail == 1) is 24.3%
-# Cond. on berinsky_fail == 1, Pr(repeat_polar == 1) is 38.9%
-# [1] 0.1849397
-# Cond. on repeat_esystems == 1, Pr(berinsky_fail == 1) is 18%
-# Cond. on berinsky_fail == 1, Pr(repeat_esystems == 1) is 40.1%
-# [1] 0.2833433
-# Cond. on repeat_tate == 1, Pr(random_tate == 1) is 48.3%
-# Cond. on random_tate == 1, Pr(repeat_tate == 1) is 24.5%
-# [1] 0.2649168
-# Cond. on repeat_identity == 1, Pr(random_identity == 1) is 47.6%
-# Cond. on random_identity == 1, Pr(repeat_identity == 1) is 27.4%
-# [1] 0.1346784
-# Cond. on repeat_identity == 1, Pr(random_id_alphabet == 1) is 31.7%
-# Cond. on random_id_alphabet == 1, Pr(repeat_identity == 1) is 19.9%
-# [1] 0.1255438
-# Cond. on repeat_identity == 1, Pr(random_id_exact == 1) is 27%
-# Cond. on random_id_exact == 1, Pr(repeat_identity == 1) is 20.1%
-# [1] 0.3039608
-# Cond. on repeat_polar == 1, Pr(random_polar == 1) is 36.7%
-# Cond. on random_polar == 1, Pr(repeat_polar == 1) is 41.8%
-# [1] 0.247155
-# Cond. on repeat_esystems == 1, Pr(random_esystems == 1) is 52.3%
-# Cond. on random_esystems == 1, Pr(repeat_esystems == 1) is 38.7%
-# [1] 0.2543388
-# Cond. on repeat_esystems == 1, Pr(random_es_alphabet == 1) is 19.4%
-# Cond. on random_es_alphabet == 1, Pr(repeat_esystems == 1) is 41.2%
-# [1] 0.2473715
-# Cond. on repeat_esystems == 1, Pr(random_es_temporal == 1) is 22.6%
-# Cond. on random_es_temporal == 1, Pr(repeat_esystems == 1) is 35.6%
