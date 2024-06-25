@@ -4,21 +4,43 @@ load(here("data", "tidy", "df_list.Rda"))
 # devtools::install_github("sysilviakim/ranking", force = T)
 library(ranking)
 
-# Grab rankings and weights
-imp_w <- read_csv(here("data/tidy", "temp_weight.csv")) %>%
-  mutate(
-    app_identity = as.character(ranking),
-    bias_weight = weight
-  ) %>%
-  dplyr::select(app_identity, bias_weight)
-
-imp_w
-hist(imp_w$bias_weight, breaks = 20) # 6 rankings should not exist, thus  w = 0
-
+# 1. Get data, get bias-correction weights =====================================
 # Grab main data
 main <- df_list$main
+main <- main %>%
+  mutate(
+    across(where(is.labelled), ~ as.numeric(as.character(.)))
+  )
 
-# Data processing ==============================================================
+
+data <- main %>%
+  select(app_identity_1, app_identity_2, app_identity_3, app_identity_4,
+         app_identity,
+         anc_correct_identity, weight)
+
+# Inverse probability weighting
+w <- imprr_weights(
+  data = data,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_identity"
+)
+
+# Add bias correction weights
+main <- main %>%
+  mutate(
+    ranking = app_identity
+  ) %>%
+  left_join(w$weights, by = "ranking") %>%
+  mutate(dual_weight = weight * w) 
+
+# Check
+plot(main$weight, main$dual_weight,
+     xlim = c(0, 6), ylim = c(0, 6))
+abline(a = 0, b = 1, col = "firebrick4", lty =2)
+
+
+# 2. Data processing ==============================================================
 # Fix some weird situation ---> haven::labelled to numeric
 main <- main %>%
   mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
@@ -38,12 +60,11 @@ dt <- main %>%
     ch.gender = app_identity_3,
     ch.race = app_identity_4
   ) %>%
-  left_join(imp_w, by = "app_identity") %>%
   select(
     starts_with("ch"), id,
     ideo7, pid7, educ, race,
     age, partisan, region, male,
-    bias_weight
+    weight, dual_weight
   ) %>%
   drop_na() %>%
   ## Aggregate Native American, Other, and Middle Eastern into a single category
@@ -56,11 +77,8 @@ dt <- main %>%
     race6 = as.factor(race6)
   )
 
-head(dt) # check
-hist(dt$bias_weight, border = "white") # good, no extremely small weight
-abline(v = 1, lty = 2, lwd = 2, col = "darkred")
 
-# Create indexed data ==========================================================
+# 3. Create indexed data ==========================================================
 library(mlogit)
 
 # Transform into mlogit format
@@ -82,13 +100,15 @@ mdat$id # respondent id
 mdat$idx # position id (1st, 2nd, 3rd, 4th = depressed)
 mdat$ideo7 # explanatory variable
 
-# Run Rank-order logit model ===================================================
+
+# 4. Run Rank-order logit model ================================================
 # Estimating parameters (no weight)
 m <- mlogit(
   ch ~ 1 | ideo7 + pid7 + partisan + male + age + race6 + educ + region,
   # Y ~ X_item | X_resp
   mdat, # Data
-  reflevel = "gender" # Base category
+  reflevel = "gender", # Base category
+  weight = weight      # Survey weights
 )
 
 # Estimating parameters (with weight)
@@ -97,16 +117,18 @@ m2 <- mlogit(
   # Y ~ X_item | X_resp
   mdat, # Data
   reflevel = "gender", # Base category
-  weight = bias_weight
+  weight = dual_weight # Survey weights X bias-correction weights
 )
 
 # Raw result
 summary(m)
 summary(m2)
 
-###########################################################
-# Predicted Prob for Gender > Race > Party > Religion
-###########################################################
+
+
+# 5. Get predicted probabilities ===============================================
+
+## 5.1. Gender > Race > Party > Religion =========================
 
 # intercept
 # partisan --> Independent
@@ -223,10 +245,7 @@ ggdt1 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(gender > race > party > religion)")
 
 
-###########################################################
-# Predicted Prob for Party > Gender > Race > Religion
-###########################################################
-
+## 5.2. Party > Gender > Race > Religion =========================
 
 # Generate 1000 sets of parameters (parametric bootstrap)
 library(clarify)
@@ -330,9 +349,8 @@ p_qoi2$results <- "our methods" # with weight
 ggdt2 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(party > gender > race > religion)")
 
-###########################################################
-# Predicted Prob for Gender > Race > Party > Religion  
-###########################################################
+
+## 5.3. Gender > Race > Party > Religion =========================
 
 
 # Generate 1000 sets of parameters (parametric bootstrap)
@@ -438,9 +456,8 @@ ggdt3 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(gender > race > religion > party)")
 
 
-###########################################################
-# Predicted Prob for Religion > Gender > Race > Party  
-###########################################################
+## 5.4. Religion > Gender > Race > Party  =========================
+
 
 # Generate 1000 sets of parameters (parametric bootstrap)
 library(clarify)
@@ -545,6 +562,7 @@ ggdt4 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(religion > gender > race > party)")
 
 
+# 6. Visualize the final results  ==============================================
 
 ggdt_all <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
 
@@ -554,8 +572,9 @@ ggdt_all %>%
   geom_point(position = position_dodge2(width = 0.5)) +
   geom_pointrange(aes(ymin = low, ymax = up),
                   position = position_dodge2(width = 0.5)) +
-  scale_color_manual(values = c("darkcyan", alpha("darkred", 0.3))) +
-  facet_wrap(~ ranking, scales = "free") +
+  scale_color_manual(values = c("darkcyan", alpha("dimgray", 0.3))) +
+  facet_wrap(~ ranking) +
+#  , scales = "free"
   theme_bw() +
   scale_x_continuous(breaks=seq(0, 7, 1)) +
   xlab("Ideology (liberal - conservative)") +
@@ -571,7 +590,7 @@ ggdt_all %>%
 
 p
 
-ggsave(here::here("fig", "placketluce_weight_all.pdf"),
+ggsave(here::here("fig", "placketluce_weight_all_weight.pdf"),
        width = 6, height = 5
 )
 
