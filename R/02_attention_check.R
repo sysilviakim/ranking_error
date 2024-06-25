@@ -193,12 +193,109 @@ summary(df_list$raw$page_alpha_page_timing) # mean 22.6s
 summary(df_list$raw$page_exact_page_timing) # mean 16.6s
 
 ## Depending on failing or passing the screener, is there a difference
-## in the latency of the main ranking question?
+## in the latency of the screener itself?
 temp <- left_join(main, df_list$raw, by = "response_id")
 
+## 27.7s for failed, 135.6s for passed (p = 0.3305)
+t.test(page_app_identity_repeat_page_timing ~ repeat_identity, data = temp)
+## 17.4s for failed, 24.4s for passed (p = 0.0601)
+t.test(page_attention_check_1_timing ~ ternovski_fail_label, data = temp)
+## 43.4s for failed, 44.5s for passed (p = 0.9481)
+t.test(page_attention_check_2_timing ~ berinsky_fail_label, data = temp)
+## 79.1s for failed, 43.5s for passed (p = 0.4812)
+t.test(page_hopkins_page_timing ~ random_identity, data = temp)
+## 47.8s for failed, 42.5s for passed (p = 0.3487)
+t.test(page_alpha_page_timing ~ random_id_alphabet, data = temp)
+## 35.1s for failed, 31.0s for passed (p = 0.3150)
+t.test(page_exact_page_timing ~ random_id_exact, data = temp)
+
+## Well... is there for the main ranking question?
+## 27.5s for failed, 39.7s for passed (p = 0.0687)
+t.test(page_app_identity_page_timing ~ repeat_identity, data = temp)
+## 40.0s for failed, 32.5s for passed (p = 0.6192)
+t.test(page_app_identity_page_timing ~ ternovski_fail_label, data = temp)
+## 23.4s for failed, 35.2s for passed (p = 0.0001842)
+t.test(page_app_identity_page_timing ~ berinsky_fail_label, data = temp)
+## 31.8s for failed, 34.2s for passed (p = 0.7301)
+t.test(page_app_identity_page_timing ~ random_identity, data = temp)
+## 30.0s for failed, 44.8s for passed (p = 0.1418)
+t.test(page_app_identity_page_timing ~ random_id_alphabet, data = temp)
+## 28.8s for failed, 32.1s for passed (p = 0.1169)
+t.test(page_app_identity_page_timing ~ random_id_exact, data = temp)
+
+## How about the Wilcoxon rank sum test?
+## p-value = 0.08016
+wilcox.test(page_app_identity_repeat_page_timing ~ repeat_identity, data = temp)
+temp %>%
+  group_by(repeat_identity) %>%
+  summarise(median(page_app_identity_repeat_page_timing))
+
+## p-value < 2.2e-16
+wilcox.test(page_attention_check_1_timing ~ ternovski_fail_label, data = temp)
 temp %>%
   group_by(ternovski_fail_label) %>%
-  summarise(mean(page_app_identity_page_timing))
+  summarise(median(page_attention_check_1_timing))
+
+## p-value < 2.2e-16
+wilcox.test(page_attention_check_2_timing ~ berinsky_fail_label, data = temp)
+temp %>%
+  group_by(berinsky_fail_label) %>%
+  summarise(median(page_attention_check_2_timing))
+
+## p = 4.249e-08
+wilcox.test(page_hopkins_page_timing ~ random_identity, data = temp)
+temp %>%
+  group_by(random_identity) %>%
+  summarise(median(page_hopkins_page_timing))
+
+## p = 0.3825
+wilcox.test(page_alpha_page_timing ~ random_id_alphabet, data = temp)
+temp %>%
+  group_by(random_id_alphabet) %>%
+  summarise(median(page_alpha_page_timing))
+
+## p = 0.006962
+wilcox.test(page_exact_page_timing ~ random_id_exact, data = temp)
+temp %>%
+  group_by(random_id_exact) %>%
+  summarise(median(page_exact_page_timing))
+
+## How about the Wilcoxon rank sum test for the main ranking question?
+## p = 6.909e-05
+wilcox.test(page_app_identity_page_timing ~ repeat_identity, data = temp)
+temp %>%
+  group_by(repeat_identity) %>%
+  summarise(median(page_app_identity_page_timing))
+
+## p = 0.00079
+wilcox.test(page_app_identity_page_timing ~ ternovski_fail_label, data = temp)
+temp %>%
+  group_by(ternovski_fail_label) %>%
+  summarise(median(page_app_identity_page_timing))
+
+## p = 6.909e-12
+wilcox.test(page_app_identity_page_timing ~ berinsky_fail_label, data = temp)
+temp %>%
+  group_by(berinsky_fail_label) %>%
+  summarise(median(page_app_identity_page_timing))
+
+## p = 1.073e-13
+wilcox.test(page_app_identity_page_timing ~ random_identity, data = temp)
+temp %>%
+  group_by(random_identity) %>%
+  summarise(median(page_app_identity_page_timing))
+
+## p = 0.2251
+wilcox.test(page_app_identity_page_timing ~ random_id_alphabet, data = temp)
+temp %>%
+  group_by(random_id_alphabet) %>%
+  summarise(median(page_app_identity_page_timing))
+
+## p = 5.202e-06
+wilcox.test(page_app_identity_page_timing ~ random_id_exact, data = temp)
+temp %>%
+  group_by(random_id_exact) %>%
+  summarise(median(page_app_identity_page_timing))
 
 # Pattern comparison by attention checks =======================================
 print(
