@@ -146,15 +146,17 @@ avg_gg_comb %>%
   group_by(dt) %>%
   mutate(diff = estimate -  lag(estimate))
 
-# Gender v. race
-0.836/0.543  # Direct/Unadjusted
-0.720/0.543  # IPW/Unadjusted
+# # Gender v. race
+# 0.836/0.543  # Direct/Unadjusted
+# 0.720/0.543  # IPW/Unadjusted
 
 # Party v. religion
 0.680/0.437 # Direct/Unadjusted
 0.617/0.437 # IPW/Unadjusted
 
-
+# Party v. gender
+(3.28 - 1.65)/(3.00 - 1.95) # Direct/Unajusted
+(3.22 - 1.72)/(3.00 - 1.95)
 
 
 
