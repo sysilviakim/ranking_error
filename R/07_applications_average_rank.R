@@ -139,6 +139,21 @@ ggsave(here::here("fig", "weight-avg-rank-sample.pdf"),
        width = 4*1.2, height = 4)
 
 
+# Quantities for comparison ==============================================================
+
+avg_gg_comb %>%
+  arrange(dt, estimate) %>%
+  group_by(dt) %>%
+  mutate(diff = estimate -  lag(estimate))
+
+# Gender v. race
+0.836/0.543  # Direct/Unadjusted
+0.720/0.543  # IPW/Unadjusted
+
+# Party v. religion
+0.680/0.437 # Direct/Unadjusted
+0.617/0.437 # IPW/Unadjusted
+
 
 
 
