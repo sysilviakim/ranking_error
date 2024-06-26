@@ -596,3 +596,18 @@ ggsave(here::here("fig", "placketluce_weight_all_weight.pdf"),
        width = 6, height = 5
 )
 
+# First difference between the most liberal and conservative
+# ggdt1
+# Bias-corrected
+# > 0.29862563 - 0.06342958
+# [1] 0.235196
+
+# Raw data
+# > 0.19450703 - 0.04083227
+# [1] 0.1536748
+
+# > 0.235196/0.1536748
+# [1] 1.530479
+
+
+ggdt3 %>% group_by(results) %>% summarize(mean(mean))
