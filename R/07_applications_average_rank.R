@@ -21,7 +21,7 @@ d <- imprr_direct(
   main_q = "app_identity",
   anc_correct = "anc_correct_identity",
   weight = data$weight,
-  bootstrap_n = 1000
+  n_bootstrap = 1000
 )
 
 # Inverse probability weighting
@@ -30,7 +30,7 @@ w <- imprr_weights(
   J = 4,
   main_q = "app_identity",
   anc_correct = "anc_correct_identity",
-  bootstrap_n = 1000
+  n_bootstrap = 1000
 )
 
 print(d)
