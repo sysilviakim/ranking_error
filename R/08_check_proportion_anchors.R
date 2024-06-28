@@ -83,6 +83,11 @@ d_exact <- imprr_direct(
   n_bootstrap = 1000
 )
 
+save(
+  list = c("d", "d_alpha", "d_exact"), 
+  file = here("data", "tidy", "corrections-three-anchors.Rda")
+)
+
 # Estimate the proportion of random responses with
 # Attention checks I
 # Attention checks II
@@ -340,7 +345,17 @@ avg_gg_comb2 %>%
 
 ggpubr::ggarrange(
   pdf_default(a) + theme(legend.position = "none"), 
-  pdf_default(b) + theme(legend.position = "none"), 
+  pdf_default(b) + theme(legend.position = "none") + 
+    ## Add a legend for geom_rect within the plot
+    ## Left-align the text, family = CM Roman
+    annotate(
+      "text", x = 1, y = 1, size = 2.5, hjust = 0, family = "CM Roman",
+      label = paste0(
+        "Gray region = \n",
+        "95% CIs of unadjusted \n",
+        "(raw data) estimates"
+      )
+    ),
   ncol = 1, heights = c(0.4, 1)
 )
 ggsave(
