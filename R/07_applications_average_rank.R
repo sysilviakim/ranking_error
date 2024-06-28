@@ -80,7 +80,7 @@ avg_rank.i <- rbind(
   avg_rank.i, lm_robust(gender ~ 1, dt, weights = dual_weight) %>% tidy()
 )
 avg_rank.i <- rbind(
-  avg_rank.i, 
+  avg_rank.i,
   lm_robust(race_ethnicity ~ 1, dt, weights = dual_weight) %>% tidy()
 )
 avg_rank.i$dt <- "IPW"
@@ -113,11 +113,21 @@ avg_gg_comb <- rbind(
 )
 width_par <- 0.5
 
-avg_gg_comb %>%
-  ggplot(aes(
-    y = fct_reorder(item, -estimate, mean),
-    x = estimate, group = dt, color = dt
-  )) +
+p <- avg_gg_comb %>%
+  mutate(
+    item = case_when(
+      item == "party" ~ "Party",
+      item == "religion" ~ "Religion",
+      item == "race_ethnicity" ~ "Race/ethnicity",
+      item == "gender" ~ "Gender"
+    )
+  ) %>%
+  ggplot(
+    aes(
+      y = fct_reorder(item, -estimate, mean),
+      x = estimate, group = dt, color = dt
+    )
+  ) +
   scale_fill_brewer(palette = "Accent") +
   geom_vline(
     xintercept = 2.5, lty = 2, color = alpha("black", 0.5), linewidth = 0.3
@@ -130,24 +140,29 @@ avg_gg_comb %>%
     width = 0,
     position = position_dodge(width_par), size = 0.6
   ) +
-  scale_color_manual(values = c(
-    "Direct" = "darkcyan",
-    "IPW" = "maroon4",
-    "Raw Data" = alpha("dimgray", 0.5)
-  )) +
+  scale_color_manual(
+    values = c(
+      "Direct" = "darkcyan",
+      "IPW" = "maroon4",
+      "Raw Data" = alpha("dimgray", 0.5)
+    )
+  ) +
   geom_text(
     aes(
       x = conf.high + 0.1,
       label = round(estimate, 1.5)
     ),
     position = position_dodge(width = width_par),
-    size = 2,
-    color = "black"
+    size = 2.5,
+    color = "black",
+    family = "CM Roman"
   ) +
   xlim(1, 4.1) +
   ylab("") +
   xlab("") +
-  theme_classic(base_rect_size = 11 / 44) +
+  theme_classic(base_rect_size = 11 / 44)
+
+pdf_default(p) +
   theme(
     legend.position = "top",
     legend.title = element_blank(),
@@ -155,9 +170,9 @@ avg_gg_comb %>%
     axis.text.y = element_text(size = 10),
     text = element_text(size = 10)
   )
-
-ggsave(here::here("fig", "weight-avg-rank-sample.pdf"),
-  width = 4 * 1.2, height = 4
+ggsave(
+  here("fig", "weight-avg-rank-sample.pdf"),
+  width = 4.5, height = 3
 )
 
 # Quantities for comparison ====================================================
