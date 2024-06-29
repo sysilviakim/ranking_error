@@ -4,7 +4,7 @@ main <- df_list$main %>%
   mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
 load(here("data", "tidy", "bias_correction.Rda"))
 
-# Data processing ==============================================================
+# Data processing + frequencies ================================================
 # Reference set: (party, religion, gender, race)
 # code attention check here
 data <- main %>%
@@ -45,11 +45,7 @@ dt_checkII <- data %>% filter(!is.na(attention_berinsky))
 
 table(dt_repeat$repeat_correct)
 
-# Estimate the proportion of random responses with
-# Attention checks I
-# Attention checks II
-# Repeated question
-
+# Estimate the proportion of random responses (attention/repeated) =============
 est_p_random_checks <- rbind(
   lm_robust(repeat_identity ~ 1, main),
   lm_robust(ternovski_fail ~ 1, main),
@@ -75,6 +71,7 @@ d_com <- rbind(
   est_p_random_checks
 )
 
+# Plot the estimated proportion of random responses ============================
 d_com$group <- c(
   "Anchor main",
   "Anchor alphabet",
@@ -85,7 +82,7 @@ d_com$group <- c(
 )
 
 width_par <- 0.8
-ggplot(d_com, aes(x = mean, y = group)) +
+a <- ggplot(d_com, aes(x = mean, y = group)) +
   geom_point(aes(shape = group, color = group)) +
   geom_errorbar(
     aes(
@@ -119,10 +116,9 @@ ggplot(d_com, aes(x = mean, y = group)) +
   ) +
   xlab("Estimated proportion of random responses") +
   ylab("") +
-  # theme_bw() +
-  theme(legend.position = "null") -> a
+  theme(legend.position = "null")
 
-# Plot the estimated average ranks
+# Plot the estimated average ranks =============================================
 dt_main <- main_direct$qoi %>%
   filter(qoi == "average rank") %>%
   mutate(dt = "Anchor main")
@@ -154,7 +150,7 @@ avg_gg_comb <- rbind(
   ungroup() %>%
   select(item, estimate, conf.low, conf.high, dt)
 
-## Listwise deletion estimates
+# Listwise deletion estimates ==================================================
 ### Create "clean" data
 dt_checkI_clean <- dt_checkI %>% filter(attention_ternovski == 1)
 dt_checkII_clean <- dt_checkI %>% filter(attention_berinsky == 1)
@@ -209,7 +205,8 @@ est_com <- rbind(
 
 avg_gg_comb2 <- rbind(avg_gg_comb, est_com)
 
-avg_gg_comb2 %>%
+# Final visualization ==========================================================
+b <- avg_gg_comb2 %>%
   mutate(
     item = case_when(
       item == "gender" ~ "Gender",
@@ -304,7 +301,7 @@ avg_gg_comb2 %>%
     axis.text.y = element_text(size = 10),
     axis.text.x = element_text(size = 10),
     text = element_text(size = 10)
-  ) -> b
+  )
 
 ggpubr::ggarrange(
   pdf_default(a) + theme(legend.position = "none"),
