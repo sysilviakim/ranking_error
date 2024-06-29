@@ -10,22 +10,22 @@ library(mlogit)
 temp_fxn <- function(v, n, p_qoi, type = 1) {
   for (i in 1:n) {
     e_XB_party <- exp(v$`(Intercept):party` + v$`ideo7:party` * i +
-                        v$`pid7:party` * .fix_pid +
-                        v$`male:party` * .fix_male +
-                        v$`age:party` * .fix_age +
-                        v$`educ:party` * .fix_edu)
+      v$`pid7:party` * .fix_pid +
+      v$`male:party` * .fix_male +
+      v$`age:party` * .fix_age +
+      v$`educ:party` * .fix_edu)
     e_XB_race <- exp(v$`(Intercept):race` + v$`ideo7:race` * i +
-                       v$`pid7:race` * .fix_pid +
-                       v$`male:race` * .fix_male +
-                       v$`age:race` * .fix_age +
-                       v$`educ:race` * .fix_edu)
+      v$`pid7:race` * .fix_pid +
+      v$`male:race` * .fix_male +
+      v$`age:race` * .fix_age +
+      v$`educ:race` * .fix_edu)
     e_XB_reli <- exp(v$`(Intercept):religion` + v$`ideo7:religion` * i +
-                       v$`pid7:religion` * .fix_pid +
-                       v$`male:religion` * .fix_male +
-                       v$`age:religion` * .fix_age +
-                       v$`educ:religion` * .fix_edu)
+      v$`pid7:religion` * .fix_pid +
+      v$`male:religion` * .fix_male +
+      v$`age:religion` * .fix_age +
+      v$`educ:religion` * .fix_edu)
     e_XB_gen <- 1
-    
+
     # Here, we want to compute the probability for one unique ranking
     # Prob (party, race, religion, gender)
     # Prob(party) * Prob(race) * Prob(religion) * Prob(gender)
@@ -143,7 +143,7 @@ summary(m2)
 .fix_pid <- 4 # Moderate
 .fix_male <- 1 # Male
 .fix_age <- 40 # close to the average of 52.76
-.fix_edu <- 4 # from 1 to 6
+.fix_edu <- 3 # some college
 
 # Generate 1000 sets of parameters (parametric bootstrap)
 ## First, reusable template
@@ -166,7 +166,7 @@ v <- sim_coefs$sim.coefs %>% as_tibble()
 p_qoi2 <- temp_fxn(v, 7, p_template, type = 1)
 
 p_qoi$results <- "raw data" # no weight
-p_qoi2$results <- "our methods" # with weight
+p_qoi2$results <- "bias-corrected" # with weight
 
 ggdt1 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(gender > race > party > religion)")
@@ -185,7 +185,7 @@ v <- sim_coefs$sim.coefs %>% as_tibble()
 p_qoi2 <- temp_fxn(v, 7, p_template, type = 2)
 
 p_qoi$results <- "raw data" # no weight
-p_qoi2$results <- "our methods" # with weight
+p_qoi2$results <- "bias-corrected" # with weight
 
 ggdt2 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(party > gender > race > religion)")
@@ -204,7 +204,7 @@ v <- sim_coefs$sim.coefs %>% as_tibble()
 p_qoi2 <- temp_fxn(v, 7, p_template, type = 3)
 
 p_qoi$results <- "raw data" # no weight
-p_qoi2$results <- "our methods" # with weight
+p_qoi2$results <- "bias-corrected" # with weight
 
 ggdt3 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(gender > race > religion > party)")
@@ -223,7 +223,7 @@ v <- sim_coefs$sim.coefs %>% as_tibble()
 p_qoi2 <- temp_fxn(v, 7, p_template, type = 4)
 
 p_qoi$results <- "raw data" # no weight
-p_qoi2$results <- "our methods" # with weight
+p_qoi2$results <- "bias-corrected" # with weight
 
 ggdt4 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(religion > gender > race > party)")
@@ -244,8 +244,8 @@ p <- ggdt_all %>%
   ylab("Predicted Probability") +
   labs(
     caption = paste0(
-      "Predictions for 40yo, white, male, ",
-      "with mid-level edu, independent, in Northeast"
+      "Predictions for a 40-year-old white male ",
+      "with some college education,\nindependent, and in Northeast"
     )
   )
 
@@ -266,18 +266,22 @@ ggsave(
   width = 6, height = 5
 )
 
-# First difference between the most liberal and conservative
-# ggdt1
-# Bias-corrected
-# > 0.29862563 - 0.06342958
-# [1] 0.235196
+# First difference between the most liberal and conservative ===================
+## Bias-corrected: 0.32752908 - 0.06778887 = 0.2597402
+corrected_diff <- ggdt1 %>%
+  filter(ideology == 7 | ideology == 1) %>%
+  filter(results == "bias-corrected") %>%
+  {.$mean[1] - .$mean[2]}
+corrected_diff
 
-# Raw data
-# > 0.19450703 - 0.04083227
-# [1] 0.1536748
+## Raw data: 0.20329978 - 0.04637296 = 0.1569268
+raw_diff <- ggdt1 %>%
+  filter(ideology == 7 | ideology == 1) %>%
+  filter(results == "raw data") %>%
+  {.$mean[1] - .$mean[2]}
+raw_diff
 
-# > 0.235196/0.1536748
-# [1] 1.530479
+corrected_diff / raw_diff
 
 ggdt3 %>%
   group_by(results) %>%
