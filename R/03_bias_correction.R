@@ -1,0 +1,104 @@
+source(here::here("R", "utilities.R"))
+load(here("data", "tidy", "df_list.Rda"))
+
+# Subset and wrangle data that we need =========================================
+main <- df_list$main %>%
+  mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
+
+# Reference set: (party, religion, gender, race)
+identity_data <- main %>%
+  select(
+    app_identity_1, app_identity_2, app_identity_3, app_identity_4,
+    anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
+    anc_correct_identity, anc_correct_id_alphabet, anc_correct_id_exact,
+    weight
+  )
+
+# Main anchor question =========================================================
+## Note that the functions now require whether the respondent made a 
+## correct answer to the anchor question in a binary format, 
+## *outside* the function
+
+## Direct bias correction ------------------------------------------------------
+main_direct <- imprr_direct(
+  data = identity_data,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_identity",
+  weight = identity_data$weight,
+  n_bootstrap = 1000
+)
+
+## Inverse probability weighting -----------------------------------------------
+main_ipw <- imprr_weights(
+  data = identity_data,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_identity",
+  n_bootstrap = 1000
+)
+
+## formerly w (as opposed to w0)
+main_ipw_weighted <- imprr_weights(
+  data = identity_data,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_identity",
+  n_bootstrap = 1000,
+  weight = identity_data$weight
+)
+
+# Alphabet anchor ==============================================================
+temp <- identity_data %>% filter(!is.na(anc_correct_id_alphabet))
+
+## Direct bias correction ------------------------------------------------------
+alphabet_direct <- imprr_direct(
+  data = temp,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_id_alphabet",
+  weight = temp$weight,
+  n_bootstrap = 1000
+)
+
+# Inverse probability weighting
+alphabet_ipw <- imprr_weights(
+  data = temp,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_id_alphabet",
+  n_bootstrap = 1000
+)
+
+# Exact anchor =================================================================
+temp <- identity_data %>% filter(!is.na(anc_correct_id_exact))
+
+## Direct bias correction ------------------------------------------------------
+exact_direct <- imprr_direct(
+  data = temp,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_id_exact",
+  weight = temp$weight,
+  n_bootstrap = 1000
+)
+
+# Inverse probability weighting
+exact_ipw <- imprr_weights(
+  data = temp,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_id_exact",
+  n_bootstrap = 1000
+)
+
+# Save results for reuse =======================================================
+save(
+  list = c(
+    "main_direct", "main_ipw", "main_ipw_weighted",
+    "alphabet_direct", "alphabet_ipw",
+    "exact_direct", "exact_ipw",
+    "identity_data"
+  ),
+  file = here("data", "tidy", "bias_correction.Rda")
+)

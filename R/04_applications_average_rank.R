@@ -157,5 +157,5 @@ avg_gg_comb %>%
 0.617 / 0.437 # IPW/Unadjusted
 
 # Party v. gender
-(3.28 - 1.65) / (3.00 - 1.95) # Direct/Unajusted
-(3.22 - 1.72) / (3.00 - 1.95)
+(3.28 - 1.65) / (3.00 - 1.95) # Direct/Unadjusted
+(3.22 - 1.72) / (3.00 - 1.95) # IPW/Unadjusted
