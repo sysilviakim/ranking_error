@@ -94,4 +94,3 @@ test_link %>%
   .$anc_esystems_recorded %>%
   {all(. == "123456")} %>%
   assert_that()
-

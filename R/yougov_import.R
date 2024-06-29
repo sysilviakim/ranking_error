@@ -263,7 +263,11 @@ yougov_import <- function(fname) {
   ## Recover recorded rankings
   message("Recovering recorded rankings.")
   for (v in var_list) {
-    main <- recover_recorded_responses(v, gsub("_row_rnd", "", v), df = main)
+    main <- recover_recorded_responses(
+      presented_order = v, 
+      true_order = gsub("_row_rnd", "", v),
+      df = main
+    )
   }
   
   ## Create binary indicators for anchor question/attention check/repeat q fails
