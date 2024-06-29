@@ -77,29 +77,7 @@ temp <- main %>%
     `Anchor alphabet` = random_id_alphabet
   )
 
-## Pairwise correlation matrix -------------------------------------------------
-cor_matrix <- cor(temp, use = "pairwise.complete.obs") %>%
-  round(., digits = 2)
-
-print(
-  cor_matrix %>%
-    xtable(
-      caption = "Pairwise Correlation Between Checks for Random Responses",
-      label = "tab:cor-random-checks",
-      align = "lrrrrrr"
-    ),
-  file = here("tab", "cor_random_check.tex"),
-  floating = FALSE,
-  booktabs = TRUE
-)
-
 ## Corrplot --------------------------------------------------------------------
-# corrplot(
-#   cor_matrix, method = "color", type = "lower",
-#   tl.cex = 0.8, tl.col = "black", tl.srt = 0, tl.pos = "lt",
-#   addCoef.col = "black", number.cex = 0.8
-# )
-
 p <- cor_matrix %>%
   reshape2::melt() %>%
   mutate(
