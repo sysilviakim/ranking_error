@@ -101,4 +101,3 @@ temp <- main %>%
   )
 temp
 temp %>% map(chisq_power)
-
