@@ -113,7 +113,6 @@ summary(m2)
 .fix_edu <- 4 # from 1 to 6
 
 # Generate 1000 sets of parameters (parametric bootstrap)
-library(clarify)
 set.seed(123)
 sim_coefs <- sim(m)
 
