@@ -1,33 +1,17 @@
 source(here::here("R", "utilities.R"))
+library(questionr)
+library(RColorBrewer)
+
 load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 load(here("data", "tidy", "bias_correction.Rda"))
 
-sum(main_ipw_weighted$weights$w)
+## Quick sanity checks
+sum(main_ipw_weighted$weights$alt_w)
 sum(main_ipw$weights$w)
 
-main_ipw_weighted$weights <- main_ipw_weighted$weights %>%
-  rename(alt_w = w)
-
-# Downsize data ================================================================
-dt <- main %>%
-  mutate(
-    party = app_identity_1,
-    religion = app_identity_2,
-    gender = app_identity_3,
-    race_ethnicity = app_identity_4,
-    ranking = app_identity
-  ) %>%
-  left_join(main_ipw_weighted$weights, by = "ranking") %>%
-  left_join(main_ipw$weights, by = "ranking") %>%
-  mutate(w_multiplied = weight * w) %>%
-  select(
-    party, religion, gender, race_ethnicity, race, app_identity,
-    ranking, weight, w, alt_w, w_multiplied
-  )
-
 # Visualize full PMF ===========================================================
-# Bias Corrected PMF
+## Bias Corrected PMF ---------------------------------------------------------
 perm <- combinat::permn(x = c("Party", "Religion", "Gender", "Race"))
 pmf <- wtd.table(
   x = dt$app_identity,
@@ -91,7 +75,7 @@ p <- ggplot(pmf, aes(x = ordering, y = Freq, fill = type)) +
   coord_flip()
 p
 
-# Raw Data
+## Raw Data -------------------------------------------------------------------
 pmf_raw <- wtd.table(x = dt$app_identity) %>%
   data.frame() %>%
   mutate(
@@ -154,42 +138,16 @@ p2 <- ggplot(pmf_com, aes(x = ordering, y = Freq, fill = type)) +
   coord_flip()
 p2
 
-p
+pdf_default(p) +
+  theme(legend.position = "none")
 ggsave(
   here("fig", "weight-PMF-survey-weights.pdf"),
   width = 5, height = 4
 )
 
-
-p2
+pdf_default(p2) +
+  theme(legend.position = "none")
 ggsave(
   here("fig", "weight-PMF-combined-survey-weights.pdf"),
-  width = 8, height = 4
-)
-
-# Figures for Talks
-pmf_com %>%
-  mutate(type = ifelse(data == "Raw Data", type, "White")) %>%
-  ggplot(aes(x = ordering, y = Freq, fill = type)) +
-  geom_bar(stat = "identity") +
-  scale_fill_manual(
-    values = c(
-      brewer.pal(n = 4, name = "Set2"),
-      alpha("white", 0)
-    )
-  ) +
-  annotate("rect",
-    xmin = 7, xmax = 12,
-    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "black"
-  ) +
-  ylab("Proportion of Unique Ranking Profiles") +
-  xlab("") +
-  facet_grid(~data) +
-  theme_bw() +
-  theme(legend.position = "none") +
-  coord_flip()
-
-ggsave(
-  here("fig", "weight-PMF-combined_empty.pdf"),
   width = 8, height = 4
 )

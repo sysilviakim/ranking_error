@@ -3,21 +3,6 @@ load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 load(here("data", "tidy", "bias_correction.Rda"))
 
-# Downsize data ================================================================
-dt <- main %>%
-  mutate(
-    party = app_identity_1,
-    religion = app_identity_2,
-    gender = app_identity_3,
-    race_ethnicity = app_identity_4,
-    ranking = app_identity
-  ) %>%
-  left_join(main_ipw$weights, by = "ranking") %>%
-  mutate(dual_weight = weight * w) %>%
-  select(
-    party, religion, gender, race_ethnicity, race, ranking, weight, dual_weight
-  )
-
 # Bias correction ==============================================================
 # Direct Bias Correction
 avg_rank.w <- main_direct$qoi %>%
@@ -39,16 +24,16 @@ avg_rank.w <- main_direct$qoi %>%
 
 # IPW
 avg_rank.i <- as.data.frame(NA)
-avg_rank.i <- lm_robust(party ~ 1, dt, weights = dual_weight) %>% tidy()
+avg_rank.i <- lm_robust(party ~ 1, dt, weights = w_multiplied) %>% tidy()
 avg_rank.i <- rbind(
-  avg_rank.i, lm_robust(religion ~ 1, dt, weights = dual_weight) %>% tidy()
+  avg_rank.i, lm_robust(religion ~ 1, dt, weights = w_multiplied) %>% tidy()
 )
 avg_rank.i <- rbind(
-  avg_rank.i, lm_robust(gender ~ 1, dt, weights = dual_weight) %>% tidy()
+  avg_rank.i, lm_robust(gender ~ 1, dt, weights = w_multiplied) %>% tidy()
 )
 avg_rank.i <- rbind(
   avg_rank.i,
-  lm_robust(race_ethnicity ~ 1, dt, weights = dual_weight) %>% tidy()
+  lm_robust(race_ethnicity ~ 1, dt, weights = w_multiplied) %>% tidy()
 )
 avg_rank.i$dt <- "IPW"
 avg_rank.i <- avg_rank.i %>%

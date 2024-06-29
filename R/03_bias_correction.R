@@ -5,7 +5,7 @@ load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main %>%
   mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
 
-# Reference set: (party, religion, gender, race)
+## Reference set: (party, religion, gender, race)
 identity_data <- main %>%
   select(
     app_identity_1, app_identity_2, app_identity_3, app_identity_4,
@@ -93,12 +93,32 @@ exact_ipw <- imprr_weights(
 )
 
 # Save results for reuse =======================================================
+main_ipw_weighted$weights <- main_ipw_weighted$weights %>%
+  rename(alt_w = w)
+
+## Downsized data
+dt <- main %>%
+  mutate(
+    party = app_identity_1,
+    religion = app_identity_2,
+    gender = app_identity_3,
+    race_ethnicity = app_identity_4,
+    ranking = app_identity
+  ) %>%
+  left_join(main_ipw_weighted$weights, by = "ranking") %>%
+  left_join(main_ipw$weights, by = "ranking") %>%
+  mutate(w_multiplied = weight * w) %>%
+  select(
+    party, religion, gender, race_ethnicity, race, app_identity,
+    ranking, weight, w, alt_w, w_multiplied
+  )
+
 save(
   list = c(
     "main_direct", "main_ipw", "main_ipw_weighted",
     "alphabet_direct", "alphabet_ipw",
     "exact_direct", "exact_ipw",
-    "identity_data"
+    "identity_data", "dt"
   ),
   file = here("data", "tidy", "bias_correction.Rda")
 )
