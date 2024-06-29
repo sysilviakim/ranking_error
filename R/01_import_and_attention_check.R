@@ -296,34 +296,3 @@ wilcox.test(page_app_identity_page_timing ~ random_id_exact, data = temp)
 temp %>%
   group_by(random_id_exact) %>%
   summarise(median(page_app_identity_page_timing))
-
-# Pattern comparison by attention checks =======================================
-print(
-  ggarrange(
-    plotlist = berinsky_plots$identity %>%
-      map(
-        ~ .x +
-          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-      ),
-    ncol = 1
-  )
-)
-ggsave(
-  here("fig", "berinsky_fail_recorded_identity.pdf"),
-  width = 6, height = 3
-)
-
-print(
-  ggarrange(
-    plotlist = ternovski_plots$identity %>%
-      map(
-        ~ .x +
-          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-      ),
-    ncol = 1
-  )
-)
-ggsave(
-  here("fig", "ternovski_fail_recorded_identity.pdf"),
-  width = 6, height = 3
-)
