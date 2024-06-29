@@ -44,18 +44,148 @@ ggsave(
 )
 
 # Main application and anchor questions ========================================
-tab_identity <- table(main$app_identity_recorded) %>% permn_augment()
-round(prop.table(tab_identity) * 100, digits = 1)
-chisq_power(tab_identity)
-temp <- table_to_tibble(tab_identity)
-plot_nolegend(pdf_default(plot_dist_ranking(temp, ylim = .7)))
+## Main ranking question of interest (identity) --------------------------------
+tab <- table(main$app_identity_recorded) %>% permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## X-sq = 121.593, p-value = 2.149e-15, ES = 0.3352, N = 287+
+temp <- table_to_tibble(tab)
+p1 <- plot_nolegend(
+  pdf_default(plot_dist_ranking(temp, ylim = .15, family = "CM Roman"))
+)
+p1
 ggsave(
   here("fig", "main-identity-recorded.pdf"),
-  width = 7.5, height = 2.8
+  width = 7.5, height = 2
 )
 
-tab_main_anc <- table(main$anc_identity_recorded) %>% permn_augment()
-round(prop.table(tab_main_anc) * 100, digits = 1)
-chisq_power(tab_main_anc) ## p-value = 2.107e-06, ES = 0.2515, need N = 510+
+## Main anchor -----------------------------------------------------------------
+tab <- table(main$anc_identity_recorded) %>% permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## X-sq = 68.447, p-value = 2.107e-06, ES = 0.2515, N = 510+
+temp <- table_to_tibble(tab)
+p2 <- plot_nolegend(
+  pdf_default(plot_dist_ranking(temp, ylim = .15, family = "CM Roman"))
+)
+p2
+ggsave(
+  here("fig", "main-anchor-recorded.pdf"),
+  width = 7.5, height = 2
+)
 
+## Subgroup: those who passed the main anchor
+tab <- main %>%
+  filter(anc_correct_identity == 1) %>%
+  {table(.$anc_identity_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 0.1066, ES = 0.2050, N = 767+
+temp <- table_to_tibble(tab)
+pass <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+plot_nolegend(pdf_default(pass))
+ggsave(
+  here("fig", "main-anchor-recorded-passers.pdf"),
+  width = 7.5, height = 2
+)
 
+## Subgroup: those who failed the main anchor
+tab <- main %>%
+  filter(anc_correct_identity == 0) %>%
+  {table(.$anc_identity_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 5.793e-13, ES = 0.5737, N = 98+
+temp <- table_to_tibble(tab)
+fail <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+plot_nolegend(pdf_default(fail))
+ggsave(
+  here("fig", "main-anchor-recorded-failers.pdf"),
+  width = 7.5, height = 2
+)
+
+## Alphabet anchor -------------------------------------------------------------
+tab <- table(main$anc_id_alphabet_recorded) %>% permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## X-sq = 33.056, p-value = 0.0801, ES = 0.2481, N = 524+
+temp <- table_to_tibble(tab)
+p3 <- plot_nolegend(
+  pdf_default(plot_dist_ranking(temp, ylim = .15, family = "CM Roman"))
+)
+p3
+ggsave(
+  here("fig", "alphabet-anchor-recorded.pdf"),
+  width = 7.5, height = 2
+)
+
+## Subgroup: those who passed the alphabet anchor
+tab <- main %>%
+  filter(anc_correct_id_alphabet == 1) %>%
+  {table(.$anc_id_alphabet_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 0.8084, ES = 0.2685, N = 447+
+temp <- table_to_tibble(tab)
+pass <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+plot_nolegend(pdf_default(pass))
+ggsave(
+  here("fig", "alphabet-anchor-recorded-passers.pdf"),
+  width = 7.5, height = 2
+)
+
+## Subgroup: those who failed the alphabet anchor
+tab <- main %>%
+  filter(anc_correct_id_alphabet == 0) %>%
+  {table(.$anc_id_alphabet_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 0.05695, ES = 0.3390, N = 280+
+temp <- table_to_tibble(tab)
+fail <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+plot_nolegend(pdf_default(fail))
+ggsave(
+  here("fig", "alphabet-anchor-recorded-failers.pdf"),
+  width = 7.5, height = 2
+)
+
+## Exact anchor ----------------------------------------------------------------
+tab <- table(main$anc_id_exact_recorded) %>% permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## X-sq = 62.662, p-value = 1.561e-05, ES = 0.3391, N = 280+
+temp <- table_to_tibble(tab)
+p4 <- plot_nolegend(
+  pdf_default(plot_dist_ranking(temp, ylim = .15, family = "CM Roman"))
+)
+p4
+ggsave(
+  here("fig", "exact-anchor-recorded.pdf"),
+  width = 7.5, height = 2
+)
+
+## Subgroup: those who passed the exact anchor
+tab <- main %>%
+  filter(anc_correct_id_exact == 1) %>%
+  {table(.$anc_id_exact_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 0.4055, ES = 0.2870, N = 391+
+temp <- table_to_tibble(tab)
+pass <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+plot_nolegend(pdf_default(pass))
+ggsave(
+  here("fig", "alphabet-anchor-recorded-passers.pdf"),
+  width = 7.5, height = 2
+)
+
+## Subgroup: those who failed the exact anchor
+tab <- main %>%
+  filter(anc_correct_id_exact == 0) %>%
+  {table(.$anc_id_exact_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 6.595e-08, ES = 0.5543, N = 105+
+temp <- table_to_tibble(tab)
+fail <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+plot_nolegend(pdf_default(fail))
+ggsave(
+  here("fig", "alphabet-anchor-recorded-failers.pdf"),
+  width = 7.5, height = 2
+)
