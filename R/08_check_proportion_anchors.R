@@ -1,13 +1,10 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
-
-# Grab main data
-main <- df_list$main
+main <- df_list$main %>%
+  mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
+load(here("data", "tidy", "bias_correction.Rda"))
 
 # Data processing ==============================================================
-main <- main %>%
-  mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
-
 # Reference set: (party, religion, gender, race)
 # code attention check here
 data <- main %>%
@@ -17,14 +14,9 @@ data <- main %>%
   ) %>%
   select(
     app_identity_1, app_identity_2, app_identity_3, app_identity_4,
-    anc_correct_identity,
-    anc_correct_id_alphabet,
-    anc_correct_id_exact,
-    app_identity_repeat,
-    app_identity,
-    attention_berinsky,
-    attention_ternovski,
-    weight,
+    anc_correct_identity, anc_correct_id_alphabet, anc_correct_id_exact,
+    app_identity_repeat, app_identity,
+    attention_berinsky, attention_ternovski, weight,
     race4, gender3, pid3, educ4
   )
 
@@ -35,8 +27,8 @@ table(main$ternovski_fail, useNA = "always")
 # Half receives Alphabet, the other half Exact
 table(main$anc_correct_id_alphabet, useNA = "always")
 table(main$anc_correct_id_exact, useNA = "always")
-table(main$anc_correct_id_alphabet,
-  main$anc_correct_id_exact,
+table(
+  main$anc_correct_id_alphabet, main$anc_correct_id_exact,
   useNA = "always"
 )
 
@@ -48,45 +40,10 @@ dt_repeat <- data %>%
   filter(!is.na(app_identity_repeat)) %>%
   mutate(repeat_correct = ifelse(app_identity_repeat == app_identity, 1, 0))
 
-dt_checkI <- data %>% filter(!is.na(attention_berinsky))
-dt_checkII <- data %>% filter(!is.na(attention_ternovski))
+dt_checkI <- data %>% filter(!is.na(attention_ternovski))
+dt_checkII <- data %>% filter(!is.na(attention_berinsky))
 
 table(dt_repeat$repeat_correct)
-
-# Direct bias correction
-d <- imprr_direct(
-  data = data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_identity",
-  weight = data$weight,
-  n_bootstrap = 1000
-)
-
-# Alphabet anchor
-d_alpha <- imprr_direct(
-  data = dt_alpha,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_id_alphabet",
-  weight = dt_alpha$weight,
-  n_bootstrap = 1000
-)
-
-# Exact anchor
-d_exact <- imprr_direct(
-  data = dt_exact,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_id_exact",
-  weight = dt_exact$weight,
-  n_bootstrap = 1000
-)
-
-save(
-  list = c("d", "d_alpha", "d_exact"), 
-  file = here("data", "tidy", "corrections-three-anchors.Rda")
-)
 
 # Estimate the proportion of random responses with
 # Attention checks I
@@ -107,14 +64,14 @@ est_p_random_checks <- rbind(
   select(mean, lower, upper)
 
 # Combine the estimated proportions
-d$est_p_random
-d_alpha$est_p_random
-d_exact$est_p_random
+main_direct$est_p_random
+alphabet_direct$est_p_random
+exact_direct$est_p_random
 
 d_com <- rbind(
-  d$est_p_random,
-  d_alpha$est_p_random,
-  d_exact$est_p_random,
+  main_direct$est_p_random,
+  alphabet_direct$est_p_random,
+  exact_direct$est_p_random,
   est_p_random_checks
 )
 
@@ -140,14 +97,16 @@ ggplot(d_com, aes(x = mean, y = group)) +
     position = position_dodge(width_par),
     linewidth = 0.6
   ) +
-  scale_color_manual(values = c(
-    "Anchor main" = "darkcyan",
-    "Anchor alphabet" = alpha("darkcyan", 0.5),
-    "Anchor exact" = alpha("darkcyan", 0.5),
-    "Repeat" = alpha("dimgray", 0.5),
-    "Attention I" = alpha("maroon", 0.5),
-    "Attention II" = alpha("maroon", 0.5)
-  )) +
+  scale_color_manual(
+    values = c(
+      "Anchor main" = "darkcyan",
+      "Anchor alphabet" = alpha("darkcyan", 0.5),
+      "Anchor exact" = alpha("darkcyan", 0.5),
+      "Repeat" = alpha("dimgray", 0.5),
+      "Attention I" = alpha("maroon", 0.5),
+      "Attention II" = alpha("maroon", 0.5)
+    )
+  ) +
   geom_text(
     aes(
       x = upper + 0.04,
@@ -164,13 +123,13 @@ ggplot(d_com, aes(x = mean, y = group)) +
   theme(legend.position = "null") -> a
 
 # Plot the estimated average ranks
-dt_main <- d$qoi %>%
+dt_main <- main_direct$qoi %>%
   filter(qoi == "average rank") %>%
   mutate(dt = "Anchor main")
-dt_alpha <- d_alpha$qoi %>%
+dt_alpha <- alphabet_direct$qoi %>%
   filter(qoi == "average rank") %>%
   mutate(dt = "Anchor alphabet")
-dt_exact <- d_exact$qoi %>%
+dt_exact <- exact_direct$qoi %>%
   filter(qoi == "average rank") %>%
   mutate(dt = "Anchor exact")
 
@@ -179,12 +138,14 @@ avg_gg_comb <- rbind(
   dt_alpha,
   dt_exact
 ) %>%
-  mutate(item = case_when(
-    item == "app_identity_1" ~ "party",
-    item == "app_identity_2" ~ "religion",
-    item == "app_identity_3" ~ "gender",
-    item == "app_identity_4" ~ "race_ethnicity"
-  )) %>%
+  mutate(
+    item = case_when(
+      item == "app_identity_1" ~ "party",
+      item == "app_identity_2" ~ "religion",
+      item == "app_identity_3" ~ "gender",
+      item == "app_identity_4" ~ "race_ethnicity"
+    )
+  ) %>%
   rename(
     estimate = mean,
     conf.low = lower,
@@ -236,12 +197,14 @@ est_com <- rbind(
   est_checkII,
   est_repeat
 ) %>%
-  mutate(item = case_when(
-    outcome == "app_identity_1" ~ "party",
-    outcome == "app_identity_2" ~ "religion",
-    outcome == "app_identity_3" ~ "gender",
-    outcome == "app_identity_4" ~ "race_ethnicity"
-  )) %>%
+  mutate(
+    item = case_when(
+      outcome == "app_identity_1" ~ "party",
+      outcome == "app_identity_2" ~ "religion",
+      outcome == "app_identity_3" ~ "gender",
+      outcome == "app_identity_4" ~ "race_ethnicity"
+    )
+  ) %>%
   select(item, estimate, conf.low, conf.high, dt)
 
 avg_gg_comb2 <- rbind(avg_gg_comb, est_com)
@@ -255,17 +218,17 @@ avg_gg_comb2 %>%
       item == "party" ~ "Party"
     )
   ) %>%
-  ggplot(aes(
-    y = fct_reorder(item, -estimate, mean),
-    x = estimate, group = dt, color = dt
-  )) +
+  ggplot(
+    aes(
+      y = fct_reorder(item, -estimate, mean),
+      x = estimate, group = dt, color = dt
+    )
+  ) +
   scale_fill_brewer(palette = "Accent") +
   geom_point(
     aes(shape = dt),
     position = position_dodge(width = width_par), size = 1.5
   ) +
-  # geom_vline(xintercept = est_unadjusted$estimate,
-  #            lty = 2, color = alpha("black", 0.5), linewidth = 0.3) +
   geom_rect(
     aes(
       xmin = est_unadjusted$conf.low[1],
@@ -344,12 +307,13 @@ avg_gg_comb2 %>%
   ) -> b
 
 ggpubr::ggarrange(
-  pdf_default(a) + theme(legend.position = "none"), 
-  pdf_default(b) + theme(legend.position = "none") + 
+  pdf_default(a) + theme(legend.position = "none"),
+  pdf_default(b) + theme(legend.position = "none") +
     ## Add a legend for geom_rect within the plot
     ## Left-align the text, family = CM Roman
     annotate(
-      "text", x = 1, y = 1, size = 2.5, hjust = 0, family = "CM Roman",
+      "text",
+      x = 1, y = 1, size = 2.5, hjust = 0, family = "CM Roman",
       label = paste0(
         "Gray region = \n",
         "95% CIs of unadjusted \n",
