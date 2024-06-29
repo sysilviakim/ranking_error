@@ -39,6 +39,13 @@ vignettes/*.pdf
 .Renviron
 
 # Project specific
+R/old/*.R
+fig/old/*.pdf
+fig/old/*.png
+data/tidy/old/*.Rda
+data/tidy/old/*.csv
+output/old/*.Rda
+output/old/*.RData
 doc/*
 output/dump*
 data/raw/*.zip
