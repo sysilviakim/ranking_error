@@ -7,7 +7,6 @@ library(coefplot)
 
 # Setup and load saved .Rda files ==============================================
 load(here("data", "tidy", "df_list.Rda"))
-load(here("data", "tidy", "prep_applications_list.Rda"))
 main <- df_list$main
 item_list <- data.frame(
   item = c(
@@ -210,46 +209,36 @@ stargazer(
 )
 
 ## Coefplots
-p <- coefplot(
-  list(
-    temp$repeated$model,
-    temp$berinsky_fail$model,
-    temp$ternovski_fail$model,
-    temp$anchor_main$model,
-    temp$exact$model,
-    temp$alphabet$model
-  )
+p <- multiplot(
+  `Repeated` = temp$repeated$model,
+  `Attention I` = temp$ternovski_fail$model,
+  `Attention II` = temp$berinsky_fail$model,
+  `Anchor main` = temp$anchor_main$model,
+  `Anchor exact` = temp$exact$model,
+  `Anchor alphabet` = temp$alphabet$model
 )
 
-p_final <- p$prms %>%
+p_final <- p$data %>%
   mutate(
-    Type = case_when(
-      id == 1 ~ "Repeated",
-      id == 2 ~ "Attention I",
-      id == 3 ~ "Attention II",
-      id == 4 ~ "Anchor main",
-      id == 5 ~ "Anchor exact",
-      id == 6 ~ "Anchor alphabet"
-    ),
-    Type = factor(
-      Type, levels = c(
+    Model = factor(
+      Model, levels = c(
         "Repeated", "Attention I", "Attention II",
         "Anchor main", "Anchor exact", "Anchor alphabet"
       )
     ),
-    estimate_names = factor(
-      estimate_names, levels = names(temp$repeated$model$coefficients)
+    Coefficient = factor(
+      Coefficient, levels = names(temp$repeated$model$coefficients)
     )
   ) %>%
   ## Drop constant
-  filter(estimate_names != "Constant") %>%
-  ggplot(aes(x = estimate_names, y = y, group = Type, color = Type)) + 
+  filter(Coefficient != "(Intercept)") %>%
+  ggplot(aes(x = Coefficient, y = Value, group = Model, color = Model)) + 
   ## Do not overlay but separate by type
   geom_point(position = position_dodge(width = 0.5)) +
   ## Using ci_low, ci_high, create error bar
   geom_errorbar(
-    aes(ymin = ci_low, ymax = ci_high),
-    width = 0.1, size = 0.5, position = position_dodge(width = 0.5)
+    aes(ymin = LowOuter, ymax = HighOuter),
+    width = 0.1, linewidth = 0.5, position = position_dodge(width = 0.5)
   ) + 
   scale_color_viridis_d(end = .85, direction = -1) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
