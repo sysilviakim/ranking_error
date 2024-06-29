@@ -388,7 +388,8 @@ yougov_import <- function(fname) {
       race2 = case_when(
         race4 == 1 ~ "White",
         race4 %in% c(2, 3, 4) ~ "None-white"
-      )
+      ),
+      male = ifelse(gender3 == 1, 1, 0)
     )
   
   ## Only complete responses

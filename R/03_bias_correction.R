@@ -109,8 +109,9 @@ dt <- main %>%
   left_join(main_ipw$weights, by = "ranking") %>%
   mutate(w_multiplied = weight * w) %>%
   select(
-    party, religion, gender, race_ethnicity, race, app_identity,
-    ranking, weight, w, alt_w, w_multiplied
+    party, religion, gender, race_ethnicity, race, app_identity, 
+    ranking, weight, w, alt_w, w_multiplied,
+    race4, ideo7, pid7, educ, age, partisan, region, male
   )
 
 save(
