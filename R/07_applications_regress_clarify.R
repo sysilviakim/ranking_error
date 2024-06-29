@@ -1,35 +1,17 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
+load(here("data", "tidy", "bias_correction.Rda"))
+main <- df_list$main %>%
+  mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
+
 library(clarify)
 library(mlogit)
 
 # 1. Get data, get bias-correction weights =====================================
-# Grab main data
-main <- df_list$main
-main <- main %>%
-  mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
-
-data <- main %>%
-  select(
-    app_identity_1, app_identity_2, app_identity_3, app_identity_4,
-    app_identity,
-    anc_correct_identity, weight
-  )
-
-# Inverse probability weighting
-w <- imprr_weights(
-  data = data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_identity"
-)
-
 # Add bias correction weights
 main <- main %>%
-  mutate(
-    ranking = app_identity
-  ) %>%
-  left_join(w$weights, by = "ranking") %>%
+  mutate(ranking = app_identity) %>%
+  left_join(main_ipw$weights, by = "ranking") %>%
   mutate(dual_weight = weight * w)
 
 # Check

@@ -1,42 +1,9 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
+load(here("data", "tidy", "bias_correction.Rda"))
 
-# Data processing ==============================================================
-main <- main %>%
-  mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
-
-# Reference set: (party, religion, gender, race)
-data <- main %>%
-  select(
-    app_identity_1, app_identity_2, app_identity_3, app_identity_4,
-    anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
-    anc_correct_identity, weight
-  )
-
-# Direct bias correction
-d <- imprr_direct(
-  data = data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_identity",
-  weight = data$weight,
-  n_bootstrap = 1000
-)
-
-# Inverse probability weighting
-w <- imprr_weights(
-  data = data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_identity",
-  n_bootstrap = 1000
-)
-
-print(d)
-print(w)
-
-# Downsize data
+# Downsize data ================================================================
 dt <- main %>%
   mutate(
     party = app_identity_1,
@@ -45,7 +12,7 @@ dt <- main %>%
     race_ethnicity = app_identity_4,
     ranking = app_identity
   ) %>%
-  left_join(w$weights, by = "ranking") %>%
+  left_join(main_ipw$weights, by = "ranking") %>%
   mutate(dual_weight = weight * w) %>%
   select(
     party, religion, gender, race_ethnicity, race, ranking, weight, dual_weight
@@ -53,7 +20,7 @@ dt <- main %>%
 
 # Bias correction ==============================================================
 # Direct Bias Correction
-avg_rank.w <- d$qoi %>%
+avg_rank.w <- main_direct$qoi %>%
   filter(qoi == "average rank") %>%
   ungroup(qoi) %>%
   mutate(
