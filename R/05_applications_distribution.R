@@ -130,7 +130,7 @@ p2 <- ggplot(pmf_com, aes(x = ordering, y = Freq, fill = type)) +
     xmin = 7, xmax = 12,
     ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "black"
   ) +
-  ylab("Proportion of Unique Ranking Profiles") +
+  ylab("Proportion of Ranking Profiles") +
   xlab("") +
   facet_grid(~data) +
   theme_bw() +
