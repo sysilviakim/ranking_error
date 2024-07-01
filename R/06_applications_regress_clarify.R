@@ -43,7 +43,7 @@ temp_fxn <- function(v, n, p_qoi, type = 1) {
         e_XB_race / (e_XB_race + e_XB_reli) *
         e_XB_reli / e_XB_reli
     } else if (type == 3) {
-      ## Gender > Race > Party > Religion
+      ## Gender > Race > Religion > Party
       p <- e_XB_gen / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
         e_XB_race / (e_XB_race + e_XB_reli + e_XB_party) *
         e_XB_reli / (e_XB_reli + e_XB_party) *

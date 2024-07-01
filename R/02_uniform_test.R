@@ -50,9 +50,10 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## X-sq = 121.593, p-value = 2.149e-15, ES = 0.3352, N = 287+
 temp <- table_to_tibble(tab)
 p1 <- plot_nolegend(
-  pdf_default(plot_dist_ranking(temp, ylim = .15, family = "CM Roman"))
+  pdf_default(plot_dist_ranking(temp, ylim = .15, family = "CM Roman", fill = "darkcyan"))
 )
 p1
+
 ggsave(
   here("fig", "main-identity-recorded.pdf"),
   width = 7.5, height = 2
