@@ -3,6 +3,25 @@ load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 load(here("data", "tidy", "bias_correction.Rda"))
 
+# Experiment by Yuki (7/1)
+## Renormalize weights
+main_ipw$weights$w_star <- (main_ipw$weights$w / (sum(main_ipw$weights$w))) * 24
+
+## Checking
+hist(main_ipw$weights$w_star, breaks = 20)
+sum(main_ipw$weights$w_star)
+
+## Recode w_multiplied
+dt <- dt %>%
+  left_join(main_ipw$weights, by = "ranking") %>%
+  mutate(w_multiplied_old = w_multiplied,
+         w_multiplied = weight * w_star)
+
+## Check --- 
+plot(dt$w_multiplied, dt$w_multiplied_old,
+     xlim = c(0, 8), ylim = c(0, 8))
+abline(a = 0, b = 1, lty = 2)  
+
 # Bias correction ==============================================================
 # Direct Bias Correction
 avg_rank.w <- main_direct$qoi %>%
@@ -101,11 +120,11 @@ p <- avg_gg_comb %>%
   ) +
   geom_text(
     aes(
-      x = conf.high + 0.1,
+      x = conf.high + 0.15,
       label = round(estimate, 1.5)
     ),
     position = position_dodge(width = width_par),
-    size = 2.5,
+    size = 2,
     color = "black",
     family = "CM Roman"
   ) +
@@ -118,9 +137,9 @@ pdf_default(p) +
   theme(
     legend.position = "top",
     legend.title = element_blank(),
-    legend.text = element_text(size = 10),
-    axis.text.y = element_text(size = 10),
-    text = element_text(size = 10)
+    legend.text = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    text = element_text(size = 8)
   )
 ggsave(
   here("fig", "weight-avg-rank-sample.pdf"),
@@ -130,16 +149,11 @@ ggsave(
 # Quantities for comparison ====================================================
 avg_gg_comb %>%
   arrange(dt, estimate) %>%
-  group_by(dt) %>%
-  mutate(diff = estimate - lag(estimate))
-
-# # Gender v. race
-# 0.836/0.543  # Direct/Unadjusted
-# 0.720/0.543  # IPW/Unadjusted
+  group_by(dt) 
 
 # Party v. religion
-0.680 / 0.437 # Direct/Unadjusted
-0.617 / 0.437 # IPW/Unadjusted
+(3.27 - 2.60) / (3.00 - 2.56) # Direct/Unadjusted
+(3.22 - 2.61) / (3.00 - 2.56) # IPW/Unadjusted
 
 # Party v. gender
 (3.28 - 1.65) / (3.00 - 1.95) # Direct/Unadjusted
