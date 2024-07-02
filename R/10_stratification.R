@@ -19,14 +19,13 @@ identity_data <- main %>%
     app_identity_1, app_identity_2, app_identity_3, app_identity_4,
     anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
     anc_correct_identity, anc_correct_id_alphabet, anc_correct_id_exact,
-    weight,
-    pid_recode
+    weight, pid_recode
   )
 
 # Stratification by bootstrap  =================================================
 seed_strat <- 1245
 n_bootstrap <- 1000
-set.seed(seed_strat) 
+set.seed(seed_strat)
 seed_list <- sample(1:10000, n_bootstrap, replace = FALSE)
 
 out_stratification <- data.frame(
@@ -86,7 +85,6 @@ for (b in 1:n_bootstrap) {
   )
 
   # Stratification estimate ====================================================
-
   ## Stratification estimate
   est_dem <- direct_dem$qoi %>%
     filter(qoi == "average rank") %>%
@@ -124,27 +122,32 @@ avg_rank.s <- out_stratification %>%
 ## Assumption 3 --- theta = observed data estimates
 # Raw Data
 avg_rank <- as.data.frame(NA)
-avg_rank <- lm_robust(app_identity_1 ~ 1, identity_data, weights = weight) %>% tidy()
+avg_rank <- 
+  lm_robust(app_identity_1 ~ 1, identity_data, weights = weight) %>% tidy()
 avg_rank <- rbind(
-  avg_rank, lm_robust(app_identity_2 ~ 1, identity_data, weights = weight) %>% tidy()
+  avg_rank, 
+  lm_robust(app_identity_2 ~ 1, identity_data, weights = weight) %>% tidy()
 )
 avg_rank <- rbind(
-  avg_rank, lm_robust(app_identity_3 ~ 1, identity_data, weights = weight) %>% tidy()
+  avg_rank, 
+  lm_robust(app_identity_3 ~ 1, identity_data, weights = weight) %>% tidy()
 )
 avg_rank <- rbind(
-  avg_rank, lm_robust(app_identity_4 ~ 1, identity_data, weights = weight) %>% tidy()
+  avg_rank, 
+  lm_robust(app_identity_4 ~ 1, identity_data, weights = weight) %>% tidy()
 )
 avg_rank$dt <- "Assumption 3"
 avg_rank <- avg_rank %>%
   rename(item = outcome) %>%
-  mutate(item = case_when(
-    item == "app_identity_1" ~ "party",
-    item == "app_identity_2" ~ "religion",
-    item == "app_identity_3" ~ "gender",
-    item == "app_identity_4" ~ "race_ethnicity"
-  )) %>%
+  mutate(
+    item = case_when(
+      item == "app_identity_1" ~ "party",
+      item == "app_identity_2" ~ "religion",
+      item == "app_identity_3" ~ "gender",
+      item == "app_identity_4" ~ "race_ethnicity"
+    )
+  ) %>%
   select(item, estimate, conf.low, conf.high, dt)
-
 
 ## Assumption 4 --- theta = theta-z
 avg_rank.d <- main_direct$qoi %>%
@@ -163,7 +166,6 @@ avg_rank.d <- main_direct$qoi %>%
     dt = "Assumption 4"
   ) %>%
   select(item, estimate, conf.low, conf.high, dt)
-
 
 # Visualization ================================================================
 avg_gg_comb <- rbind(
@@ -197,9 +199,10 @@ p <- avg_gg_comb %>%
     aes(shape = dt),
     position = position_dodge(width = width_par), size = 1.5
   ) +
-  geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
-                width = 0,
-                position = position_dodge(width_par), size = 0.6
+  geom_errorbar(
+    aes(xmin = conf.low, xmax = conf.high),
+    width = 0,
+    position = position_dodge(width_par), size = 0.6
   ) +
   scale_color_manual(
     values = c(
@@ -211,7 +214,7 @@ p <- avg_gg_comb %>%
   geom_text(
     aes(
       x = conf.high + 0.15,
-      label = round(estimate, 1.5)
+      label = formatC(estimate, digits = 2, format = "f")
     ),
     position = position_dodge(width = width_par),
     size = 2,
