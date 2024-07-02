@@ -38,6 +38,7 @@ table(pi_s) / length(pi_s)
 table(pi_n) / length(pi_n)
 table(raw) / length(raw)
 weight
+sum(weight) # Must sum up to 5 
 
 #       123       131       213       231       312       321
 # 1.4123457 1.2860814 0.7498127 0.4612903 0.7498127 0.4612903
@@ -64,7 +65,7 @@ plot(
   xlim = c(-0.1, 6.5),
   ylim = c(0, 0.45),
   xlab = "",
-  ylab = "Probability Mass"
+  ylab = "Proportion"
 )
 axis(
   side = 1, at = c(1, 2, 3, 4, 5, 6),
@@ -75,7 +76,7 @@ lines(p_true, col = "darkcyan", lwd = 2)
 points(p_raw, col = "dimgray", cex = 1.5, pch = 16)
 lines(p_raw, col = "dimgray", lwd = 2, lty = 2)
 text(
-  x = 2.9, y = 0.38, labels = "Non-randome Responses",
+  x = 2.7, y = 0.38, labels = "Bias-Corrected Data",
   cex = 1.2, col = "darkcyan", font = 2
 )
 text(
@@ -95,20 +96,20 @@ arrows(
   length = 0.1, lwd = 3, col = alpha("deeppink4", 0.3)
 )
 text(
-  x = 0.4, y = 0.35, labels = "needs to be\nscaled up\n w > 1",
+  x = 0.4, y = 0.35, labels = "needs to be\nscaled up\n weight > 1",
   col = "deeppink4"
 )
 text(
-  x = 4, y = 0.16, labels = "needs to be\nscaled down\n w < 1",
+  x = 4, y = 0.16, labels = "needs to be\nscaled down\n weight < 1",
   col = "deeppink4"
 )
-text(x = 4.5, y = 0.35, labels = "w (weight) = ", col = "deeppink4")
-text(x = 5.8, y = 0.35 + 0.015, labels = "P(Non-random)", col = "darkcyan")
-text(x = 5.7, y = 0.35 - 0.015, labels = "P(Raw Data)", col = "dimgray")
-arrows(
-  x0 = 5.6 - 0.5, x1 = 5.7 + 0.5, y0 = 0.35, y1 = 0.35, length = 0,
-  col = "dimgray"
-)
+# text(x = 4.5, y = 0.35, labels = "w (weight) = ", col = "deeppink4")
+# text(x = 5.8, y = 0.35 + 0.015, labels = "P(Bias-Corrected)", col = "darkcyan")
+# text(x = 5.7, y = 0.35 - 0.015, labels = "P(Raw Data)", col = "dimgray")
+# arrows(
+#   x0 = 5.6 - 0.5, x1 = 5.7 + 0.5, y0 = 0.35, y1 = 0.35, length = 0,
+#   col = "dimgray"
+# )
 rect(
   xleft = 0.6, ybottom = 0, xright = 1.4, ytop = p_raw$Freq[1],
   col = alpha("dimgray", 0.3), lty = 0
