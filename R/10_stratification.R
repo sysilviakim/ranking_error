@@ -1,5 +1,6 @@
 source(here::here("R", "utilities.R"))
 load(here("data", "tidy", "df_list.Rda"))
+load(here("data", "tidy", "bias_correction.Rda"))
 
 # Subset and wrangle data that we need =========================================
 main <- df_list$main %>%
@@ -110,15 +111,66 @@ for (b in 1:n_bootstrap) {
   out_stratification <- rbind(out_stratification, strat)
 }
 
-avg_gg_comb <- out_stratification %>%
+avg_rank.s <- out_stratification %>%
   group_by(item) %>%
   summarize(
     estimate = mean(mean),
     conf.low = quantile(mean, prob = 0.025),
     conf.high = quantile(mean, prob = 0.975)
-  )
+  ) %>%
+  mutate(dt = "Assumption 5")
+
+# Methods based on Assumptions 3-4 =============================================
+## Assumption 3 --- theta = observed data estimates
+# Raw Data
+avg_rank <- as.data.frame(NA)
+avg_rank <- lm_robust(app_identity_1 ~ 1, identity_data, weights = weight) %>% tidy()
+avg_rank <- rbind(
+  avg_rank, lm_robust(app_identity_2 ~ 1, identity_data, weights = weight) %>% tidy()
+)
+avg_rank <- rbind(
+  avg_rank, lm_robust(app_identity_3 ~ 1, identity_data, weights = weight) %>% tidy()
+)
+avg_rank <- rbind(
+  avg_rank, lm_robust(app_identity_4 ~ 1, identity_data, weights = weight) %>% tidy()
+)
+avg_rank$dt <- "Assumption 3"
+avg_rank <- avg_rank %>%
+  rename(item = outcome) %>%
+  mutate(item = case_when(
+    item == "app_identity_1" ~ "party",
+    item == "app_identity_2" ~ "religion",
+    item == "app_identity_3" ~ "gender",
+    item == "app_identity_4" ~ "race_ethnicity"
+  )) %>%
+  select(item, estimate, conf.low, conf.high, dt)
+
+
+## Assumption 4 --- theta = theta-z
+avg_rank.d <- main_direct$qoi %>%
+  filter(qoi == "average rank") %>%
+  ungroup(qoi) %>%
+  mutate(
+    item = case_when(
+      item == "app_identity_1" ~ "party",
+      item == "app_identity_2" ~ "religion",
+      item == "app_identity_3" ~ "gender",
+      item == "app_identity_4" ~ "race_ethnicity"
+    ),
+    estimate = mean,
+    conf.low = lower,
+    conf.high = upper,
+    dt = "Assumption 4"
+  ) %>%
+  select(item, estimate, conf.low, conf.high, dt)
+
 
 # Visualization ================================================================
+avg_gg_comb <- rbind(
+  avg_rank.s,
+  avg_rank,
+  avg_rank.d
+)
 
 width_par <- 0.5
 
@@ -134,7 +186,7 @@ p <- avg_gg_comb %>%
   ggplot(
     aes(
       y = fct_reorder(item, -estimate, mean),
-      x = estimate
+      x = estimate, group = dt, color = dt
     )
   ) +
   scale_fill_brewer(palette = "Accent") +
@@ -142,17 +194,18 @@ p <- avg_gg_comb %>%
     xintercept = 2.5, lty = 2, color = alpha("black", 0.5), linewidth = 0.3
   ) +
   geom_point(
+    aes(shape = dt),
     position = position_dodge(width = width_par), size = 1.5
   ) +
   geom_errorbar(aes(xmin = conf.low, xmax = conf.high),
-    width = 0,
-    position = position_dodge(width_par), size = 0.6
+                width = 0,
+                position = position_dodge(width_par), size = 0.6
   ) +
   scale_color_manual(
     values = c(
-      "Direct" = "darkcyan",
-      "IPW" = "maroon4",
-      "Raw Data" = alpha("dimgray", 0.5)
+      "Assumption 5" = "darkcyan",
+      "Assumption 4" = "maroon4",
+      "Assumption 3" = "dimgray"
     )
   ) +
   geom_text(
@@ -179,6 +232,6 @@ pdf_default(p) +
     text = element_text(size = 8)
   )
 ggsave(
-  here("fig", "weight-avg-rank-theta-stratification.pdf"),
-  width = 4, height = 2.5
+  here("fig", "weight-avg-rank-theta.pdf"),
+  width = 4.5, height = 3
 )
