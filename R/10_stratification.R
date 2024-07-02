@@ -8,24 +8,17 @@ main <- df_list$main %>%
 
 ## Reference set: (party, religion, gender, race)
 identity_data <- main %>%
-  mutate(
-    pid_recode = case_when(
-      pid3 == 1 ~ "Democrat",
-      pid3 == 2 ~ "Republican",
-      TRUE ~ "Others"
-    )
-  ) %>%
   select(
     app_identity_1, app_identity_2, app_identity_3, app_identity_4,
     anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
     anc_correct_identity, anc_correct_id_alphabet, anc_correct_id_exact,
-    weight, pid_recode
+    weight, partisan
   )
 
 # Stratification by bootstrap  =================================================
 out_stratification <- stratified_avg(
   data = identity_data,
-  var_stratum = "pid_recode",
+  var_stratum = "partisan",
   seed = 1245,
   J = 4,
   n_bootstrap = 1000,
@@ -162,6 +155,6 @@ pdf_default(p) +
     text = element_text(size = 8)
   )
 ggsave(
-  here("fig", "weight-avg-rank-theta.pdf"),
+  here("fig", "weight-avg-rank-theta-partisan-strength.pdf"),
   width = 4.5, height = 3
 )
