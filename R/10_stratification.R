@@ -23,91 +23,17 @@ identity_data <- main %>%
   )
 
 # Stratification by bootstrap  =================================================
-seed_strat <- 1245
-n_bootstrap <- 1000
-set.seed(seed_strat)
-seed_list <- sample(1:10000, n_bootstrap, replace = FALSE)
-
-out_stratification <- data.frame(
-  mean = as.numeric(),
-  item = as.character()
+out_stratification <- stratified_avg(
+  data = identity_data,
+  var_stratum = "pid_recode",
+  seed = 1245,
+  J = 4,
+  n_bootstrap = 1000,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_identity",
+  weight = "weight",
+  labels = c("party", "religion", "gender", "race_ethnicity")
 )
-
-# set.seed(seed_strat) Using random seed here fixes all bootstrap estimates
-for (b in 1:n_bootstrap) {
-  ## Sample indices
-  index <-
-    sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
-
-  ## This is the bootstrapped data
-  boostrap_dat <- identity_data[index, ]
-
-  ## Estimated proportions of strata
-  p_X <- prop.table(table(boostrap_dat$pid_recode))
-
-  ## Stratify by partisanship
-  data_dem <- boostrap_dat %>% filter(pid_recode == "Democrat")
-  data_rep <- boostrap_dat %>% filter(pid_recode == "Republican")
-  data_oth <- boostrap_dat %>% filter(pid_recode == "Others")
-
-  # Apply bias correction ======================================================
-  ## Democrat ------------------------------------------------------------------
-  direct_dem <- imprr_direct(
-    data = data_dem,
-    J = 4,
-    main_q = "app_identity",
-    anc_correct = "anc_correct_identity",
-    weight = data_dem$weight,
-    n_bootstrap = 1,
-    seed = seed_list[b]
-  )
-
-  ## Republican ----------------------------------------------------------------
-  direct_rep <- imprr_direct(
-    data = data_rep,
-    J = 4,
-    main_q = "app_identity",
-    anc_correct = "anc_correct_identity",
-    weight = data_rep$weight,
-    n_bootstrap = 1,
-    seed = seed_list[b]
-  )
-
-  ## Others --------------------------------------------------------------------
-  direct_oth <- imprr_direct(
-    data = data_oth,
-    J = 4,
-    main_q = "app_identity",
-    anc_correct = "anc_correct_identity",
-    weight = data_oth$weight,
-    n_bootstrap = 1,
-    seed = seed_list[b]
-  )
-
-  # Stratification estimate ====================================================
-  ## Stratification estimate
-  est_dem <- direct_dem$qoi %>%
-    filter(qoi == "average rank") %>%
-    ungroup() %>%
-    select(item, mean)
-  est_rep <- direct_rep$qoi %>%
-    filter(qoi == "average rank") %>%
-    ungroup() %>%
-    select(item, mean)
-  est_oth <- direct_oth$qoi %>%
-    filter(qoi == "average rank") %>%
-    ungroup() %>%
-    select(item, mean)
-
-  strat <-
-    est_dem[1:4, 2] * p_X[1] +
-    est_rep[1:4, 2] * p_X[2] +
-    est_oth[1:4, 2] * p_X[3]
-
-  strat$item <- c("party", "religion", "gender", "race_ethnicity")
-
-  out_stratification <- rbind(out_stratification, strat)
-}
 
 avg_rank.s <- out_stratification %>%
   group_by(item) %>%
@@ -202,7 +128,8 @@ p <- avg_gg_comb %>%
   geom_errorbar(
     aes(xmin = conf.low, xmax = conf.high),
     width = 0,
-    position = position_dodge(width_par), size = 0.6
+    position = position_dodge(width_par), 
+    linewidth = 0.6
   ) +
   scale_color_manual(
     values = c(
