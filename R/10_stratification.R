@@ -93,7 +93,7 @@ est_dem[1:4, 2] * p_X[1] +
   est_rep[1:4, 2] * p_X[2] + 
   est_oth[1:4, 2] * p_X[3] 
 
-strat$item <- c("party,", "religion", "gender", "race_ethnicity")
+strat$item <- c("party", "religion", "gender", "race_ethnicity")
 
-strat
+strat %>% arrange(mean)
 
