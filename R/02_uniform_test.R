@@ -50,14 +50,19 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## X-sq = 121.593, p-value = 2.149e-15, ES = 0.3352, N = 287+
 temp <- table_to_tibble(tab)
 p1 <- plot_nolegend(
-  pdf_default(plot_dist_ranking(temp, ylim = .1, family = "CM Roman", 
-                                fill = "darkcyan"))
+  pdf_default(
+    plot_dist_ranking(
+      temp,
+      ylim = .15, family = "CM Roman",
+      fill = "darkcyan"
+    )
+  )
 )
 p1 + xlab("Recorded Reponse")
 
 ggsave(
   here("fig", "main-identity-recorded.pdf"),
-  width = 7.5, height = 7.5 * 0.5
+  width = 7.5, height = 2.5
 )
 
 ## Main anchor -----------------------------------------------------------------
@@ -71,7 +76,7 @@ p2 <- plot_nolegend(
 p2
 ggsave(
   here("fig", "main-anchor-recorded.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Subgroup: those who passed the main anchor
@@ -82,11 +87,12 @@ tab <- main %>%
 round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.1066, ES = 0.2050, N = 767+
 temp <- table_to_tibble(tab)
-pass <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+pass <- 
+  plot_dist_ranking(temp, ylim = .15, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
 ggsave(
   here("fig", "main-anchor-recorded-passers.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Subgroup: those who failed the main anchor
@@ -97,11 +103,12 @@ tab <- main %>%
 round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 5.793e-13, ES = 0.5737, N = 98+
 temp <- table_to_tibble(tab)
-fail <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+fail <- 
+  plot_dist_ranking(temp, ylim = .15, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
 ggsave(
   here("fig", "main-anchor-recorded-failers.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Alphabet anchor -------------------------------------------------------------
@@ -110,12 +117,14 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## X-sq = 33.056, p-value = 0.0801, ES = 0.2481, N = 524+
 temp <- table_to_tibble(tab)
 p3 <- plot_nolegend(
-  pdf_default(plot_dist_ranking(temp, ylim = .15, family = "CM Roman"))
+  pdf_default(
+    plot_dist_ranking(
+      temp, ylim = .15, family = "CM Roman"))
 )
 p3
 ggsave(
   here("fig", "alphabet-anchor-recorded.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Subgroup: those who passed the alphabet anchor
@@ -126,11 +135,12 @@ tab <- main %>%
 round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.8084, ES = 0.2685, N = 447+
 temp <- table_to_tibble(tab)
-pass <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+pass <- 
+  plot_dist_ranking(temp, ylim = .15, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
 ggsave(
   here("fig", "alphabet-anchor-recorded-passers.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Subgroup: those who failed the alphabet anchor
@@ -141,11 +151,12 @@ tab <- main %>%
 round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.05695, ES = 0.3390, N = 280+
 temp <- table_to_tibble(tab)
-fail <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
+fail <- 
+  plot_dist_ranking(temp, ylim = .15, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
 ggsave(
   here("fig", "alphabet-anchor-recorded-failers.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Exact anchor ----------------------------------------------------------------
@@ -159,7 +170,7 @@ p4 <- plot_nolegend(
 p4
 ggsave(
   here("fig", "exact-anchor-recorded.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Subgroup: those who passed the exact anchor
@@ -174,7 +185,7 @@ pass <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
 plot_nolegend(pdf_default(pass))
 ggsave(
   here("fig", "alphabet-anchor-recorded-passers.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
 
 ## Subgroup: those who failed the exact anchor
@@ -189,5 +200,5 @@ fail <- plot_dist_ranking(temp, ylim = .15, family = "CM Roman")
 plot_nolegend(pdf_default(fail))
 ggsave(
   here("fig", "alphabet-anchor-recorded-failers.pdf"),
-  width = 7.5, height = 2
+  width = 7.5, height = 2.5
 )
