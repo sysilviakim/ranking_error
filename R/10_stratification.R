@@ -7,11 +7,13 @@ main <- df_list$main %>%
 
 ## Reference set: (party, religion, gender, race)
 identity_data <- main %>%
-  mutate(pid_recode = case_when(
-    pid3 == 1 ~ "Democrat",
-    pid3 == 2 ~ "Republican",
-    TRUE ~ "Others"
-  )) %>%
+  mutate(
+    pid_recode = case_when(
+      pid3 == 1 ~ "Democrat",
+      pid3 == 2 ~ "Republican",
+      TRUE ~ "Others"
+    )
+  ) %>%
   select(
     app_identity_1, app_identity_2, app_identity_3, app_identity_4,
     anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
@@ -21,10 +23,11 @@ identity_data <- main %>%
   )
 
 # Stratification by bootstrap  =================================================
-
-set.seed(NULL)
 seed_strat <- 1245
-n_bootstrap <- 200
+n_bootstrap <- 1000
+set.seed(seed_strat) 
+seed_list <- sample(1:10000, n_bootstrap, replace = FALSE)
+
 out_stratification <- data.frame(
   mean = as.numeric(),
   item = as.character()
@@ -33,7 +36,7 @@ out_stratification <- data.frame(
 # set.seed(seed_strat) Using random seed here fixes all bootstrap estimates
 for (b in 1:n_bootstrap) {
   ## Sample indices
-  index <- 
+  index <-
     sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
 
   ## This is the bootstrapped data
@@ -55,7 +58,8 @@ for (b in 1:n_bootstrap) {
     main_q = "app_identity",
     anc_correct = "anc_correct_identity",
     weight = data_dem$weight,
-    n_bootstrap = 1
+    n_bootstrap = 1,
+    seed = seed_list[b]
   )
 
   ## Republican ----------------------------------------------------------------
@@ -65,7 +69,8 @@ for (b in 1:n_bootstrap) {
     main_q = "app_identity",
     anc_correct = "anc_correct_identity",
     weight = data_rep$weight,
-    n_bootstrap = 1
+    n_bootstrap = 1,
+    seed = seed_list[b]
   )
 
   ## Others --------------------------------------------------------------------
@@ -75,7 +80,8 @@ for (b in 1:n_bootstrap) {
     main_q = "app_identity",
     anc_correct = "anc_correct_identity",
     weight = data_oth$weight,
-    n_bootstrap = 1
+    n_bootstrap = 1,
+    seed = seed_list[b]
   )
 
   # Stratification estimate ====================================================
