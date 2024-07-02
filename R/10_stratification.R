@@ -180,5 +180,5 @@ pdf_default(p) +
   )
 ggsave(
   here("fig", "weight-avg-rank-theta-stratification.pdf"),
-  width = 4.5, height = 3
+  width = 4, height = 2.5
 )
