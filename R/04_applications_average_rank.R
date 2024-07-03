@@ -3,6 +3,15 @@ load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main
 load(here("data", "tidy", "bias_correction.Rda"))
 
+identity_data <- main %>%
+  mutate(ranking = app_identity) %>%
+  select(
+    app_identity_1, app_identity_2, app_identity_3, app_identity_4,
+    anc_identity_1, anc_identity_2, anc_identity_3, anc_identity_4,
+    anc_correct_identity, anc_correct_id_alphabet, anc_correct_id_exact,
+    weight, ranking
+  )
+
 # Experiment by Yuki (7/1)
 ## Renormalize weights
 main_ipw$weights$w_star <- (main_ipw$weights$w / (sum(main_ipw$weights$w))) * 24
@@ -12,7 +21,7 @@ hist(main_ipw$weights$w_star, breaks = 20)
 sum(main_ipw$weights$w_star)
 
 ## Recode w_multiplied
-dt <- dt %>%
+data <- dt %>%
   left_join(main_ipw$weights, by = "ranking") %>%
   mutate(w_multiplied_old = w_multiplied,
          w_multiplied = weight * w_star)
@@ -41,23 +50,76 @@ avg_rank.w <- main_direct$qoi %>%
   ) %>%
   select(item, estimate, conf.low, conf.high, dt)
 
+
 # IPW
+# Here, we will get the IPW estimate for each bootstrapped data and weights
+
+out_ipw <- data.frame(item = as.character(),
+                      estimate = as.numeric())
+seeds <- 1234
+n_bootstrap <- 1000
+
+set.seed(seeds)
+seed_list <- sample(1:max(n_bootstrap * 10, 10000), n_bootstrap, 
+                    replace = FALSE)
+
+for (b in 1:n_bootstrap) {
+  index <- sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
+  boostrap_dat <- identity_data[index, ]
+
+boot_ipw <- imprr_weights(
+  data = boostrap_dat,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_identity",
+  n_bootstrap = 1,
+  seed = seed_list[b]
+)
+
+boostrap_dat <- boostrap_dat %>%
+  left_join(boot_ipw$weights, by = "ranking") %>%
+  mutate(w_multiplied = weight * w)
+
+# weight = survey weights
+# w = bias-correction weights
+
+
 avg_rank.i <- as.data.frame(NA)
-avg_rank.i <- lm_robust(party ~ 1, dt, weights = w_multiplied) %>% tidy()
+avg_rank.i <- lm_robust(app_identity_1 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
 avg_rank.i <- rbind(
-  avg_rank.i, lm_robust(religion ~ 1, dt, weights = w_multiplied) %>% tidy()
+  avg_rank.i, lm_robust(app_identity_2 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
 )
 avg_rank.i <- rbind(
-  avg_rank.i, lm_robust(gender ~ 1, dt, weights = w_multiplied) %>% tidy()
+  avg_rank.i, lm_robust(app_identity_3 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
 )
 avg_rank.i <- rbind(
   avg_rank.i,
-  lm_robust(race_ethnicity ~ 1, dt, weights = w_multiplied) %>% tidy()
+  lm_robust(app_identity_4 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
 )
-avg_rank.i$dt <- "IPW"
+
 avg_rank.i <- avg_rank.i %>%
   rename(item = outcome) %>%
-  select(item, estimate, conf.low, conf.high, dt)
+  select(item, estimate)
+
+out_ipw <- rbind(out_ipw, avg_rank.i)
+
+}
+
+avg_rank.i <- out_ipw %>%
+  group_by(item) %>%
+  summarize(
+    conf.low = quantile(estimate, prob = 0.025),
+    conf.high = quantile(estimate, prob = 0.975),
+    estimate = mean(estimate)
+  ) %>%
+  select(item, estimate, conf.low, conf.high) %>%
+  mutate(dt = "IPW",
+         item = case_when(item == "app_identity_1" ~ "party",
+                          item == "app_identity_2" ~ "religion",
+                          item == "app_identity_3" ~ "gender",
+                          item == "app_identity_4" ~ "race_ethnicity"))
+
+
 
 # Raw Data
 avg_rank <- as.data.frame(NA)
@@ -142,7 +204,7 @@ pdf_default(p) +
     text = element_text(size = 8)
   )
 ggsave(
-  here("fig", "weight-avg-rank-sample.pdf"),
+  here("fig", "weight-avg-rank-sample-boot.pdf"),
   width = 4.5, height = 3
 )
 
