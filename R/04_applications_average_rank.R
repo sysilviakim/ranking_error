@@ -215,8 +215,8 @@ avg_gg_comb %>%
 
 # Party v. religion
 (3.27 - 2.60) / (3.00 - 2.56) # Direct/Unadjusted
-(3.22 - 2.61) / (3.00 - 2.56) # IPW/Unadjusted
+(3.21 - 2.61) / (3.00 - 2.56) # IPW/Unadjusted
 
 # Party v. gender
 (3.28 - 1.65) / (3.00 - 1.95) # Direct/Unadjusted
-(3.22 - 1.72) / (3.00 - 1.95) # IPW/Unadjusted
+(3.21 - 1.73) / (3.00 - 1.95) # IPW/Unadjusted
