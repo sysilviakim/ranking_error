@@ -34,19 +34,18 @@ main_ipw <- imprr_weights(
   data = identity_data,
   J = 4,
   main_q = "app_identity",
-  anc_correct = "anc_correct_identity",
-  n_bootstrap = 1000
+  anc_correct = "anc_correct_identity"
 )
 
-## formerly w (as opposed to w0)
-main_ipw_weighted <- imprr_weights(
-  data = identity_data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_identity",
-  n_bootstrap = 1000,
-  weight = identity_data$weight
-)
+# This needs to be depreciated since it is not used in our analysis
+# ## formerly w (as opposed to w0)
+# main_ipw_weighted <- imprr_weights(
+#   data = identity_data,
+#   J = 4,
+#   main_q = "app_identity",
+#   anc_correct = "anc_correct_identity",
+#   weight = identity_data$weight
+# )
 
 # Alphabet anchor ==============================================================
 temp <- identity_data %>% filter(!is.na(anc_correct_id_alphabet))
@@ -116,7 +115,7 @@ dt <- main %>%
 
 save(
   list = c(
-    "main_direct", "main_ipw", "main_ipw_weighted",
+    "main_direct", "main_ipw", 
     "alphabet_direct", "alphabet_ipw",
     "exact_direct", "exact_ipw",
     "identity_data", "dt"
