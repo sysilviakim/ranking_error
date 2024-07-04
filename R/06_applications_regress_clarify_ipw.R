@@ -21,11 +21,13 @@ identity_data <- main %>%
     ranking, weight, 
     race4, ideo7, pid7, educ, age, partisan, region, male,
     anc_correct_identity
-  )
+  ) %>%
+  drop_na()
 
 
 library(clarify)
 library(mlogit)
+library(future.apply)
 
 temp_fxn <- function(v, n, p_qoi, type = 1) {
   for (i in 1:n) {
@@ -89,21 +91,11 @@ temp_fxn <- function(v, n, p_qoi, type = 1) {
 ## Now already performed within 03_bias_correction.R
 ## Sanity check
 
-out_ipw <- data.frame(ideology = as.numeric(),
-                      mean = as.numeric(),
-                      low =  as.numeric(),
-                      uup = as.numeric(),
-                      results = as.character(),
-                      ranking = as.character())
-seeds <- 1234
-n_bootstrap <- 200
+# Functionalize bootstrapping with Plackett-Luce
+boot_luce_temp <- function(
+                  identity_data,
+                  boot_seed){
 
-set.seed(seeds)
-seed_list <- sample(1:max(n_bootstrap * 10, 10000), n_bootstrap, 
-                    replace = FALSE)
-
-
-for (b in 1:n_bootstrap) {
   index <- sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
   bootstrap_dat <- identity_data[index, ]
   
@@ -112,7 +104,7 @@ for (b in 1:n_bootstrap) {
     J = 4,
     main_q = "app_identity",
     anc_correct = "anc_correct_identity",
-    seed = seed_list[b]
+    seed = boot_seed
   )
   
   # Bootstrap data with estimated weights
@@ -126,7 +118,7 @@ for (b in 1:n_bootstrap) {
 # Downsize data
 dt <- bootstrap_dat %>%
   mutate(
-    id = 1:nrow(main),
+    id = 1:nrow(bootstrap_dat),
     race = as.factor(race4),
     region = as.factor(region)
   ) %>%
@@ -153,7 +145,8 @@ mdat <- dfidx::dfidx(
 )
 # Check
 head(mdat)
-print(b)
+
+# print(b)
 # mdat$ch # logical: TRUE if id2 was ranked idx1-th, by unit id1
 # mdat$id # respondent id
 # mdat$idx # position id (1st, 2nd, 3rd, 4th = depressed)
@@ -236,11 +229,50 @@ ggdt4 <- rbind(p_qoi2) %>%
 
 # Tie everything together
 ggdt_ipw <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
-out_ipw <- rbind(out_ipw, ggdt_ipw)
+
+return(ggdt_ipw)
 }
 
 
-PL_ipw <- out_ipw %>%
+seeds <- 123
+n_bootstrap <- 200
+set.seed(seeds)
+seed_list <- sample(1:max(n_bootstrap * 10, 10000), n_bootstrap, 
+                    replace = FALSE)
+seed_list <- as.list(seed_list)
+
+out_ipw <- list()
+
+plan(multisession) # using multiple CPU cores (https://stackoverflow.com/questions/70213799/r-looking-for-faster-alternative-for-sapply)
+out_ipw <- future_sapply(seed_list, 
+                         boot_luce_temp, 
+                         identity_data = identity_data)
+
+
+out_ipw_df <- data.frame(
+  ideology = as.numeric(),
+  mean = as.numeric(),
+  ranking = as.character()
+)
+
+
+# Store all results in a data frame
+for(b in 1:n_bootstrap){
+
+temp <- data.frame(
+  ideology = out_ipw[,b]$ideology,
+  mean = out_ipw[,b]$mean,
+  ranking = out_ipw[,b]$ranking
+)
+
+out_ipw_df <- rbind(out_ipw_df, temp)
+
+}
+
+out_ipw_df
+
+
+PL_ipw <- out_ipw_df %>%
   group_by(ideology, ranking) %>%
   summarize(
     low = quantile(mean, prob = 0.025),

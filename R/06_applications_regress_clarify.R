@@ -228,8 +228,21 @@ p_qoi2$results <- "bias-corrected" # with weight
 ggdt4 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(religion > gender > race > party)")
 
+
+
 # 6. Visualize the final results  ==============================================
 ggdt_all <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
+
+# This will be used in 06_applications_regress_clarify_figure.R
+save(
+  list = c(
+    "ggdt4"
+  ),
+  file = here("data", "tidy", "PL_raw_ipw.Rda")
+)
+
+
+
 p <- ggdt_all %>%
   ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
   geom_point(position = position_dodge2(width = 0.5)) +
@@ -242,7 +255,7 @@ p <- ggdt_all %>%
   scale_x_continuous(breaks = seq(0, 7, 1)) +
   xlab("Ideology (liberal - conservative)") +
   ylab("Predicted Probability") +
-  ylim(0, 0.45) +
+  ylim(0, 0.5) +
   labs(
     caption = paste0(
       "Predictions for a 40-year-old white male ",
