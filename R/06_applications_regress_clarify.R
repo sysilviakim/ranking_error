@@ -170,20 +170,11 @@ p_qoi2$results <- "bias-corrected" # with weight
 ggdt4 <- rbind(p_qoi, p_qoi2) %>%
   mutate(ranking = "Pr(religion > gender > race > party)")
 
-
-
 # 6. Visualize the final results  ==============================================
 ggdt_all <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
 
 # This will be used in 06_applications_regress_clarify_figure.R
-save(
-  list = c(
-    "ggdt4"
-  ),
-  file = here("data", "tidy", "PL_raw_ipw.Rda")
-)
-
-
+save(ggdt_all, file = here("data", "tidy", "PL_raw_ipw.Rda"))
 
 p <- ggdt_all %>%
   ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
