@@ -28,67 +28,6 @@ library(clarify)
 library(mlogit)
 library(future.apply)
 
-temp_fxn <- function(v, n, p_qoi, type = 1) {
-  for (i in 1:n) {
-    e_XB_party <- exp(
-      v$`(Intercept):party` + v$`ideo7:party` * i +
-      v$`pid7:party` * .fix_pid +
-      v$`male:party` * .fix_male +
-      v$`age:party` * .fix_age +
-      v$`educ:party` * .fix_edu)
-    e_XB_race <- exp(
-      v$`(Intercept):race` + v$`ideo7:race` * i +
-      v$`pid7:race` * .fix_pid +
-      v$`male:race` * .fix_male +
-      v$`age:race` * .fix_age +
-      v$`educ:race` * .fix_edu)
-    e_XB_reli <- exp(
-      v$`(Intercept):religion` + v$`ideo7:religion` * i +
-      v$`pid7:religion` * .fix_pid +
-      v$`male:religion` * .fix_male +
-      v$`age:religion` * .fix_age +
-      v$`educ:religion` * .fix_edu)
-    e_XB_gen <- 1
-
-    # Here, we want to compute the probability for one unique ranking
-    # Prob (party, race, religion, gender)
-    # Prob(party) * Prob(race) * Prob(religion) * Prob(gender)
-    # This is multiplication of three multinomial choices
-    if (type == 1) {
-      ## Gender > Race > Party > Religion
-      p <- e_XB_gen / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
-        e_XB_race / (e_XB_race + e_XB_reli + e_XB_party) *
-        e_XB_party / (e_XB_reli + e_XB_party) *
-        e_XB_reli / e_XB_reli
-    } else if (type == 2) {
-      ## Party > Gender > Race > Religion
-      p <- e_XB_party / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
-        e_XB_gen / (e_XB_race + e_XB_gen + e_XB_reli) *
-        e_XB_race / (e_XB_race + e_XB_reli) *
-        e_XB_reli / e_XB_reli
-    } else if (type == 3) {
-      ## Gender > Race > Religion > Party
-      p <- e_XB_gen / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
-        e_XB_race / (e_XB_race + e_XB_reli + e_XB_party) *
-        e_XB_reli / (e_XB_reli + e_XB_party) *
-        e_XB_party / e_XB_party
-    } else if (type == 4) {
-      ## Religion > Gender > Race > Party
-      p <- e_XB_reli / (e_XB_party + e_XB_race + e_XB_reli + e_XB_gen) *
-        e_XB_gen / (e_XB_race + e_XB_gen + e_XB_party) *
-        e_XB_race / (e_XB_race + e_XB_party) *
-        e_XB_party / e_XB_party
-    }
-
-    # we want to generate 24 ps. They should sum up to one.
-    p_qoi[i, 2] <- mean(p)
-    # if we bootstrap the whole thing, we don't need to save this
-    p_qoi[i, 3] <- quantile(p, prob = 0.025)
-    p_qoi[i, 4] <- quantile(p, prob = 0.975)
-  }
-  return(p_qoi)
-}
-
 # 1. Get data, get bias-correction weights =====================================
 ## Now already performed within 03_bias_correction.R
 ## Sanity check
@@ -191,7 +130,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- temp_fxn(v, 7, p_template, type = 1)
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 1)
 
   ggdt1 <- rbind(p_qoi2) %>%
     mutate(ranking = "Pr(gender > race > party > religion)")
@@ -201,7 +140,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- temp_fxn(v, 7, p_template, type = 2)
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 2)
 
   ggdt2 <- rbind(p_qoi2) %>%
     mutate(ranking = "Pr(party > gender > race > religion)")
@@ -211,7 +150,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- temp_fxn(v, 7, p_template, type = 3)
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 3)
 
   ggdt3 <- rbind(p_qoi2) %>%
     mutate(ranking = "Pr(gender > race > religion > party)")
@@ -221,7 +160,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- temp_fxn(v, 7, p_template, type = 4)
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 4)
 
   ggdt4 <- rbind(p_qoi2) %>%
     mutate(ranking = "Pr(religion > gender > race > party)")
