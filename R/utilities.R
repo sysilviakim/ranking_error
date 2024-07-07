@@ -683,11 +683,14 @@ regress_clarify_temp <- function(v, n, p_qoi, type = 1) {
 }
 
 # Functionalize bootstrapping with Plackett-Luce
-boot_luce_temp <- function(identity_data,
+boot_luce_temp <- function(data,
                            boot_seed) {
+  set.seed(boot_seed)
+  
+  ## Otherwise, this part is not reproducible
   index <- 
-    sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
-  bootstrap_dat <- identity_data[index, ]
+    sample(1:nrow(data), size = nrow(data), replace = TRUE)
+  bootstrap_dat <- data[index, ]
   
   boot_ipw <- imprr_weights(
     data = bootstrap_dat,
@@ -768,9 +771,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 1)
-  
-  ggdt1 <- rbind(p_qoi2) %>%
+  ggdt1 <- regress_clarify_temp(v, 7, p_template, type = 1) %>%
     mutate(ranking = "Pr(gender > race > party > religion)")
   
   ## 5.2. Party > Gender > Race > Religion =====================================
@@ -778,9 +779,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 2)
-  
-  ggdt2 <- rbind(p_qoi2) %>%
+  ggdt2 <- regress_clarify_temp(v, 7, p_template, type = 2) %>%
     mutate(ranking = "Pr(party > gender > race > religion)")
   
   ## 5.3. Gender > Race > Party > Religion =====================================
@@ -788,9 +787,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 3)
-  
-  ggdt3 <- rbind(p_qoi2) %>%
+  ggdt3 <- regress_clarify_temp(v, 7, p_template, type = 3) %>%
     mutate(ranking = "Pr(gender > race > religion > party)")
   
   ## 5.4. Religion > Gender > Race > Party  ====================================
@@ -798,9 +795,7 @@ boot_luce_temp <- function(identity_data,
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
-  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 4)
-  
-  ggdt4 <- rbind(p_qoi2) %>%
+  ggdt4 <- regress_clarify_temp(v, 7, p_template, type = 4) %>%
     mutate(ranking = "Pr(religion > gender > race > party)")
   
   # Tie everything together
