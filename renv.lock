@@ -1432,6 +1432,35 @@
       ],
       "Hash": "15aeb8c27f5ea5161f9f6a641fafd93a"
     },
+    "future": {
+      "Package": "future",
+      "Version": "1.33.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "digest",
+        "globals",
+        "listenv",
+        "parallel",
+        "parallelly",
+        "utils"
+      ],
+      "Hash": "8e92c7bc53e91b9bb1faf9a6ef0e8514"
+    },
+    "future.apply": {
+      "Package": "future.apply",
+      "Version": "1.11.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "future",
+        "globals",
+        "parallel",
+        "utils"
+      ],
+      "Hash": "ba4be138fe47eac3e16a6deaa4da106e"
+    },
     "gargle": {
       "Package": "gargle",
       "Version": "1.5.2",
@@ -1643,6 +1672,17 @@
         "utils"
       ],
       "Hash": "eb6fc70e561aae41d5911a6726188f71"
+    },
+    "globals": {
+      "Package": "globals",
+      "Version": "0.16.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "codetools"
+      ],
+      "Hash": "baa9585ab4ce47a9f4618e671778cc6f"
     },
     "glue": {
       "Package": "glue",
@@ -2202,6 +2242,16 @@
       ],
       "Hash": "b8552d117e1b808b09a832f589b79035"
     },
+    "listenv": {
+      "Package": "listenv",
+      "Version": "0.9.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "4fbd3679ec8ee169ba28d4b1ea7d0e8f"
+    },
     "lme4": {
       "Package": "lme4",
       "Version": "1.1-35.4",
@@ -2604,6 +2654,18 @@
       "Repository": "CRAN",
       "Hash": "495d032ad6bfc725f37ce89e3d6dadb2"
     },
+    "parallelly": {
+      "Package": "parallelly",
+      "Version": "1.36.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "parallel",
+        "tools",
+        "utils"
+      ],
+      "Hash": "bca377e1c87ec89ebed77bba00635b2e"
+    },
     "partykit": {
       "Package": "partykit",
       "Version": "1.2-20",
@@ -2777,17 +2839,6 @@
         "stats4"
       ],
       "Hash": "bf0267b0987c36805efa67309db6b33e"
-    },
-    "poLCA": {
-      "Package": "poLCA",
-      "Version": "1.6.0.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "MASS",
-        "scatterplot3d"
-      ],
-      "Hash": "ecc586dd8958e78d73048eebf737ebe6"
     },
     "polynom": {
       "Package": "polynom",
@@ -3059,7 +3110,7 @@
       "RemoteRepo": "ranking",
       "RemoteUsername": "sysilviakim",
       "RemoteRef": "HEAD",
-      "RemoteSha": "736bde3a715eba130ed16b9b08159cad98791ac6",
+      "RemoteSha": "bd8a0adda1efdeb7dee326c8b82ee4eaccfaa7e5",
       "Requirements": [
         "PLMIX",
         "R",
@@ -3082,7 +3133,7 @@
         "tidyr",
         "tidyselect"
       ],
-      "Hash": "45ae6171e0c31251186ad145aa3c8ef2"
+      "Hash": "20f6f1211f12494a999a35347037b6e3"
     },
     "rappdirs": {
       "Package": "rappdirs",
@@ -3418,19 +3469,6 @@
         "viridisLite"
       ],
       "Hash": "c19df082ba346b0ffa6f833e92de34d1"
-    },
-    "scatterplot3d": {
-      "Package": "scatterplot3d",
-      "Version": "0.3-44",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "grDevices",
-        "graphics",
-        "stats"
-      ],
-      "Hash": "10ee4b91ec812690bd55d9bf51edccee"
     },
     "scs": {
       "Package": "scs",
