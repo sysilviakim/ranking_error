@@ -3,22 +3,21 @@ load(here("data", "tidy", "PL_raw_ipw.Rda"))
 load(here("data", "tidy", "PL_ipw.Rda"))
 
 # 6. Visualize the final results  ==============================================
-ggdt_all <- ggdt_all
-
 ggdt_raw <- ggdt_all %>% filter(results == "raw data")
 ggdt_ipw <- ggdt_all %>% filter(results == "bias-corrected")
 
 PL_ipw <- PL_ipw %>% arrange(ranking)
 
-ggdt_ipw <- ggdt_ipw %>%
-  arrange(ranking) %>%
-  mutate(
-    low = PL_ipw$low,
-    up = PL_ipw$up
-  )
+# ggdt_ipw <- ggdt_ipw %>%
+#   arrange(ranking) %>%
+#   mutate(
+#     low = PL_ipw$low,
+#     up = PL_ipw$up
+#   )
 
 # Recombine the two estimates
-ggdt_all <- rbind(ggdt_raw, ggdt_ipw)
+# ggdt_all <- rbind(ggdt_raw, ggdt_ipw)
+ggdt_all <- rbind(ggdt_raw, PL_ipw)
 
 p <- ggdt_all %>%
   ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
