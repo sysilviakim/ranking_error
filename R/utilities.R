@@ -621,7 +621,6 @@ coef_rename <- function(x) {
     )
 }
 
-
 regress_clarify_temp <- function(v, n, p_qoi, type = 1) {
   for (i in 1:n) {
     e_XB_party <- exp(
@@ -683,3 +682,128 @@ regress_clarify_temp <- function(v, n, p_qoi, type = 1) {
   return(p_qoi)
 }
 
+# Functionalize bootstrapping with Plackett-Luce
+boot_luce_temp <- function(identity_data,
+                           boot_seed) {
+  index <- 
+    sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
+  bootstrap_dat <- identity_data[index, ]
+  
+  boot_ipw <- imprr_weights(
+    data = bootstrap_dat,
+    J = 4,
+    main_q = "app_identity",
+    anc_correct = "anc_correct_identity",
+    seed = boot_seed
+  )
+  
+  # Bootstrap data with estimated weights
+  bootstrap_dat <- bootstrap_dat %>%
+    left_join(boot_ipw$weights, by = "ranking") %>%
+    mutate(w_multiplied = weight * w)
+  
+  # 2. Data processing =========================================================
+  # Reference set: (party, religion, gender, race)
+  # Downsize data
+  dt <- bootstrap_dat %>%
+    mutate(
+      id = 1:nrow(bootstrap_dat),
+      race = as.factor(race4),
+      region = as.factor(region)
+    ) %>%
+    rename(
+      ch.party = app_identity_1,
+      ch.religion = app_identity_2,
+      ch.gender = app_identity_3,
+      ch.race = app_identity_4
+    ) %>%
+    ## Use race4 instead of race6 that was previously used
+    drop_na()
+  
+  # 3. Create indexed data =====================================================
+  # Transform into mlogit format
+  dt <- as.data.frame(dt)
+  
+  ## Takes about 2 seconds
+  mdat <- dfidx::dfidx(
+    dt,
+    shape = "wide",
+    choice = "ch",
+    varying = 1:4, # 1:J, J = # items
+    ranked = TRUE
+  )
+  # Check
+  head(mdat)
+  
+  # print(b)
+  # mdat$ch # logical: TRUE if id2 was ranked idx1-th, by unit id1
+  # mdat$id # respondent id
+  # mdat$idx # position id (1st, 2nd, 3rd, 4th = depressed)
+  # mdat$ideo7 # explanatory variable
+  
+  # 4. Run Rank-order logit model ==============================================
+  # Estimating parameters (with weight)
+  m2 <- mlogit(
+    ch ~ 1 | ideo7 + pid7 + partisan + male + age + race4 + educ + region,
+    mdat, # Data
+    reflevel = "gender", # Base category
+    weight = w_multiplied # Survey weights X bias-correction weights
+  )
+  
+  # Raw result
+  summary(m2)
+  
+  # 5. Get predicted probabilities =============================================
+  ## 5.1. Gender > Race > Party > Religion =====================================
+  # Generate 1000 sets of parameters (parametric bootstrap)
+  ## First, reusable template
+  p_template <- data.frame(
+    ideology = 1:7,
+    mean = NA,
+    low = NA,
+    up = NA
+  )
+  
+  # Generate 1000 sets of parameters (parametric bootstrap)
+  # set.seed(123)
+  sim_coefs <- sim(m2)
+  v <- sim_coefs$sim.coefs %>% as_tibble()
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 1)
+  
+  ggdt1 <- rbind(p_qoi2) %>%
+    mutate(ranking = "Pr(gender > race > party > religion)")
+  
+  ## 5.2. Party > Gender > Race > Religion =====================================
+  # Generate 1000 sets of parameters (parametric bootstrap)
+  # set.seed(123)
+  sim_coefs <- sim(m2)
+  v <- sim_coefs$sim.coefs %>% as_tibble()
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 2)
+  
+  ggdt2 <- rbind(p_qoi2) %>%
+    mutate(ranking = "Pr(party > gender > race > religion)")
+  
+  ## 5.3. Gender > Race > Party > Religion =====================================
+  # Generate 1000 sets of parameters (parametric bootstrap)
+  # set.seed(123)
+  sim_coefs <- sim(m2)
+  v <- sim_coefs$sim.coefs %>% as_tibble()
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 3)
+  
+  ggdt3 <- rbind(p_qoi2) %>%
+    mutate(ranking = "Pr(gender > race > religion > party)")
+  
+  ## 5.4. Religion > Gender > Race > Party  ====================================
+  # Generate 1000 sets of parameters (parametric bootstrap)
+  # set.seed(123)
+  sim_coefs <- sim(m2)
+  v <- sim_coefs$sim.coefs %>% as_tibble()
+  p_qoi2 <- regress_clarify_temp(v, 7, p_template, type = 4)
+  
+  ggdt4 <- rbind(p_qoi2) %>%
+    mutate(ranking = "Pr(religion > gender > race > party)")
+  
+  # Tie everything together
+  ggdt_ipw <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
+  return(ggdt_ipw)
+}
