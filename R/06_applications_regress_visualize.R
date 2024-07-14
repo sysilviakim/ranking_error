@@ -1,23 +1,13 @@
 source(here::here("R", "utilities.R"))
-load(here("data", "tidy", "PL_raw_ipw.Rda"))
-load(here("data", "tidy", "PL_ipw.Rda"))
+load(here("data", "tidy", "PL_raw.Rda"))
+load(here("data", "tidy", "PL_ipw_sapply.Rda"))
 
 # 6. Visualize the final results  ==============================================
-ggdt_raw <- ggdt_all %>% filter(results == "raw data")
-ggdt_ipw <- ggdt_all %>% filter(results == "bias-corrected")
-
-PL_ipw <- PL_ipw %>% arrange(ranking)
-
-# ggdt_ipw <- ggdt_ipw %>%
-#   arrange(ranking) %>%
-#   mutate(
-#     low = PL_ipw$low,
-#     up = PL_ipw$up
-#   )
+gg_raw <- PL_raw %>% filter(results == "raw data") %>% arrange(ranking)
+gg_ipw <- PL_ipw %>% arrange(ranking)
 
 # Recombine the two estimates
-# ggdt_all <- rbind(ggdt_raw, ggdt_ipw)
-ggdt_all <- rbind(ggdt_raw, PL_ipw)
+ggdt_all <- rbind(gg_raw, gg_ipw)
 
 p <- ggdt_all %>%
   ggplot(aes(x = ideology, y = mean, color = results, shape = results)) +
@@ -57,23 +47,43 @@ ggsave(
   width = 6, height = 5
 )
 
+
+
 # First difference between the most liberal and conservative ===================
-## Bias-corrected: 0.32752908 - 0.06778887 = 0.2597402
-corrected_diff <- ggdt1 %>%
+## Bias-corrected: 0.31268234  - 0.06695451 = 0.2457278
+corrected_diff <- ggdt_all %>%
   filter(ideology == 7 | ideology == 1) %>%
   filter(results == "bias-corrected") %>%
+  filter(ranking == "Pr(gender > race > party > religion)") %>%
   {.$mean[1] - .$mean[2]}
 corrected_diff
 
 ## Raw data: 0.20329978 - 0.04637296 = 0.1569268
-raw_diff <- ggdt1 %>%
+raw_diff <- ggdt_all %>%
   filter(ideology == 7 | ideology == 1) %>%
   filter(results == "raw data") %>%
+  filter(ranking == "Pr(gender > race > party > religion)") %>%  
   {.$mean[1] - .$mean[2]}
 raw_diff
 
 corrected_diff / raw_diff
 
-ggdt3 %>%
-  group_by(results) %>%
-  summarize(mean(mean))
+# Average probabilities ===================
+## Bias-corrected: 0.1753277
+corrected_avg <- ggdt_all %>%
+  filter(results == "bias-corrected") %>%
+  filter(ranking == "Pr(gender > race > religion > party)") %>%
+  {mean(.$mean)}
+corrected_avg
+
+
+## Raw data: 0.1088795
+raw_avg <- ggdt_all %>%
+  filter(results == "raw data") %>%
+  filter(ranking == "Pr(gender > race > religion > party)") %>%
+  {mean(.$mean)}
+raw_avg
+
+corrected_avg / raw_avg
+
+

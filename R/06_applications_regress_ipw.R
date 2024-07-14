@@ -89,4 +89,4 @@ PL_ipw <- out_ipw_df %>%
 ## Checked that the old file Yuki committed is reproducible? Not quite
 ## PL_ipw_old <- loadRData(here("data", "tidy", "PL_ipw_old.Rda"))
 ## Then change n_bootstrap to 1,000
-save(PL_ipw, file = here("data", "tidy", "PL_ipw.Rda"))
+save(PL_ipw, file = here("data", "tidy", "PL_ipw_sapply.Rda"))
