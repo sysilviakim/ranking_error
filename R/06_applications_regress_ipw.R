@@ -33,18 +33,18 @@ seed_list <- sample(
 seed_list <- as.list(seed_list)
 out_ipw <- list()
 
-# using multiple CPU cores 
+# using multiple CPU cores
 ## (https://stackoverflow.com/questions/70213799/)
-plan(multisession) 
+plan(multisession)
 
-## UNRELIABLE VALUE: One of the ‘future.apply’ iterations (‘future_sapply-1’) 
-## unexpectedly generated random numbers without declaring so. 
-## There is a risk that those random numbers are not statistically sound 
-## and the overall results might be invalid. 
-## To fix this, specify 'future.seed=TRUE'. This ensures that proper, 
+## UNRELIABLE VALUE: One of the ‘future.apply’ iterations (‘future_sapply-1’)
+## unexpectedly generated random numbers without declaring so.
+## There is a risk that those random numbers are not statistically sound
+## and the overall results might be invalid.
+## To fix this, specify 'future.seed=TRUE'. This ensures that proper,
 ## parallel-safe random numbers are produced via the L'Ecuyer-CMRG method.
-## To disable this check, use 'future.seed = NULL', or 
-## set option 'future.rng.onMisuse' to "ignore". 
+## To disable this check, use 'future.seed = NULL', or
+## set option 'future.rng.onMisuse' to "ignore".
 
 ## Test full reproducibility
 ## temp_first <- boot_luce_temp(identity_data, first(seed_list))
@@ -86,7 +86,4 @@ PL_ipw <- out_ipw_df %>%
   select(ideology, mean, low, up, results, ranking) %>%
   arrange(ranking)
 
-## Checked that the old file Yuki committed is reproducible? Not quite
-## PL_ipw_old <- loadRData(here("data", "tidy", "PL_ipw_old.Rda"))
-## Then change n_bootstrap to 1,000
 save(PL_ipw, file = here("data", "tidy", "PL_ipw_sapply.Rda"))
