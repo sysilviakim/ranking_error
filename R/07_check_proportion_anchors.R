@@ -319,7 +319,9 @@ ggpubr::ggarrange(
     ),
   ncol = 1, heights = c(0.4, 1)
 )
+
+## Figure C.16, formerly weight-avg-rank-multiple-anchors.pdf
 ggsave(
-  here("fig", "weight-avg-rank-multiple-anchors.pdf"),
+  here("fig", "AtsusakaKimFigC16.pdf"),
   width = 5, height = 5
 )

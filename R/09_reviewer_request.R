@@ -248,8 +248,10 @@ p_final <- p$data %>%
 pdf_default(p_final) + 
   theme(legend.position = "bottom") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+## Figure C.10, formerly predict_random_identity_coefplot.pdf
 ggsave(
-  here("fig", "predict_random_identity_coefplot.pdf"),
+  here("fig", "AtsusakaKimFigC10.pdf"),
   width = 9, height = 5
 )
 

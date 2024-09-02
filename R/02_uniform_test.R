@@ -34,8 +34,10 @@ temp <- table_to_tibble(tab3r)
 plot_nolegend(
   pdf_default(plot_dist_ranking(temp, ylim = .7, family = "Verdana"))
 )
+
+## Figure B.4(a), formerly nocontext3-recorded.pdf
 ggsave(
-  here("fig", "nocontext3-recorded.pdf"),
+  here("fig", "AtsusakaKimFigB4a.pdf"),
   width = 4.5, height = 2.8
 )
 
@@ -44,8 +46,10 @@ temp <- table_to_tibble(tab4r)
 plot_nolegend(
   pdf_default(plot_dist_ranking(temp, ylim = .7, family = "Verdana"))
 )
+
+## Figure B.4(b), formerly nocontext4-recorded.pdf
 ggsave(
-  here("fig", "nocontext4-recorded.pdf"),
+  here("fig", "AtsusakaKimFigB4b.pdf"),
   width = 7.5, height = 2.8
 )
 
@@ -90,8 +94,10 @@ ggsave(
 pass <-
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
+
+## Figure C.12(a), formerly main-anchor-recorded-passers-ylim-20.pdf
 ggsave(
-  here("fig", "main-anchor-recorded-passers-ylim-20.pdf"),
+  here("fig", "AtsusakaKimFigC12a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -116,8 +122,10 @@ ggsave(
 fail <-
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
+
+## Figure C.12(b), formerly main-anchor-recorded-failers-ylim-20.pdf
 ggsave(
-  here("fig", "main-anchor-recorded-failers-ylim-20.pdf"),
+  here("fig", "AtsusakaKimFigC12b.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -133,8 +141,10 @@ temp <- table_to_tibble(tab)
 pass <-
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
+
+## Figure C.13(a), formerly alphabet-anchor-recorded-passers.pdf
 ggsave(
-  here("fig", "alphabet-anchor-recorded-passers.pdf"),
+  here("fig", "AtsusakaKimFigC13a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -149,8 +159,10 @@ temp <- table_to_tibble(tab)
 fail <-
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
+
+## Figure C.13(b), formerly alphabet-anchor-recorded-failers.pdf
 ggsave(
-  here("fig", "alphabet-anchor-recorded-failers.pdf"),
+  here("fig", "AtsusakaKimC13b.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -166,8 +178,10 @@ temp <- table_to_tibble(tab)
 pass <- 
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
+
+## Figure C.14(a), formerly exact-anchor-recorded-passers.pdf
 ggsave(
-  here("fig", "exact-anchor-recorded-passers.pdf"),
+  here("fig", "AtsusakaKimFigC14a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -182,6 +196,8 @@ temp <- table_to_tibble(tab)
 fail <- 
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
+
+## Figure C.14(b), formerly exact-anchor-recorded-failers.pdf
 ggsave(
   here("fig", "exact-anchor-recorded-failers.pdf"),
   width = 7.5, height = 2.5
@@ -199,8 +215,10 @@ temp <- table_to_tibble(tab)
 pass <- 
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
+
+## Figure C.15(a), formerly repeated-recorded-passers.pdf
 ggsave(
-  here("fig", "repeated-recorded-passers.pdf"),
+  here("fig", "AtsusakaKimFigC15a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -215,8 +233,10 @@ temp <- table_to_tibble(tab)
 fail <- 
   plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
+
+## Figure C.15(b), formerly repeated-recorded-failers.pdf
 ggsave(
-  here("fig", "repeated-recorded-failers.pdf"),
+  here("fig", "AtsusakaKimFigC15b.pdf"),
   width = 7.5, height = 2.5
 )
 

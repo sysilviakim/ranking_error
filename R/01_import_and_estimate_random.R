@@ -118,7 +118,9 @@ pdf_default(p) +
     legend.position = "bottom",
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
-ggsave(here("fig", "corrplot_random_check.pdf"), width = 5, height = 5)
+
+## Figure C.11, formerly corrplot_random_check.pdf
+ggsave(here("fig", "AtsusakaKimFigC11.pdf"), width = 5, height = 5)
 
 ## Conditional probabilities? --------------------------------------------------
 ## Between attention filters
