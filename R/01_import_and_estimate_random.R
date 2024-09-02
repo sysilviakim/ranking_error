@@ -109,7 +109,7 @@ p <- cor_matrix %>%
   coord_fixed() +
   geom_text(
     aes(label = `Correlation Coefficient`),
-    size = 3, family = "Verdana"
+    size = 3, family = "CM Roman"
   ) +
   labs(x = "", y = "")
 

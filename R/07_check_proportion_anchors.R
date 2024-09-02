@@ -112,7 +112,7 @@ a <- ggplot(d_com, aes(x = mean, y = group)) +
     position = position_dodge(width = width_par),
     size = 2.5,
     color = "black",
-    family = "Verdana"
+    family = "CM Roman"
   ) +
   xlab("Estimated proportion of random responses") +
   ylab("") +
@@ -288,7 +288,7 @@ b <- avg_gg_comb2 %>%
     position = position_dodge(width = width_par),
     size = 2.5,
     color = "black",
-    family = "Verdana"
+    family = "CM Roman"
   ) +
   xlim(0.8, 4.1) +
   ylab("") +
@@ -307,10 +307,10 @@ ggpubr::ggarrange(
   pdf_default(a) + theme(legend.position = "none"),
   pdf_default(b) + theme(legend.position = "none") +
     ## Add a legend for geom_rect within the plot
-    ## Left-align the text, family = Verdana
+    ## Left-align the text, family = CM Roman
     annotate(
       "text",
-      x = 1, y = 1, size = 2.5, hjust = 0, family = "Verdana",
+      x = 1, y = 1, size = 2.5, hjust = 0, family = "CM Roman",
       label = paste0(
         "Gray region = \n",
         "95% CIs of unadjusted \n",

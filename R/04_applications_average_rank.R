@@ -23,13 +23,10 @@ sum(main_ipw$weights$w_star)
 ## Recode w_multiplied
 data <- dt %>%
   left_join(main_ipw$weights, by = "ranking") %>%
-  mutate(w_multiplied_old = w_multiplied,
-         w_multiplied = weight * w_star)
-
-## Check --- 
-plot(dt$w_multiplied, dt$w_multiplied_old,
-     xlim = c(0, 8), ylim = c(0, 8))
-abline(a = 0, b = 1, lty = 2)  
+  mutate(
+    w_multiplied_old = w_multiplied,
+    w_multiplied = weight * w_star
+  )
 
 # Bias correction ==============================================================
 # Direct Bias Correction
@@ -50,59 +47,65 @@ avg_rank.w <- main_direct$qoi %>%
   ) %>%
   select(item, estimate, conf.low, conf.high, dt)
 
-
 # IPW
 # Here, we will get the IPW estimate for each bootstrapped data and weights
 
-out_ipw <- data.frame(item = as.character(),
-                      estimate = as.numeric())
+out_ipw <- data.frame(
+  item = as.character(),
+  estimate = as.numeric()
+)
 seeds <- 1234
 n_bootstrap <- 1000
 
 set.seed(seeds)
-seed_list <- sample(1:max(n_bootstrap * 10, 10000), n_bootstrap, 
-                    replace = FALSE)
+seed_list <- sample(1:max(n_bootstrap * 10, 10000), n_bootstrap,
+  replace = FALSE
+)
 
 for (b in 1:n_bootstrap) {
-  index <- sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
+  index <-
+    sample(1:nrow(identity_data), size = nrow(identity_data), replace = TRUE)
   boostrap_dat <- identity_data[index, ]
 
-boot_ipw <- imprr_weights(
-  data = boostrap_dat,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_identity",
-  n_bootstrap = 1,
-  seed = seed_list[b]
-)
+  boot_ipw <- imprr_weights(
+    data = boostrap_dat,
+    J = 4,
+    main_q = "app_identity",
+    anc_correct = "anc_correct_identity",
+    seed = seed_list[b]
+  )
 
-boostrap_dat <- boostrap_dat %>%
-  left_join(boot_ipw$weights, by = "ranking") %>%
-  mutate(w_multiplied = weight * w)
+  boostrap_dat <- boostrap_dat %>%
+    left_join(boot_ipw$weights, by = "ranking") %>%
+    mutate(w_multiplied = weight * w)
 
-# weight = survey weights
-# w = bias-correction weights
+  # weight = survey weights
+  # w = bias-correction weights
+  avg_rank.i <- as.data.frame(NA)
+  avg_rank.i <-
+    lm_robust(app_identity_1 ~ 1, boostrap_dat, weights = w_multiplied) %>%
+    tidy()
+  avg_rank.i <- rbind(
+    avg_rank.i,
+    lm_robust(app_identity_2 ~ 1, boostrap_dat, weights = w_multiplied) %>%
+      tidy()
+  )
+  avg_rank.i <- rbind(
+    avg_rank.i,
+    lm_robust(app_identity_3 ~ 1, boostrap_dat, weights = w_multiplied) %>%
+      tidy()
+  )
+  avg_rank.i <- rbind(
+    avg_rank.i,
+    lm_robust(app_identity_4 ~ 1, boostrap_dat, weights = w_multiplied) %>%
+      tidy()
+  )
 
+  avg_rank.i <- avg_rank.i %>%
+    rename(item = outcome) %>%
+    select(item, estimate)
 
-avg_rank.i <- as.data.frame(NA)
-avg_rank.i <- lm_robust(app_identity_1 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
-avg_rank.i <- rbind(
-  avg_rank.i, lm_robust(app_identity_2 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
-)
-avg_rank.i <- rbind(
-  avg_rank.i, lm_robust(app_identity_3 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
-)
-avg_rank.i <- rbind(
-  avg_rank.i,
-  lm_robust(app_identity_4 ~ 1, boostrap_dat, weights = w_multiplied) %>% tidy()
-)
-
-avg_rank.i <- avg_rank.i %>%
-  rename(item = outcome) %>%
-  select(item, estimate)
-
-out_ipw <- rbind(out_ipw, avg_rank.i)
-
+  out_ipw <- rbind(out_ipw, avg_rank.i)
 }
 
 avg_rank.i <- out_ipw %>%
@@ -113,13 +116,15 @@ avg_rank.i <- out_ipw %>%
     estimate = mean(estimate)
   ) %>%
   select(item, estimate, conf.low, conf.high) %>%
-  mutate(dt = "IPW",
-         item = case_when(item == "app_identity_1" ~ "party",
-                          item == "app_identity_2" ~ "religion",
-                          item == "app_identity_3" ~ "gender",
-                          item == "app_identity_4" ~ "race_ethnicity"))
-
-
+  mutate(
+    dt = "IPW",
+    item = case_when(
+      item == "app_identity_1" ~ "party",
+      item == "app_identity_2" ~ "religion",
+      item == "app_identity_3" ~ "gender",
+      item == "app_identity_4" ~ "race_ethnicity"
+    )
+  )
 
 # Raw Data
 avg_rank <- as.data.frame(NA)
@@ -188,14 +193,15 @@ p <- avg_gg_comb %>%
     position = position_dodge(width = width_par),
     size = 2,
     color = "black",
-    family = "Verdana"
+    family = "CM Roman"
   ) +
   xlim(1, 4.1) +
   ylab("") +
   xlab("") +
   theme_classic(base_rect_size = 11 / 44)
 
-pdf_default(p) +
+p +
+  theme_bw() +
   theme(
     legend.position = "top",
     legend.title = element_blank(),
@@ -213,7 +219,7 @@ ggsave(
 # Quantities for comparison ====================================================
 avg_gg_comb %>%
   arrange(dt, estimate) %>%
-  group_by(dt) 
+  group_by(dt)
 
 # Party v. religion
 (3.27 - 2.60) / (3.00 - 2.56) # Direct/Unadjusted

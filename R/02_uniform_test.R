@@ -32,7 +32,7 @@ chisq_power(tab4r) ## p-value < 2.2e-16, ES = 2.7244, need N = 5+
 ## 3-option, recorded
 temp <- table_to_tibble(tab3r)
 plot_nolegend(
-  pdf_default(plot_dist_ranking(temp, ylim = .7, family = "Verdana"))
+  pdf_default(plot_dist_ranking(temp, ylim = .7, family = "CM Roman"))
 )
 
 ## Figure B.4(a), formerly nocontext3-recorded.pdf
@@ -44,7 +44,7 @@ ggsave(
 ## 4-option, recorded
 temp <- table_to_tibble(tab4r)
 plot_nolegend(
-  pdf_default(plot_dist_ranking(temp, ylim = .7, family = "Verdana"))
+  pdf_default(plot_dist_ranking(temp, ylim = .7, family = "CM Roman"))
 )
 
 ## Figure B.4(b), formerly nocontext4-recorded.pdf
@@ -60,16 +60,14 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## X-sq = 121.593, p-value = 2.149e-15, ES = 0.3352, N = 287+
 temp <- table_to_tibble(tab)
 p1 <- plot_nolegend(
-  pdf_default(
-    plot_dist_ranking(temp, ylim = .15, family = "Verdana", fill = "darkcyan")
-  )
+  plot_dist_ranking(temp, ylim = .15, fill = "darkcyan")
 )
 p1
 
 ## Figure 6(a), formerly main-identity-recorded.pdf
 ggsave(
   here("fig", "AtsusakaKimFig6a.pdf"),
-  width = 7.5, height = 2.5
+  width = 8.2, height = 2.5
 )
 
 ## Main anchor -----------------------------------------------------------------
@@ -81,18 +79,17 @@ tab <- main %>%
 round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.1066, ES = 0.2050, N = 767+
 temp <- table_to_tibble(tab)
-pass <-
-  plot_dist_ranking(temp, ylim = .15, family = "Verdana", fill = "dimgray")
-plot_nolegend(pdf_default(pass))
+pass <- plot_dist_ranking(temp, ylim = .15, fill = "dimgray")
+plot_nolegend(pass)
 
 ## Figure 6(b), formerly main-anchor-recorded-passers.pdf
 ggsave(
-  here("fig", "Fig6b.pdf"),
-  width = 7.5, height = 2.5
+  here("fig", "AtsusakaKimFig6b.pdf"),
+  width = 8.2, height = 2.5
 )
 
 pass <-
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
 
 ## Figure C.12(a), formerly main-anchor-recorded-passers-ylim-20.pdf
@@ -109,18 +106,17 @@ tab <- main %>%
 round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 5.793e-13, ES = 0.5737, N = 98+
 temp <- table_to_tibble(tab)
-fail <-
-  plot_dist_ranking(temp, ylim = .15, family = "Verdana", fill = "dimgray")
-plot_nolegend(pdf_default(fail))
+fail <- plot_dist_ranking(temp, ylim = .15, fill = "dimgray")
+plot_nolegend(fail)
 
 ## Figure 6(c), formerly main-anchor-recorded-failers.pdf
 ggsave(
   here("fig", "AtsusakaKimFig6c.pdf"),
-  width = 7.5, height = 2.5
+  width = 8.2, height = 2.5
 )
 
 fail <-
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
 
 ## Figure C.12(b), formerly main-anchor-recorded-failers-ylim-20.pdf
@@ -139,7 +135,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.8084, ES = 0.2685, N = 447+
 temp <- table_to_tibble(tab)
 pass <-
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
 
 ## Figure C.13(a), formerly alphabet-anchor-recorded-passers.pdf
@@ -157,7 +153,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.05695, ES = 0.3390, N = 280+
 temp <- table_to_tibble(tab)
 fail <-
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
 
 ## Figure C.13(b), formerly alphabet-anchor-recorded-failers.pdf
@@ -176,7 +172,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.4055, ES = 0.2870, N = 391+
 temp <- table_to_tibble(tab)
 pass <- 
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
 
 ## Figure C.14(a), formerly exact-anchor-recorded-passers.pdf
@@ -194,7 +190,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 6.595e-08, ES = 0.5543, N = 105+
 temp <- table_to_tibble(tab)
 fail <- 
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
 
 ## Figure C.14(b), formerly exact-anchor-recorded-failers.pdf
@@ -213,7 +209,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.01503, ES = 0.3332, N = 290+
 temp <- table_to_tibble(tab)
 pass <- 
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
 
 ## Figure C.15(a), formerly repeated-recorded-passers.pdf
@@ -231,7 +227,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 3.215e-12, ES = 0.7407, N = 58+
 temp <- table_to_tibble(tab)
 fail <- 
-  plot_dist_ranking(temp, ylim = .2, family = "Verdana", fill = "dimgray")
+  plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
 
 ## Figure C.15(b), formerly repeated-recorded-failers.pdf
