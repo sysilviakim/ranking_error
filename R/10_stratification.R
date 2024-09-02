@@ -139,7 +139,7 @@ p <- avg_gg_comb %>%
     position = position_dodge(width = width_par),
     size = 2,
     color = "black",
-    family = "CM Roman"
+    family = "Verdana"
   ) +
   xlim(1, 4.1) +
   ylab("") +

@@ -57,9 +57,7 @@ corrected_diff <- ggdt_all %>%
   filter(ideology == 7 | ideology == 1) %>%
   filter(results == "bias-corrected") %>%
   filter(ranking == "Pr(gender > race > party > religion)") %>%
-  {
-    .$mean[1] - .$mean[2]
-  }
+  {.$mean[1] - .$mean[2]}
 corrected_diff
 
 ## Raw data: 0.20329978 - 0.04637296 = 0.1569268
@@ -67,9 +65,7 @@ raw_diff <- ggdt_all %>%
   filter(ideology == 7 | ideology == 1) %>%
   filter(results == "raw data") %>%
   filter(ranking == "Pr(gender > race > party > religion)") %>%
-  {
-    .$mean[1] - .$mean[2]
-  }
+  {.$mean[1] - .$mean[2]}
 raw_diff
 
 corrected_diff / raw_diff
@@ -79,18 +75,14 @@ corrected_diff / raw_diff
 corrected_avg <- ggdt_all %>%
   filter(results == "bias-corrected") %>%
   filter(ranking == "Pr(gender > race > religion > party)") %>%
-  {
-    mean(.$mean)
-  }
+  {mean(.$mean)}
 corrected_avg
 
 ## Raw data: 0.1088795
 raw_avg <- ggdt_all %>%
   filter(results == "raw data") %>%
   filter(ranking == "Pr(gender > race > religion > party)") %>%
-  {
-    mean(.$mean)
-  }
+  {mean(.$mean)}
 raw_avg
 
 corrected_avg / raw_avg
