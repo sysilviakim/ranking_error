@@ -121,9 +121,18 @@ p2 <- ggplot(pmf_com, aes(x = ordering, y = Freq, fill = type)) +
   facet_grid(~data) +
   theme_bw() +
   theme(legend.position = "none") +
-  coord_flip()
+  coord_flip() + 
+  scale_fill_manual(
+    values = c(
+      A = "darkcyan",
+      B = "maroon4",
+      C = "dimgray",
+      D = "goldenrod4"
+    )
+  )
 
-pdf_default(p2) +
+p2 +
+  theme_bw() + 
   theme(legend.position = "none")
 
 ## Figure 7, formerly weight-PMF-combined-survey-weights.pdf

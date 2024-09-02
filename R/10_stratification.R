@@ -138,15 +138,15 @@ p <- avg_gg_comb %>%
     ),
     position = position_dodge(width = width_par),
     size = 2,
-    color = "black",
-    family = "CM Roman"
+    color = "black"
   ) +
   xlim(1, 4.1) +
   ylab("") +
   xlab("") +
   theme_classic(base_rect_size = 11 / 44)
 
-pdf_default(p) +
+p +
+  theme_bw() +
   theme(
     legend.position = "top",
     legend.title = element_blank(),

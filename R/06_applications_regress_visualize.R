@@ -32,7 +32,8 @@ p <- ggdt_all %>%
     )
   )
 
-pdf_default(p) +
+p +
+  theme_bw() + 
   theme(
     plot.caption = element_text(hjust = 0),
     strip.text.x = element_text(angle = 0, hjust = 0),

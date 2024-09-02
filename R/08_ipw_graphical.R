@@ -50,7 +50,6 @@ sum(weight) # Must sum up to 5
 p_raw <- as.data.frame(table(raw) / length(raw))
 p_true <- as.data.frame(table(pi_s) / length(pi_s))
 
-
 ## Figure 5, formerly illustrate.pdf
 pdf(
   here("fig", "AtsusakaKimFig5.pdf"),
@@ -136,5 +135,4 @@ rect(
   xleft = 5.6, ybottom = 0, xright = 6.4, ytop = p_raw$Freq[6],
   col = alpha("dimgray", 0.3), lty = 0
 )
-
 dev.off()

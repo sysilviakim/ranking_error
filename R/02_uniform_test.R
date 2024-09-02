@@ -62,7 +62,7 @@ temp <- table_to_tibble(tab)
 p1 <- plot_nolegend(
   plot_dist_ranking(temp, ylim = .15, fill = "darkcyan")
 )
-p1
+plot_nolegend(p1 + theme_bw())
 
 ## Figure 6(a), formerly main-identity-recorded.pdf
 ggsave(
@@ -80,7 +80,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 0.1066, ES = 0.2050, N = 767+
 temp <- table_to_tibble(tab)
 pass <- plot_dist_ranking(temp, ylim = .15, fill = "dimgray")
-plot_nolegend(pass)
+plot_nolegend(pass + theme_bw())
 
 ## Figure 6(b), formerly main-anchor-recorded-passers.pdf
 ggsave(
@@ -107,7 +107,7 @@ round(prop.table(tab) * 100, digits = 1)
 chisq_power(tab) ## p-value = 5.793e-13, ES = 0.5737, N = 98+
 temp <- table_to_tibble(tab)
 fail <- plot_dist_ranking(temp, ylim = .15, fill = "dimgray")
-plot_nolegend(fail)
+plot_nolegend(fail + theme_bw())
 
 ## Figure 6(c), formerly main-anchor-recorded-failers.pdf
 ggsave(

@@ -22,19 +22,6 @@ yougov_import <- function(fname) {
     "capabilities_touch", "invalidrank", "more" 
   )
   
-  # Check for timing variables
-  # Check for duration + start time + end time
-  
-  # filter(
-  #   start_date != "Start Date" &
-  #     start_date != '{"ImportId":"startDate","timeZone":"America/Denver"}'
-  # ) %>%
-  # mutate(
-  #   duration_in_seconds = as.numeric(duration_in_seconds),
-  #   duration_in_minutes = duration_in_seconds / 60,
-  #   q_recaptcha_score = as.numeric(q_recaptcha_score)
-  # )
-  
   ## Aggressively rename variables 
   ## Next time, alert YouGov to preferred module/page names!
   temp <- df_raw %>%
