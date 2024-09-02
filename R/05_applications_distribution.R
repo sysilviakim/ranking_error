@@ -147,7 +147,9 @@ ggsave(
 
 pdf_default(p2) +
   theme(legend.position = "none")
+
+## Figure 7, formerly weight-PMF-combined-survey-weights.pdf
 ggsave(
-  here("fig", "weight-PMF-combined-survey-weights.pdf"),
+  here("fig", "AtsusakaKimFig7.pdf"),
   width = 8, height = 4
 )

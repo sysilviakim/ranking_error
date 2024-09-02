@@ -154,7 +154,9 @@ pdf_default(p) +
     axis.text.y = element_text(size = 8),
     text = element_text(size = 8)
   )
+
+## Figure 10, formerly weight-avg-rank-theta-partisan-strength.pdf
 ggsave(
-  here("fig", "weight-avg-rank-theta-partisan-strength.pdf"),
+  here("fig", "AtsusakaKimFig10.pdf"),
   width = 4.5, height = 3
 )

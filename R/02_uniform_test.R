@@ -61,8 +61,10 @@ p1 <- plot_nolegend(
   )
 )
 p1
+
+## Figure 6(a), formerly main-identity-recorded.pdf
 ggsave(
-  here("fig", "main-identity-recorded.pdf"),
+  here("fig", "AtsusakaKimFig6a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -78,8 +80,10 @@ temp <- table_to_tibble(tab)
 pass <-
   plot_dist_ranking(temp, ylim = .15, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
+
+## Figure 6(b), formerly main-anchor-recorded-passers.pdf
 ggsave(
-  here("fig", "main-anchor-recorded-passers.pdf"),
+  here("fig", "Fig6b.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -102,8 +106,10 @@ temp <- table_to_tibble(tab)
 fail <-
   plot_dist_ranking(temp, ylim = .15, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(fail))
+
+## Figure 6(c), formerly main-anchor-recorded-failers.pdf
 ggsave(
-  here("fig", "main-anchor-recorded-failers.pdf"),
+  here("fig", "AtsusakaKimFig6c.pdf"),
   width = 7.5, height = 2.5
 )
 

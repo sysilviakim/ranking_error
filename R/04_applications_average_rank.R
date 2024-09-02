@@ -203,8 +203,10 @@ pdf_default(p) +
     axis.text.y = element_text(size = 8),
     text = element_text(size = 8)
   )
+
+## Figure 8, formerly weight-avg-rank-sample-boot.pdf
 ggsave(
-  here("fig", "weight-avg-rank-sample-boot.pdf"),
+  here("fig", "AtsusakaKimFig8.pdf"),
   width = 4.5, height = 3
 )
 
