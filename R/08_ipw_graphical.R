@@ -50,8 +50,10 @@ sum(weight) # Must sum up to 5
 p_raw <- as.data.frame(table(raw) / length(raw))
 p_true <- as.data.frame(table(pi_s) / length(pi_s))
 
+
+## Figure 5, formerly illustrate.pdf
 pdf(
-  here::here("fig", "illustrate.pdf"),
+  here("fig", "AtsusakaKimFig5.pdf"),
   width = 7, height = 5
 )
 

@@ -61,20 +61,6 @@ pmf <- wtd.table(
   ) %>%
   arrange(type, Var1)
 
-p <- ggplot(pmf, aes(x = ordering, y = Freq, fill = type)) +
-  geom_bar(stat = "identity") +
-  scale_fill_manual(values = brewer.pal(n = 4, name = "Set2")) +
-  annotate("rect",
-    xmin = 7, xmax = 12,
-    ymin = -Inf, ymax = Inf, alpha = 0.1, fill = "black"
-  ) +
-  ylab("Proportion of Unique Ranking Profiles") +
-  xlab("") +
-  theme_bw() +
-  theme(legend.position = "none") +
-  coord_flip()
-p
-
 ## Raw Data -------------------------------------------------------------------
 pmf_raw <- wtd.table(x = dt$app_identity) %>%
   data.frame() %>%
@@ -136,14 +122,6 @@ p2 <- ggplot(pmf_com, aes(x = ordering, y = Freq, fill = type)) +
   theme_bw() +
   theme(legend.position = "none") +
   coord_flip()
-p2
-
-pdf_default(p) +
-  theme(legend.position = "none")
-ggsave(
-  here("fig", "weight-PMF-survey-weights.pdf"),
-  width = 5, height = 4
-)
 
 pdf_default(p2) +
   theme(legend.position = "none")
