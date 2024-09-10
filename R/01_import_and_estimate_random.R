@@ -120,7 +120,7 @@ pdf_default(p) +
   )
 
 ## Figure C.11, formerly corrplot_random_check.pdf
-ggsave(here("fig", "AtsusakaKimFigC11.pdf"), width = 5, height = 5)
+ggsave(here("fig", "FigC11.pdf"), width = 5, height = 5)
 
 ## Conditional probabilities? --------------------------------------------------
 ## Between attention filters

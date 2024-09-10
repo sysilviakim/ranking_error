@@ -48,7 +48,7 @@ p +
 
 ## Figure 9, formerly placketluce_weight_all_weight-boot.pdf
 ggsave(
-  here("fig", "AtsusakaKimFig9.pdf"),
+  here("fig", "Fig9.pdf"),
   width = 6, height = 5
 )
 

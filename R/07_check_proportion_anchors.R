@@ -322,6 +322,6 @@ ggpubr::ggarrange(
 
 ## Figure C.16, formerly weight-avg-rank-multiple-anchors.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC16.pdf"),
+  here("fig", "FigC16.pdf"),
   width = 5, height = 5
 )

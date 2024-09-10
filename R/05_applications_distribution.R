@@ -137,6 +137,6 @@ p2 +
 
 ## Figure 7, formerly weight-PMF-combined-survey-weights.pdf
 ggsave(
-  here("fig", "AtsusakaKimFig7.pdf"),
+  here("fig", "Fig7.pdf"),
   width = 8, height = 4
 )

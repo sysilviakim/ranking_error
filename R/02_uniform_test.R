@@ -37,7 +37,7 @@ plot_nolegend(
 
 ## Figure B.4(a), formerly nocontext3-recorded.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigB4a.pdf"),
+  here("fig", "FigB4a.pdf"),
   width = 4.5, height = 2.8
 )
 
@@ -49,7 +49,7 @@ plot_nolegend(
 
 ## Figure B.4(b), formerly nocontext4-recorded.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigB4b.pdf"),
+  here("fig", "FigB4b.pdf"),
   width = 7.5, height = 2.8
 )
 
@@ -66,7 +66,7 @@ plot_nolegend(p1 + theme_bw())
 
 ## Figure 6(a), formerly main-identity-recorded.pdf
 ggsave(
-  here("fig", "AtsusakaKimFig6a.pdf"),
+  here("fig", "Fig6a.pdf"),
   width = 8.2, height = 2.5
 )
 
@@ -84,7 +84,7 @@ plot_nolegend(pass + theme_bw())
 
 ## Figure 6(b), formerly main-anchor-recorded-passers.pdf
 ggsave(
-  here("fig", "AtsusakaKimFig6b.pdf"),
+  here("fig", "Fig6b.pdf"),
   width = 8.2, height = 2.5
 )
 
@@ -94,7 +94,7 @@ plot_nolegend(pdf_default(pass))
 
 ## Figure C.12(a), formerly main-anchor-recorded-passers-ylim-20.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC12a.pdf"),
+  here("fig", "FigC12a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -111,7 +111,7 @@ plot_nolegend(fail + theme_bw())
 
 ## Figure 6(c), formerly main-anchor-recorded-failers.pdf
 ggsave(
-  here("fig", "AtsusakaKimFig6c.pdf"),
+  here("fig", "Fig6c.pdf"),
   width = 8.2, height = 2.5
 )
 
@@ -121,7 +121,7 @@ plot_nolegend(pdf_default(fail))
 
 ## Figure C.12(b), formerly main-anchor-recorded-failers-ylim-20.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC12b.pdf"),
+  here("fig", "FigC12b.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -140,7 +140,7 @@ plot_nolegend(pdf_default(pass))
 
 ## Figure C.13(a), formerly alphabet-anchor-recorded-passers.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC13a.pdf"),
+  here("fig", "FigC13a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -158,7 +158,7 @@ plot_nolegend(pdf_default(fail))
 
 ## Figure C.13(b), formerly alphabet-anchor-recorded-failers.pdf
 ggsave(
-  here("fig", "AtsusakaKimC13b.pdf"),
+  here("fig", "FigC13b.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -177,7 +177,7 @@ plot_nolegend(pdf_default(pass))
 
 ## Figure C.14(a), formerly exact-anchor-recorded-passers.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC14a.pdf"),
+  here("fig", "FigC14a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -195,7 +195,7 @@ plot_nolegend(pdf_default(fail))
 
 ## Figure C.14(b), formerly exact-anchor-recorded-failers.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC14b.pdf"),
+  here("fig", "FigC14b.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -214,7 +214,7 @@ plot_nolegend(pdf_default(pass))
 
 ## Figure C.15(a), formerly repeated-recorded-passers.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC15a.pdf"),
+  here("fig", "FigC15a.pdf"),
   width = 7.5, height = 2.5
 )
 
@@ -232,6 +232,6 @@ plot_nolegend(pdf_default(fail))
 
 ## Figure C.15(b), formerly repeated-recorded-failers.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC15b.pdf"),
+  here("fig", "FigC15b.pdf"),
   width = 7.5, height = 2.5
 )

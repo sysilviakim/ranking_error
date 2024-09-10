@@ -52,7 +52,7 @@ p_true <- as.data.frame(table(pi_s) / length(pi_s))
 
 ## Figure 5, formerly illustrate.pdf
 pdf(
-  here("fig", "AtsusakaKimFig5.pdf"),
+  here("fig", "Fig5.pdf"),
   width = 7, height = 5
 )
 

@@ -157,6 +157,6 @@ p +
 
 ## Figure 10, formerly weight-avg-rank-theta-partisan-strength.pdf
 ggsave(
-  here("fig", "AtsusakaKimFig10.pdf"),
+  here("fig", "Fig10.pdf"),
   width = 4.5, height = 3
 )

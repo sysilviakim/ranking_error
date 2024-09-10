@@ -251,7 +251,7 @@ pdf_default(p_final) +
 
 ## Figure C.10, formerly predict_random_identity_coefplot.pdf
 ggsave(
-  here("fig", "AtsusakaKimFigC10.pdf"),
+  here("fig", "FigC10.pdf"),
   width = 9, height = 5
 )
 

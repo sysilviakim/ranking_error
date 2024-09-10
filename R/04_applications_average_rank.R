@@ -211,7 +211,7 @@ p +
 
 ## Figure 8, formerly weight-avg-rank-sample-boot.pdf
 ggsave(
-  here("fig", "AtsusakaKimFig8.pdf"),
+  here("fig", "Fig8.pdf"),
   width = 4.5, height = 3
 )
 
