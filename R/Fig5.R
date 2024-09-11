@@ -1,7 +1,5 @@
 # Script Description ===========================================================
-# illustrate.R
 # Aim: illustrate weights in our de-contamination step
-
 library(scales)
 N <- 1000
 
@@ -104,13 +102,6 @@ text(
   x = 4, y = 0.16, labels = "needs to be\nscaled down\n weight < 1",
   col = "deeppink4"
 )
-# text(x = 4.5, y = 0.35, labels = "w (weight) = ", col = "deeppink4")
-# text(x = 5.8, y = 0.35 + 0.015, labels = "P(Bias-Corrected)", col = "darkcyan")
-# text(x = 5.7, y = 0.35 - 0.015, labels = "P(Raw Data)", col = "dimgray")
-# arrows(
-#   x0 = 5.6 - 0.5, x1 = 5.7 + 0.5, y0 = 0.35, y1 = 0.35, length = 0,
-#   col = "dimgray"
-# )
 rect(
   xleft = 0.6, ybottom = 0, xright = 1.4, ytop = p_raw$Freq[1],
   col = alpha("dimgray", 0.3), lty = 0
