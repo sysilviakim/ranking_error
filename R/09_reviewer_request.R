@@ -193,6 +193,9 @@ temp <- list(
   coef_rename()
 
 ## Export
+## Table C.1, formerly predict_random_identity.tex
+## I like booktabs, so changed hlines to 
+## toprule, cmidrule, midrule, and bottomrule
 stargazer(
   temp %>% map("model"),
   se = temp %>% map("se_robust"),
@@ -202,8 +205,8 @@ stargazer(
     "Repeated", "Attention I", "Attention II",
     "Anchor main", "Anchor exact", "Anchor alphabet"
   ),
-  dep.var.caption = "What Determins a Random Response?",
-  out = here("tab", "predict_random_identity.tex"), float = FALSE,
+  dep.var.caption = "What Determines a Random Response?",
+  out = here("tab", "TabC1.tex"), float = FALSE,
   omit.stat = c("f", "ser"), star.cutoffs = c(0.05, 0.01, 0.001),
   no.space = TRUE
 )
@@ -271,6 +274,7 @@ tab <- cbind(
   )
 )
 
+## Table 2, formerly anchor_detail.tex
 xtable(
   tab,
   caption = "Distribution of Responses to the Anchor Question",
@@ -279,7 +283,7 @@ xtable(
 ) %>%
   print(
     type = "latex",
-    file = here("tab", "anchor_detail.tex"),
+    file = here("tab", "Tab2.tex"),
     include.rownames = FALSE,
     floating = FALSE,
     booktabs = TRUE

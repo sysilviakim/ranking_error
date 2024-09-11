@@ -107,7 +107,7 @@ obs_data <- bind_cols(
 )
 
 # Visualize: compare observed patterns -----------------------------------------
-pdf(here("fig", "AtsusakaKimFigB2.pdf"), width = 7, height = 5)
+pdf(here("fig", "FigB2.pdf"), width = 7, height = 5)
 permn_list <- list(
   ## fixed_100p: if 100% sincere, observe true permutation
   p1_fixed_100p = true_permn %>%
