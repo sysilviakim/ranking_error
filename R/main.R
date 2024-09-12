@@ -113,25 +113,35 @@ library(remotes)
 
 # Figures and Tables replication, ordered ======================================
 ## Step 00: simulation and the main bias correction
-source(here::here("R", "FigB2.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "FigB2.R"))))
+message("FigB2 successfully completed.")
 
 ## Step 01
-source(here::here("R", "FigC11.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "FigC11.R"))))
+message("FigC11 successfully completed.")
 
 ## Step 02
-source(here::here("R", "FigB4.R"))
-source(here::here("R", "Fig6.R"))
-source(here::here("R", "FigsC12-C15.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "FigB4.R"))))
+message("FigB4 successfully completed.")
+
+suppressMessages(suppressWarnings(source(here::here("R", "Fig6.R"))))
+message("Fig6 successfully completed.")
+
+suppressMessages(suppressWarnings(source(here::here("R", "FigsC12-C15.R"))))
+message("Figs C12 to C15 successfully completed.")
 
 ## Step 03
 ## This one does not produce figures or tables
-source(here::here("R", "bias_correction.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "bias_correction.R"))))
+message("Main bias correction script completed.")
 
 ## Step 04
-source(here::here("R", "Fig8.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "Fig8.R"))))
+message("Fig8 successfully completed.")
 
 ## Step 05
-source(here::here("R", "Fig7.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "Fig7.R"))))
+message("Fig7 successfully completed.")
 
 ## Step 06
 ## This script is a heavy load on the memory due to future_sapply
@@ -139,18 +149,28 @@ source(here::here("R", "Fig7.R"))
 ## I've suppressed the number of workers to half the available ones
 ## If unreleased memory becomes an issue, try restarting session after this
 ## and run afresh from Step 07
-source(here::here("R", "Fig9.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "Fig9.R"))))
+message("Fig9 successfully completed.")
 
 ## Step 07
-source(here::here("R", "FigC16.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "FigC16.R"))))
+message("FigC16 successfully completed.")
 
 ## Step 08
-source(here::here("R", "Fig5.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "Fig5.R"))))
+message("Fig5 successfully completed.")
 
 ## Step 09
-source(here::here("R", "TabC1.R"))
-source(here::here("R", "FigC10.R"))
-source(here::here("R", "Tab2.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "TabC1.R"))))
+message("TabC1 successfully completed.")
+
+suppressMessages(suppressWarnings(source(here::here("R", "FigC10.R"))))
+message("FigC10 successfully completed.")
+
+suppressMessages(suppressWarnings(source(here::here("R", "Tab2.R"))))
+message("Tab2 successfully completed.")
 
 ## Step 10
-source(here::here("R", "Fig10.R"))
+suppressMessages(suppressWarnings(source(here::here("R", "Fig10.R"))))
+message("Fig10 successfully completed.")
+message("All scripts successfully completed.")
