@@ -11,39 +11,39 @@ library(remotes)
 
 # Figures and Tables replication, ordered ======================================
 ## Step 00: simulation and the main bias correction
-source(here("R", "FigB2.R"))
+source(here::here("R", "FigB2.R"))
 
 ## Step 01
-source(here("R", "FigC11.R"))
+source(here::here("R", "FigC11.R"))
 
 ## Step 02
-source(here("R", "FigB4.R"))
-source(here("R", "Fig6.R"))
-source(here("R", "FigsC12-C15.R"))
+source(here::here("R", "FigB4.R"))
+source(here::here("R", "Fig6.R"))
+source(here::here("R", "FigsC12-C15.R"))
 
 ## Step 03
 ## This one does not produce figures or tables
-source(here("R", "bias_correction.R"))
+source(here::here("R", "bias_correction.R"))
 
 ## Step 04
-source(here("R", "Fig8.R"))
+source(here::here("R", "Fig8.R"))
 
 ## Step 05
-source(here("R", "Fig7.R"))
+source(here::here("R", "Fig7.R"))
 
 ## Step 06
-source(here("R", "Fig9.R"))
+source(here::here("R", "Fig9.R"))
 
 ## Step 07
-source(here("R", "FigC16.R"))
+source(here::here("R", "FigC16.R"))
 
 ## Step 08
-source(here("R", "Fig5.R"))
+source(here::here("R", "Fig5.R"))
 
 ## Step 09
-source(here("R", "TabC1.R"))
-source(here("R", "FigC10.R"))
-source(here("R", "Tab2.R"))
+source(here::here("R", "TabC1.R"))
+source(here::here("R", "FigC10.R"))
+source(here::here("R", "Tab2.R"))
 
 ## Step 10
-source(here("R", "Fig10.pdf"))
+source(here::here("R", "Fig10.pdf"))
