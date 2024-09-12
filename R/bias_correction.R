@@ -37,6 +37,14 @@ main_ipw <- imprr_weights(
   anc_correct = "anc_correct_identity"
 )
 
+main_ipw_weighted <- imprr_weights(
+  data = identity_data,
+  J = 4,
+  main_q = "app_identity",
+  anc_correct = "anc_correct_identity",
+  weight = identity_data$weight
+)
+
 # Alphabet anchor ==============================================================
 temp <- identity_data %>% filter(!is.na(anc_correct_id_alphabet))
 
