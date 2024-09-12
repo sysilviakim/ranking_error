@@ -29,10 +29,8 @@ library(pwr)
 library(xtable)
 library(estimatr)
 library(ggpubr)
-library(Kmisc) ## None-CRAN package
 library(lubridate)
 library(haven)
-library(ranking) ## None-CRAN package
 library(questionr)
 library(RColorBrewer)
 library(clarify)
@@ -43,6 +41,9 @@ library(sandwich)
 library(stargazer)
 library(fixest)
 library(coefplot)
+library(corrplot)
+library(Kmisc) ## None-CRAN package
+library(ranking) ## None-CRAN package
 
 # Parameters/stored vectors ====================================================
 bootstrap_n <- 1000
