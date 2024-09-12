@@ -34,7 +34,9 @@ out_ipw <- list()
 
 # using multiple CPU cores
 ## (https://stackoverflow.com/questions/70213799/)
-plan(multisession)
+## Use half the workers
+## https://github.com/HenrikBengtsson/future/issues/368
+plan(multisession, workers = future::availableCores() / 2)
 
 ## UNRELIABLE VALUE: One of the ‘future.apply’ iterations (‘future_sapply-1’)
 ## unexpectedly generated random numbers without declaring so.
@@ -314,3 +316,4 @@ raw_avg <- ggdt_all %>%
 raw_avg
 
 corrected_avg / raw_avg
+gc(reset = TRUE)

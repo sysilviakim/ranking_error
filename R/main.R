@@ -33,7 +33,10 @@ source(here::here("R", "Fig7.R"))
 
 ## Step 06
 ## This script is a heavy load on the memory due to future_sapply
-## Recommend at least 32gb of memory (max. ~59% used)
+## Recommend at least 32gb of memory (max. ~59% used if all workers used)
+## I've suppressed the number of workers to half the available ones
+## If unreleased memory becomes an issue, try restarting session after this
+## and run afresh from Step 07
 source(here::here("R", "Fig9.R"))
 
 ## Step 07

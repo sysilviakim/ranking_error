@@ -6,7 +6,7 @@
 #   dependencies = TRUE
 # )
 # install_github(
-#   "sysilviakim/ranking",
+#   "sysilviakim/ranking_q",
 #   INSTALL_opts = c("--no-multiarch"),
 #   dependencies = TRUE
 # )
