@@ -1,9 +1,4 @@
 source(here::here("R", "utilities.R"))
-library(lmtest)
-library(sandwich)
-library(stargazer)
-library(fixest)
-library(coefplot)
 
 # Setup and load saved .Rda files ==============================================
 load(here("data", "tidy", "df_list.Rda"))

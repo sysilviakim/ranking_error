@@ -5,10 +5,6 @@ load(here("data", "tidy", "bias_correction.Rda"))
 main <- df_list$main %>%
   mutate(across(where(is.labelled), ~ as.numeric(as.character(.))))
 
-library(clarify)
-library(mlogit)
-library(future.apply)
-
 identity_data <- main %>%
   mutate(ranking = app_identity) %>%
   select(

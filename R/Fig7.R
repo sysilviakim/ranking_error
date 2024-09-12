@@ -1,6 +1,4 @@
 source(here::here("R", "utilities.R"))
-library(questionr)
-library(RColorBrewer)
 
 load(here("data", "tidy", "df_list.Rda"))
 main <- df_list$main

@@ -1,3 +1,16 @@
+## If these none-CRAN packages have not been installed, try this code
+# library(remotes)
+# install_github(
+#   "sysilviakim/Kmisc",
+#   INSTALL_opts = c("--no-multiarch"),
+#   dependencies = TRUE
+# )
+# install_github(
+#   "sysilviakim/ranking",
+#   INSTALL_opts = c("--no-multiarch"),
+#   dependencies = TRUE
+# )
+
 # Library and function calls ===================================================
 library(plyr)
 library(MASS)
@@ -16,15 +29,20 @@ library(pwr)
 library(xtable)
 library(estimatr)
 library(ggpubr)
-# remotes::install_github("sysilviakim/Kmisc")
-library(Kmisc) ## None-CRAN package. Will wean eventually
+library(Kmisc) ## None-CRAN package
 library(lubridate)
 library(haven)
-## remotes::install_github("sysilviakim/ranking")
-library(ranking)
-
-# Read all functions
-source(here("R", "yougov_import.R"))
+library(ranking) ## None-CRAN package
+library(questionr)
+library(RColorBrewer)
+library(clarify)
+library(mlogit)
+library(future.apply)
+library(lmtest)
+library(sandwich)
+library(stargazer)
+library(fixest)
+library(coefplot)
 
 # Parameters/stored vectors ====================================================
 bootstrap_n <- 1000
@@ -178,7 +196,7 @@ unite_ranking <- function(x, remove = FALSE) {
     l <- x %>%
       select(contains(v)) %>%
       select(
-        -ends_with("timing"), 
+        -ends_with("timing"),
         -ends_with("_rnd")
       )
 
@@ -409,7 +427,7 @@ crosswalk_short <- function(x, label) {
     select(-name) %>%
     ## Must refactor code
     mutate(
-      name = item, 
+      name = item,
       est = mean,
       low = mean - 1.96 * se,
       up = mean + 1.96 * se,
@@ -430,7 +448,7 @@ viz_avg_wrapper <- function(data, J = NULL) {
   } else if (nrow(data) / 2 == 6) {
     order <- c(
       "Accountability (Politicians)", "Accountability (Government)",
-      "Median Voter Policy", "Seat-Vote Unbiased", 
+      "Median Voter Policy", "Seat-Vote Unbiased",
       "Minority Representation", "Women's Representation"
     )
   } else {
@@ -469,13 +487,14 @@ viz_avg_wrapper <- function(data, J = NULL) {
 }
 
 ## Must make it more general
-summ_avg_rank_by_group <- function(data, items = NULL, 
+summ_avg_rank_by_group <- function(data, items = NULL,
                                    v = NULL, label = NULL, raw = TRUE,
                                    weight = NULL, round = 2,
                                    mean_only = TRUE) {
   if (is.null(v) | is.null(label)) {
     out <- avg_rank(
-      data, "app_polar", items = items,
+      data, "app_polar",
+      items = items,
       raw = raw, weight = weight, round = round
     )
     if (mean_only) {
@@ -491,7 +510,6 @@ summ_avg_rank_by_group <- function(data, items = NULL,
     } else {
       return(out)
     }
-    
   } else {
     out <- unique(data[[v]]) %>%
       set_names(., .) %>%
@@ -545,9 +563,9 @@ viz_avg_rank_temp <- function(data, wrap = NULL, ipw_only = FALSE) {
       values = c(2, 3)
     ) +
     xlim(1.8, 5) +
-    ylab("") + 
+    ylab("") +
     xlab("Average Rank") +
-    theme_bw() + 
+    theme_bw() +
     scale_x_continuous(limits = c(0.75, 5.25))
   if (ipw_only) {
     p <- p +
@@ -560,7 +578,7 @@ viz_avg_rank_temp <- function(data, wrap = NULL, ipw_only = FALSE) {
         values = rev(c("solid", "solid"))
       )
   }
-  
+
   if (!is.null(wrap)) {
     p <- p + facet_wrap(as.formula(paste("~", wrap)))
   }
@@ -628,21 +646,24 @@ regress_clarify_temp <- function(v, n, p_qoi, type = 1) {
         v$`pid7:party` * .fix_pid +
         v$`male:party` * .fix_male +
         v$`age:party` * .fix_age +
-        v$`educ:party` * .fix_edu)
+        v$`educ:party` * .fix_edu
+    )
     e_XB_race <- exp(
       v$`(Intercept):race` + v$`ideo7:race` * i +
         v$`pid7:race` * .fix_pid +
         v$`male:race` * .fix_male +
         v$`age:race` * .fix_age +
-        v$`educ:race` * .fix_edu)
+        v$`educ:race` * .fix_edu
+    )
     e_XB_reli <- exp(
       v$`(Intercept):religion` + v$`ideo7:religion` * i +
         v$`pid7:religion` * .fix_pid +
         v$`male:religion` * .fix_male +
         v$`age:religion` * .fix_age +
-        v$`educ:religion` * .fix_edu)
+        v$`educ:religion` * .fix_edu
+    )
     e_XB_gen <- 1
-    
+
     # Here, we want to compute the probability for one unique ranking
     # Prob (party, race, religion, gender)
     # Prob(party) * Prob(race) * Prob(religion) * Prob(gender)
@@ -672,7 +693,7 @@ regress_clarify_temp <- function(v, n, p_qoi, type = 1) {
         e_XB_race / (e_XB_race + e_XB_party) *
         e_XB_party / e_XB_party
     }
-    
+
     # we want to generate 24 ps. They should sum up to one.
     p_qoi[i, 2] <- mean(p)
     # if we bootstrap the whole thing, we don't need to save this
@@ -686,12 +707,12 @@ regress_clarify_temp <- function(v, n, p_qoi, type = 1) {
 boot_luce_temp <- function(data,
                            boot_seed) {
   set.seed(boot_seed)
-  
+
   ## Otherwise, this part is not reproducible
-  index <- 
+  index <-
     sample(1:nrow(data), size = nrow(data), replace = TRUE)
   bootstrap_dat <- data[index, ]
-  
+
   boot_ipw <- imprr_weights(
     data = bootstrap_dat,
     J = 4,
@@ -699,12 +720,12 @@ boot_luce_temp <- function(data,
     anc_correct = "anc_correct_identity",
     seed = boot_seed
   )
-  
+
   # Bootstrap data with estimated weights
   bootstrap_dat <- bootstrap_dat %>%
     left_join(boot_ipw$weights, by = "ranking") %>%
     mutate(w_multiplied = weight * w)
-  
+
   # 2. Data processing =========================================================
   # Reference set: (party, religion, gender, race)
   # Downsize data
@@ -722,11 +743,11 @@ boot_luce_temp <- function(data,
     ) %>%
     ## Use race4 instead of race6 that was previously used
     drop_na()
-  
+
   # 3. Create indexed data =====================================================
   # Transform into mlogit format
   dt <- as.data.frame(dt)
-  
+
   ## Takes about 2 seconds
   mdat <- dfidx::dfidx(
     dt,
@@ -737,13 +758,13 @@ boot_luce_temp <- function(data,
   )
   # Check
   head(mdat)
-  
+
   # print(b)
   # mdat$ch # logical: TRUE if id2 was ranked idx1-th, by unit id1
   # mdat$id # respondent id
   # mdat$idx # position id (1st, 2nd, 3rd, 4th = depressed)
   # mdat$ideo7 # explanatory variable
-  
+
   # 4. Run Rank-order logit model ==============================================
   # Estimating parameters (with weight)
   m2 <- mlogit(
@@ -752,10 +773,10 @@ boot_luce_temp <- function(data,
     reflevel = "gender", # Base category
     weight = w_multiplied # Survey weights X bias-correction weights
   )
-  
+
   # Raw result
   summary(m2)
-  
+
   # 5. Get predicted probabilities =============================================
   ## 5.1. Gender > Race > Party > Religion =====================================
   # Generate 1000 sets of parameters (parametric bootstrap)
@@ -766,14 +787,14 @@ boot_luce_temp <- function(data,
     low = NA,
     up = NA
   )
-  
+
   # Generate 1000 sets of parameters (parametric bootstrap)
   # set.seed(123)
   sim_coefs <- sim(m2)
   v <- sim_coefs$sim.coefs %>% as_tibble()
   ggdt1 <- regress_clarify_temp(v, 7, p_template, type = 1) %>%
     mutate(ranking = "Pr(gender > race > party > religion)")
-  
+
   ## 5.2. Party > Gender > Race > Religion =====================================
   # Generate 1000 sets of parameters (parametric bootstrap)
   # set.seed(123)
@@ -781,7 +802,7 @@ boot_luce_temp <- function(data,
   v <- sim_coefs$sim.coefs %>% as_tibble()
   ggdt2 <- regress_clarify_temp(v, 7, p_template, type = 2) %>%
     mutate(ranking = "Pr(party > gender > race > religion)")
-  
+
   ## 5.3. Gender > Race > Party > Religion =====================================
   # Generate 1000 sets of parameters (parametric bootstrap)
   # set.seed(123)
@@ -789,7 +810,7 @@ boot_luce_temp <- function(data,
   v <- sim_coefs$sim.coefs %>% as_tibble()
   ggdt3 <- regress_clarify_temp(v, 7, p_template, type = 3) %>%
     mutate(ranking = "Pr(gender > race > religion > party)")
-  
+
   ## 5.4. Religion > Gender > Race > Party  ====================================
   # Generate 1000 sets of parameters (parametric bootstrap)
   # set.seed(123)
@@ -797,7 +818,7 @@ boot_luce_temp <- function(data,
   v <- sim_coefs$sim.coefs %>% as_tibble()
   ggdt4 <- regress_clarify_temp(v, 7, p_template, type = 4) %>%
     mutate(ranking = "Pr(religion > gender > race > party)")
-  
+
   # Tie everything together
   ggdt_ipw <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
   return(ggdt_ipw)
@@ -815,19 +836,19 @@ yougov_import <- function(fname) {
     clean_names() %>%
     mutate(response_id = str_pad(row_number(), width = 4, pad = "0")) %>%
     select(response_id, everything())
-  
+
   ## Metadata
   yougov_meta <- c(
     "version", "exit_status", "respondent_status", "disposition", "last_page",
-    "starttime", "endtime", "favor_or_oppose", "follow_up", "hcountry_code", 
-    "perc_skipped", "phone_flag", "points", 
+    "starttime", "endtime", "favor_or_oppose", "follow_up", "hcountry_code",
+    "perc_skipped", "phone_flag", "points",
     ## I don't know what these are + must request browser types
     "posneg", "r1", "r2", "r3", "r4", "r5", "r6",
     "attention_check", "attention_check_word",
-    "capabilities_touch", "invalidrank", "more" 
+    "capabilities_touch", "invalidrank", "more"
   )
-  
-  ## Aggressively rename variables 
+
+  ## Aggressively rename variables
   ## Next time, alert YouGov to preferred module/page names!
   temp <- df_raw %>%
     ## Make consistent with root_var
@@ -853,56 +874,58 @@ yougov_import <- function(fname) {
     ## ordering variables
     rename_with(~ gsub("hopkins_order", "identity_order", .x)) %>%
     rename_with(~ gsub("app_order", "tate_order", .x))
-  
+
   ## Print raw data's number of rows
   message(paste0("We have total ", nrow(temp), " respondents."))
-  
+
   ## Make sure that there are no variations in the _module_rnd
   temp_rnd <- temp %>%
     select(
       ends_with("_module_rnd"),
-      ends_with("_page_rnd"), 
-      ends_with("_col_rnd"), 
+      ends_with("_page_rnd"),
+      ends_with("_col_rnd"),
       ends_with("order_q_rnd")
     )
-  
+
   for (v in names(temp_rnd)) {
     ## After NAs are dismissed, there should be only one entry
     assert_that(length(setdiff(unique(temp_rnd[[v]]), c(NA, "NA"))) < 2)
   }
-  
+
   ## Further zero-variance variables
   temp2 <- Filter(
-    function(x) case_when(
-      all(is.na(x)) ~ FALSE,
-      !any(is.na(x)) & var(x, na.rm = TRUE) == 0 ~ FALSE,
-      TRUE ~ TRUE
-    ), 
+    function(x) {
+      case_when(
+        all(is.na(x)) ~ FALSE,
+        !any(is.na(x)) & var(x, na.rm = TRUE) == 0 ~ FALSE,
+        TRUE ~ TRUE
+      )
+    },
     temp
   )
-  
+
   setdiff(names(temp), names(temp2))
-  #  [1] "consent"                               "invalidrank"                          
-  #  [3] "page_esystems_order_q_timing"          "page_back_timing"                     
-  #  [5] "page_birthyr_timing"                   "page_check_scores_timing"             
-  #  [7] "page_educ4_timing"                     "page_gender_timing"                   
-  #  [9] "page_headers_timing"                   "page_identity_order_q_timing"         
-  # [11] "page_immigrant_screen_out_page_timing" "page_mobilescreenpage_timing"         
-  # [13] "page_p_empty_timing"                   "page_polar_order_q_timing"            
-  # [15] "page_race4_timing"                     "page_rand_1_ranking_timing"           
-  # [17] "page_rand_2_ranking_timing"            "page_rand_3_ranking_timing"           
-  # [19] "page_rand_4_ranking_timing"            "page_rand_5_ranking_timing"           
-  # [21] "page_region_timing"                    "page_tate_order_q_timing"             
-  # [23] "page_three_strikes_timing"             "page_votereg2_timing"                 
-  # [25] "page_welcomeset_timing"                "phone_flag"    
-  
+  #  [1] "consent"                               "invalidrank"
+  #  [3] "page_esystems_order_q_timing"          "page_back_timing"
+  #  [5] "page_birthyr_timing"                   "page_check_scores_timing"
+  #  [7] "page_educ4_timing"                     "page_gender_timing"
+  #  [9] "page_headers_timing"                   "page_identity_order_q_timing"
+  # [11] "page_immigrant_screen_out_page_timing" "page_mobilescreenpage_timing"
+  # [13] "page_p_empty_timing"                   "page_polar_order_q_timing"
+  # [15] "page_race4_timing"                     "page_rand_1_ranking_timing"
+  # [17] "page_rand_2_ranking_timing"            "page_rand_3_ranking_timing"
+  # [19] "page_rand_4_ranking_timing"            "page_rand_5_ranking_timing"
+  # [21] "page_region_timing"                    "page_tate_order_q_timing"
+  # [23] "page_three_strikes_timing"             "page_votereg2_timing"
+  # [25] "page_welcomeset_timing"                "phone_flag"
+
   ## Separate out timing variables away from substantial responses
   timing <- temp2 %>%
     select(
       response_id,
       matches(yougov_meta %>% paste(collapse = "|")),
       ## Timing
-      ends_with("_timing"), 
+      ends_with("_timing"),
       ## No module-level, column, or page randomization took place
       ## Randomization was actually recorded in variables such as tate_order_q
       # ends_with("_module_rnd"),
@@ -927,7 +950,7 @@ yougov_import <- function(fname) {
       matches("^dem_rep_can$"),
       matches("^lib_con$")
     )
-  
+
   if ("starttime" %in% names(timing)) {
     timing <- timing %>%
       mutate(duration_in_minutes = endtime - starttime)
@@ -935,8 +958,8 @@ yougov_import <- function(fname) {
     timing <- timing %>%
       mutate(duration_in_minutes = as.numeric(ms(endtime)) / 60)
   }
-  
-  main <- temp2 %>% 
+
+  main <- temp2 %>%
     select(
       !ends_with("_rnd"),
       ends_with("_row_rnd")
@@ -958,7 +981,7 @@ yougov_import <- function(fname) {
       -matches("^dem_rep_can$"),
       -matches("^lib_con$")
     )
-  
+
   ## Delete further unnecessary variables (recheck with real data)
   main <- main %>%
     ## age and age4 already exist
@@ -969,13 +992,13 @@ yougov_import <- function(fname) {
     select(-pid3_t, -matches("^pid3_why$"), -pid7others, -pid7text) %>%
     ## Other text variables
     select(
-      -matches("^religpew_t$"), 
-      -matches("^presvote20post_t$"), 
+      -matches("^religpew_t$"),
+      -matches("^presvote20post_t$"),
       -matches("^housevote22post_t$")
     ) %>%
     ## hobbies/socialize are not substantial questions but cushions
     select(-contains("hobbies"), -contains("socialize"))
-  
+
   ## Berinsky and Ternovski screeners
   if (any(grepl("selected", main$berinsky_1))) {
     main <- main %>%
@@ -990,21 +1013,23 @@ yougov_import <- function(fname) {
         )
       )
   }
-  
+
   ## Unite columns
   main <- main %>%
     unite(
       col = "ternovski", sep = "|",
       ternovski_1, ternovski_2, ternovski_3, ternovski_4, ternovski_5
     )
-  
+
   ## Unite rankings into a permutation pattern, a single variable
   main <- main %>%
     unite_ranking()
-  
+
   ## Turn _row_rnd (Qualtrics equivalent of _do) into something more legible
-  var_list <- main %>% select(ends_with("_row_rnd")) %>% names()
-  
+  var_list <- main %>%
+    select(ends_with("_row_rnd")) %>%
+    names()
+
   ## YouGov has a particular style of showing randomized item order
   ## Make it consistent with existing code tailored to Qualtrics
   ## e.g., "randomize(5, [2,0,1])" ---> 312
@@ -1012,26 +1037,26 @@ yougov_import <- function(fname) {
   item_order_transform <- function(input_string) {
     ## Extract substring between square brackets
     substring <- gsub(".*\\[([^]]+)\\].*", "\\1", input_string)
-    
+
     ## Split the substring by comma
     numbers <- strsplit(substring, ",")[[1]]
-    
+
     ## Increment each number by 1, remove spaces, and concatenate
     result <- ""
     for (number in numbers) {
       incremented_number <- as.numeric(trimws(number)) + 1
       result <- paste0(result, incremented_number)
     }
-    
+
     ## Return NA if string NA
     if (result == "NA") {
       result <- NA
     }
-    
+
     ## Return the final string
     return(result)
   }
-  
+
   ## Transform the item order variables
   ## rowwise will slow things down; must find way to optimize
   message("Stripping item orders of brackets and other unnecessary strings.")
@@ -1039,29 +1064,29 @@ yougov_import <- function(fname) {
     rowwise() %>%
     mutate(across(ends_with("_row_rnd"), ~ item_order_transform(.x))) %>%
     ungroup()
-  
+
   ## Remember, we still don't have the *observed* ranking of the respondent
   ## unless the randomization has been given a 1234... natural order
-  
+
   ## So if the true order respondent gave out  is 3-2-1
   ## but the order provided is                    3-1-2
   ## the *observed* ranking is                    1-3-2
   ## unite_ranking() will give 321 for this respondent.
-  
+
   ## Simiarly, if the true order respondent gave out is 6-3-2-7-1-4-5
   ## but the order provided is                          6-1-5-2-7-3-4
   ## the true order respondent provided is              4-6-1-3-5-2-7
-  
+
   ## Recover recorded rankings
   message("Recovering recorded rankings.")
   for (v in var_list) {
     main <- recover_recorded_responses(
-      presented_order = v, 
+      presented_order = v,
       true_order = gsub("_row_rnd", "", v),
       df = main
     )
   }
-  
+
   ## Create binary indicators for anchor question/attention check/repeat q fails
   main <- main %>%
     ## 1 indicates failure; 0 indicates passing the test
@@ -1077,15 +1102,15 @@ yougov_import <- function(fname) {
         (ternovski == "1|1|0|0|0") | (ternovski == "1|1|2|2|2") ~ "Passed"
       ),
       berinsky_fail = case_when(
-        (berinsky != "000100000001000000") & 
+        (berinsky != "000100000001000000") &
           (berinsky != "222122222221222222") ~ 1,
-        (berinsky == "000100000001000000") | 
+        (berinsky == "000100000001000000") |
           (berinsky == "222122222221222222") ~ 0
       ),
       berinsky_fail_label = case_when(
-        (berinsky != "000100000001000000") & 
+        (berinsky != "000100000001000000") &
           (berinsky != "222122222221222222") ~ "Failed",
-        (berinsky == "000100000001000000") | 
+        (berinsky == "000100000001000000") |
           (berinsky == "222122222221222222") ~ "Passed"
       ),
       ## Random responses
@@ -1151,7 +1176,7 @@ yougov_import <- function(fname) {
       )
       ## Truncated rankings not yet propagated to main coding
     )
-  
+
   ## Other wranglings
   main <- main %>%
     mutate(
@@ -1183,7 +1208,7 @@ yougov_import <- function(fname) {
       ),
       male = ifelse(gender3 == 1, 1, 0)
     )
-  
+
   ## Only complete responses
   if ("respondent_status" %in% names(timing)) {
     timing <- timing %>%
@@ -1191,9 +1216,9 @@ yougov_import <- function(fname) {
     main <- main %>%
       filter(response_id %in% timing$response_id)
   }
-  
+
   ## After filtering
   message(paste0("We have total ", nrow(main), " respondents after filtering."))
-  
+
   return(list(main = main, timing = timing, raw = df_raw))
 }
