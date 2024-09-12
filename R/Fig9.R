@@ -55,6 +55,7 @@ out_ipw <- future_sapply(
   data = identity_data,
   future.seed = TRUE
 )
+message("Creation of out_ipw complete.")
 
 out_ipw_df <- data.frame(
   ideology = vector("numeric", n_bootstrap),
@@ -86,8 +87,11 @@ PL_ipw <- out_ipw_df %>%
   arrange(ranking)
 
 save(PL_ipw, file = here("data", "tidy", "PL_ipw_sapply.Rda"))
+message("Creation of PL_ipw complete.")
 
 # Originally applications_regression_raw.R =====================================
+gc(reset = TRUE)
+
 ## 1. Get data, get bias-correction weights ====================================
 ## Now already performed within 03_bias_correction.R
 ## Sanity check
@@ -206,7 +210,6 @@ set.seed(123)
 sim_coefs <- sim(m)
 v <- sim_coefs$sim.coefs %>% as_tibble()
 p_qoi <- regress_clarify_temp(v, 7, p_template, type = 4)
-
 p_qoi$results <- "raw data" # no weight
 
 ggdt4 <- p_qoi %>%
@@ -217,8 +220,11 @@ PL_raw <- rbind(ggdt1, ggdt2, ggdt3, ggdt4)
 
 ## This will be used in R/Fig9.R
 save(PL_raw, file = here("data", "tidy", "PL_raw.Rda"))
+message("Creation of PL_raw complete.")
 
 # Create Figure 9 ==============================================================
+gc(reset = TRUE)
+
 # Merging Fig9.R, originally 06_applications_regress_visualize.R 
 load(here("data", "tidy", "PL_raw.Rda"))
 load(here("data", "tidy", "PL_ipw_sapply.Rda"))
@@ -271,6 +277,7 @@ ggsave(
   here("fig", "Fig9.pdf"),
   width = 6, height = 5
 )
+message("Creation of Fig9 complete.")
 
 ## First difference between the most liberal and conservative ==================
 ## Bias-corrected: 0.31268234  - 0.06695451 = 0.2457278
