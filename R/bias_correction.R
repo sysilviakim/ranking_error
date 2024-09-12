@@ -15,10 +15,6 @@ identity_data <- main %>%
   )
 
 # Main anchor question =========================================================
-## Note that the functions now require whether the respondent made a 
-## correct answer to the anchor question in a binary format, 
-## *outside* the function
-
 ## Direct bias correction ------------------------------------------------------
 main_direct <- imprr_direct(
   data = identity_data,
