@@ -46,4 +46,4 @@ source(here::here("R", "FigC10.R"))
 source(here::here("R", "Tab2.R"))
 
 ## Step 10
-source(here::here("R", "Fig10.pdf"))
+source(here::here("R", "Fig10.R"))
