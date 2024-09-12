@@ -1,5 +1,4 @@
 source(here::here("R", "utilities.R"))
-library(corrplot)
 
 # Import data ==================================================================
 ## substitute file name when actual data is sent
@@ -78,6 +77,9 @@ temp <- main %>%
   )
 
 ## Corrplot --------------------------------------------------------------------
+cor_matrix <- cor(temp, use = "pairwise.complete.obs") %>%
+  round(., digits = 2)
+
 p <- cor_matrix %>%
   reshape2::melt() %>%
   mutate(
