@@ -2863,10 +2863,10 @@
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "ranking",
+      "RemoteRepo": "ranking_q",
       "RemoteUsername": "sysilviakim",
       "RemoteRef": "HEAD",
-      "RemoteSha": "db82c969f24f82ddff9a5ef1268a3ce06a7b417e",
+      "RemoteSha": "58ef76cf9e43d81b04c08d5f584a6a5f6538c2ef",
       "Requirements": [
         "PLMIX",
         "R",
@@ -2889,7 +2889,7 @@
         "tidyr",
         "tidyselect"
       ],
-      "Hash": "27327e9406795010168495ce9055fa25"
+      "Hash": "4b545a9b19bac2c2f7a2994d20eaf07f"
     },
     "rappdirs": {
       "Package": "rappdirs",
