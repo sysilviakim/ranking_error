@@ -111,6 +111,19 @@ library(remotes)
 # install_version("ggthemes", version = "5.1.0")
 # install_version("rlang", version = "1.1.4")
 
+## If these none-CRAN packages have not been installed, try this code
+# library(remotes)
+# install_github(
+#   "sysilviakim/Kmisc",
+#   INSTALL_opts = c("--no-multiarch"),
+#   dependencies = TRUE
+# )
+# install_github(
+#   "sysilviakim/rankingQ",
+#   INSTALL_opts = c("--no-multiarch"),
+#   dependencies = TRUE
+# )
+
 # Figures and Tables replication, ordered ======================================
 ## Step 00: simulation and the main bias correction
 suppressMessages(suppressWarnings(source(here::here("R", "FigB2.R"))))

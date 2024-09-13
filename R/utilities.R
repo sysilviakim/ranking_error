@@ -6,7 +6,7 @@
 #   dependencies = TRUE
 # )
 # install_github(
-#   "sysilviakim/ranking_q",
+#   "sysilviakim/rankingQ",
 #   INSTALL_opts = c("--no-multiarch"),
 #   dependencies = TRUE
 # )
@@ -43,7 +43,7 @@ library(fixest)
 library(coefplot)
 library(corrplot)
 library(Kmisc) ## None-CRAN package
-library(ranking) ## None-CRAN package
+library(rankingQ) ## None-CRAN package
 
 # Parameters/stored vectors ====================================================
 bootstrap_n <- 1000

@@ -381,7 +381,7 @@
     },
     "RcppArmadillo": {
       "Package": "RcppArmadillo",
-      "Version": "14.0.0-1",
+      "Version": "14.0.2-1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -391,7 +391,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "a711769be34214addf7805278b72d56b"
+      "Hash": "edff747eebfb8f2e18eed194e000caa1"
     },
     "RcppEigen": {
       "Package": "RcppEigen",
@@ -472,7 +472,7 @@
     },
     "abind": {
       "Package": "abind",
-      "Version": "1.4-5",
+      "Version": "1.4-8",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -480,7 +480,7 @@
         "methods",
         "utils"
       ],
-      "Hash": "4f57884290cc75ab22f4af9e9d4ca862"
+      "Hash": "2288423bb0f20a457800d7fc47f6aa54"
     },
     "askpass": {
       "Package": "askpass",
@@ -2138,10 +2138,10 @@
     },
     "lpSolve": {
       "Package": "lpSolve",
-      "Version": "5.6.20",
+      "Version": "5.6.21",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "2801c8082e89ed84cc0dbe43de850d31"
+      "Hash": "730a90bdc519fb0caff03df11218ddd8"
     },
     "lubridate": {
       "Package": "lubridate",
@@ -2857,16 +2857,16 @@
       ],
       "Hash": "1c162ad19d46be9d9a219c1f49956f5d"
     },
-    "ranking": {
-      "Package": "ranking",
+    "rankingQ": {
+      "Package": "rankingQ",
       "Version": "0.1.0",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteRepo": "ranking_q",
+      "RemoteRepo": "rankingQ",
       "RemoteUsername": "sysilviakim",
       "RemoteRef": "HEAD",
-      "RemoteSha": "58ef76cf9e43d81b04c08d5f584a6a5f6538c2ef",
+      "RemoteSha": "1ff3ba37a59a7af78658f3b2c7610ba48b30a69d",
       "Requirements": [
         "PLMIX",
         "R",
@@ -2889,7 +2889,7 @@
         "tidyr",
         "tidyselect"
       ],
-      "Hash": "4b545a9b19bac2c2f7a2994d20eaf07f"
+      "Hash": "f2bf2f263804f8689c4b4d803219ffa0"
     },
     "rappdirs": {
       "Package": "rappdirs",

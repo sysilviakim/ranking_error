@@ -14,7 +14,8 @@ install_github(
   "wch/fontcm", INSTALL_opts = c("--no-multiarch"), dependencies = TRUE
 )
 install_github(
-  "sysilviakim/ranking", INSTALL_opts = c("--no-multiarch"), dependencies = TRUE
+  "sysilviakim/rankingQ",
+  INSTALL_opts = c("--no-multiarch"), dependencies = TRUE
 )
 Kmisc::proj_skeleton()
 
