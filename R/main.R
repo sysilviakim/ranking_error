@@ -5,6 +5,7 @@
 ## Running under: Windows 11 x64 (build 22631)
 ## 32.0 GB RAM, Intel(R) Core(TM) Ultra 7 155H, 3800 Mhz, 16 Core(s), 
 ## 22 Logical Processor(s)
+## The estimated computation time on a comparable machine is about 43 minutes.
 
 ## Uncomment the following lines if the packages are not installed
 # install.packages("renv")
