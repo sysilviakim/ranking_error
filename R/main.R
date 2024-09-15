@@ -10,7 +10,7 @@
 ## Uncomment the following lines if the packages are not installed
 # install.packages("renv")
 # install.packages("here")
-# renv::restore()
+renv::restore()
 
 ## If renv is giving you trouble due to OS issues or such, use the following:
 # install.packages("remotes")
@@ -61,17 +61,17 @@
 # install_version("plyr", version = "1.8.9")
 
 ## None-CRAN packages
-# library(remotes)
-# install_github(
-#   "sysilviakim/Kmisc",
-#   INSTALL_opts = c("--no-multiarch"),
-#   dependencies = TRUE
-# )
-# install_github(
-#   "sysilviakim/rankingQ",
-#   INSTALL_opts = c("--no-multiarch"),
-#   dependencies = TRUE
-# )
+library(remotes)
+install_github(
+  "sysilviakim/Kmisc",
+  INSTALL_opts = c("--no-multiarch"),
+  dependencies = TRUE
+)
+install_github(
+  "sysilviakim/rankingQ",
+  INSTALL_opts = c("--no-multiarch"),
+  dependencies = TRUE
+)
 
 # Figures and Tables replication, ordered ======================================
 ## Step 00: simulation and the main bias correction
