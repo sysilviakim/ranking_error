@@ -33,13 +33,13 @@ main_ipw <- imprr_weights(
   anc_correct = "anc_correct_identity"
 )
 
-main_ipw_weighted <- imprr_weights(
-  data = identity_data,
-  J = 4,
-  main_q = "app_identity",
-  anc_correct = "anc_correct_identity",
-  weight = identity_data$weight
-)
+# main_ipw_weighted <- imprr_weights(
+#   data = identity_data,
+#   J = 4,
+#   main_q = "app_identity",
+#   anc_correct = "anc_correct_identity",
+#   weight = identity_data$weight
+# )
 
 # Alphabet anchor ==============================================================
 temp <- identity_data %>% filter(!is.na(anc_correct_id_alphabet))
@@ -84,8 +84,8 @@ exact_ipw <- imprr_weights(
 )
 
 # Save results for reuse =======================================================
-main_ipw_weighted$weights <- main_ipw_weighted$weights %>%
-  rename(alt_w = w)
+# main_ipw_weighted$weights <- main_ipw_weighted$weights %>%
+#   rename(alt_w = w)
 
 ## Downsized data
 dt <- main %>%
@@ -96,7 +96,7 @@ dt <- main %>%
     race_ethnicity = app_identity_4,
     ranking = app_identity
   ) %>%
-  left_join(main_ipw_weighted$weights, by = "ranking") %>%
+  # left_join(main_ipw_weighted$weights, by = "ranking") %>%
   left_join(main_ipw$weights, by = "ranking") %>%
   mutate(w_multiplied = weight * w) %>%
   select(
