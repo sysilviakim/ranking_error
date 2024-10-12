@@ -14,6 +14,21 @@ identity_data <- main %>%
     weight
   )
 
+# Save identity_data for package purpose
+identity_ranking <- identity_data %>% 
+  select(-c(anc_correct_id_alphabet, anc_correct_id_exact)) %>%
+  rename(s_weight = weight,
+         app_party = app_identity_1,
+         app_religion = app_identity_2,
+         app_gender = app_identity_3,
+         app_race = app_identity_4,
+         anc_federal = anc_identity_1,
+         anc_state = anc_identity_2,
+         anc_municipal = anc_identity_3,
+         anc_school = anc_identity_4)
+
+save(identity_ranking, file = here("data", "tidy", "identity_ranking.Rda"))
+
 # Main anchor question =========================================================
 ## Direct bias correction ------------------------------------------------------
 main_direct <- imprr_direct(
