@@ -1,5 +1,18 @@
 source(here::here("R", "Fig6.R"))
 
+## Government anchor -----------------------------------------------------------
+## Subgroup: those who passed the government anchor
+
+tab <- main %>%
+  filter(anc_correct_identity == 1) %>%
+  {table(.$anc_identity_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 0.1066, ES = 0.2050, N = 767+
+temp <- table_to_tibble(tab)
+pass <- plot_dist_ranking(temp, ylim = .15, fill = "dimgray")
+plot_nolegend(pass + theme_bw())
+
 pass <-
   plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
 plot_nolegend(pdf_default(pass))
@@ -9,6 +22,18 @@ ggsave(
   here("fig", "FigC12a.pdf"),
   width = 7.5, height = 2.5
 )
+
+
+## Subgroup: those who failed the government anchor
+tab <- main %>%
+  filter(anc_correct_identity == 0) %>%
+  {table(.$anc_identity_recorded)} %>%
+  permn_augment()
+round(prop.table(tab) * 100, digits = 1)
+chisq_power(tab) ## p-value = 5.793e-13, ES = 0.5737, N = 98+
+temp <- table_to_tibble(tab)
+fail <- plot_dist_ranking(temp, ylim = .15, fill = "dimgray")
+plot_nolegend(fail + theme_bw())
 
 fail <-
   plot_dist_ranking(temp, ylim = .2, family = "CM Roman", fill = "dimgray")
