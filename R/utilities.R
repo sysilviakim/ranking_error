@@ -3,12 +3,13 @@
 # install_github(
 #   "sysilviakim/Kmisc",
 #   INSTALL_opts = c("--no-multiarch"),
-#   dependencies = TRUE
+#   dependencies = TRUE,
+#   ref = "fdffd26"
 # )
 # install_github(
 #   "sysilviakim/rankingQ",
-#   INSTALL_opts = c("--no-multiarch"),
-#   dependencies = TRUE
+#   dependencies = TRUE,
+#   ref = "c16a523"
 # )
 
 # Library and function calls ===================================================
