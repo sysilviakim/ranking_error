@@ -158,7 +158,7 @@ p_list[[5]] <- p_list[[5]] + ggtitle("E. 100% Random")
 p_list[[6]] <- p_list[[6]] + ggtitle("F. 50% Random")
 
 p <- p_list %>%
-  map(~ .x + theme(plot.title = element_text(size = 10))) %>%
+  map(~ pdf_default(.x) + theme(plot.title = element_text(size = 10))) %>%
   wrap_plots(ncol = 3)
-print(pdf_default(p))
+print(p)
 dev.off()
