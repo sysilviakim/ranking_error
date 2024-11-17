@@ -150,12 +150,12 @@ p_list <- permn_list %>%
     }
   )
 
-p_list[[1]] <- p_list[[1]] + ggtitle("A. 100% Sincere")
-p_list[[2]] <- p_list[[2]] + ggtitle("B. 0% Sincere")
-p_list[[3]] <- p_list[[3]] + ggtitle("C. 50% Sincere")
-p_list[[4]] <- p_list[[4]] + ggtitle("D. 100% Sincere")
-p_list[[5]] <- p_list[[5]] + ggtitle("E. 0% Sincere")
-p_list[[6]] <- p_list[[6]] + ggtitle("F. 50% Sincere")
+p_list[[1]] <- p_list[[1]] + ggtitle("A. 0% Random")
+p_list[[2]] <- p_list[[2]] + ggtitle("B. 100% Random")
+p_list[[3]] <- p_list[[3]] + ggtitle("C. 50% Random")
+p_list[[4]] <- p_list[[4]] + ggtitle("D. 0% Random")
+p_list[[5]] <- p_list[[5]] + ggtitle("E. 100% Random")
+p_list[[6]] <- p_list[[6]] + ggtitle("F. 50% Random")
 
 p <- p_list %>%
   map(~ .x + theme(plot.title = element_text(size = 10))) %>%
