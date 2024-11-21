@@ -15,19 +15,26 @@ identity_data <- main %>%
   )
 
 # Save identity_data for package purpose
-identity <- identity_data %>% 
-  select(-c(anc_correct_id_alphabet, anc_correct_id_exact)) %>%
-  rename(s_weight = weight,
-         app_party = app_identity_1,
-         app_religion = app_identity_2,
-         app_gender = app_identity_3,
-         app_race = app_identity_4,
-         anc_house = anc_identity_1,
-         anc_neighborhood = anc_identity_2,
-         anc_city = anc_identity_3,
-         anc_state = anc_identity_4)
-
-save(identity, file = here("data", "tidy", "identity.Rda"))
+identity <- main %>%
+  select(
+    s_weight = weight,
+    app_party = app_identity_1,
+    app_religion = app_identity_2,
+    app_gender = app_identity_3,
+    app_race = app_identity_4,
+    anc_house = anc_identity_1,
+    anc_neighborhood = anc_identity_2,
+    anc_city = anc_identity_3,
+    anc_state = anc_identity_4,
+    anc_correct_identity,
+    app_identity_recorded,
+    anc_identity_recorded,
+    app_identity,
+    app_identity_row_rnd,
+    anc_identity,
+    anc_identity_row_rnd
+  )
+save(identity, file = here("data", "tidy", "identity.rda"))
 
 # Main anchor question =========================================================
 ## Direct bias correction ------------------------------------------------------
