@@ -18,20 +18,20 @@ identity_data <- main %>%
 identity <- main %>%
   select(
     s_weight = weight,
-    app_party = app_identity_1,
-    app_religion = app_identity_2,
-    app_gender = app_identity_3,
-    app_race = app_identity_4,
-    anc_house = anc_identity_1,
-    anc_neighborhood = anc_identity_2,
-    anc_city = anc_identity_3,
-    anc_state = anc_identity_4,
+    app_identity, ## full ranking pattern
+    app_identity_1, ## party
+    app_identity_2, ## religion
+    app_identity_3, ## gender
+    app_identity_4, ## race
+    anc_identity,
+    anc_identity_1, ## house
+    anc_identity_2, ## neighborhood
+    anc_identity_3, ## city
+    anc_identity_4, ## state
     anc_correct_identity,
     app_identity_recorded,
     anc_identity_recorded,
-    app_identity,
     app_identity_row_rnd,
-    anc_identity,
     anc_identity_row_rnd
   )
 save(identity, file = here("data", "tidy", "identity.rda"))
