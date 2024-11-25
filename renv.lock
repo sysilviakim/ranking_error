@@ -2866,30 +2866,22 @@
       "RemoteRepo": "rankingQ",
       "RemoteUsername": "sysilviakim",
       "RemoteRef": "HEAD",
-      "RemoteSha": "c16a5236dfbeb57890e6c004c07c6db13cc83e37",
+      "RemoteSha": "ee9e27b2e89081cd571538b04360e70bd3aa74f3",
       "Requirements": [
         "PLMIX",
         "R",
-        "assertthat",
-        "clarify",
         "combinat",
-        "dfidx",
         "dplyr",
         "estimatr",
-        "generics",
         "ggplot2",
-        "ggpubr",
-        "mlogit",
         "purrr",
-        "questionr",
         "rlang",
-        "scales",
         "stringr",
         "tibble",
         "tidyr",
         "tidyselect"
       ],
-      "Hash": "50ac26c85fb14cd5a799a3b6f572ea3c"
+      "Hash": "c66506975d60a5116c01d4634208b265"
     },
     "rappdirs": {
       "Package": "rappdirs",
