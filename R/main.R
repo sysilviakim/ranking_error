@@ -63,12 +63,15 @@ renv::restore()
 ## None-CRAN packages
 library(remotes)
 install_github(
-  "sysilviakim/Kmisc",
+  "sysilviakim/Kmisc@fdffd26",
   INSTALL_opts = c("--no-multiarch"),
+  
   dependencies = TRUE
 )
 install_github(
   "sysilviakim/rankingQ",
+  ## If latest update does not work due to package lifecycle, use
+  ## "sysilviakim/rankingQ@b42cce2",
   INSTALL_opts = c("--no-multiarch"),
   dependencies = TRUE
 )
